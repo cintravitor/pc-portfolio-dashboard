@@ -21,7 +21,12 @@
                     <button class="refresh-btn" onclick="fetchSheetData()">🔄 Refresh Data</button>
                 </div>
             </div>
-            <div class="filters-section">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="portfolio-overview">Portfolio Overview</button>
+                <button class="tab-btn" data-tab="descriptive-analysis">Descriptive Analysis</button>
+            </div>
+            <div class="filters-section" id="filters-section">
                 <div class="filters-container">
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Search by solution name, problem, or description..." oninput="applyFilters()">
@@ -35,42 +40,56 @@
         </div>
     </header>
     <main class="main-content" id="main-content">
-        <div class="content-left" id="content-left">
-            <div class="stats-bar" id="stats-bar" style="display: none;">
-                <div class="stat-card">
-                    <div class="stat-label">Total Solutions</div>
-                    <div class="stat-value" id="stat-total">0</div>
+        <!-- Portfolio Overview Tab Content -->
+        <div class="tab-content active" id="tab-portfolio-overview">
+            <div class="content-left" id="content-left">
+                <div class="stats-bar" id="stats-bar" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Solutions</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Showing</div>
+                        <div class="stat-value" id="stat-showing">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Live Products</div>
+                        <div class="stat-value" id="stat-live">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">In Development</div>
+                        <div class="stat-value" id="stat-dev">0</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Showing</div>
-                    <div class="stat-value" id="stat-showing">0</div>
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <h2>Loading Portfolio Data...</h2>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">Fetching data from Google Sheets</p>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Live Products</div>
-                    <div class="stat-value" id="stat-live">0</div>
+                <div id="error" class="error hidden">
+                    <h2>⚠️ Error Loading Data</h2>
+                    <p id="error-message"></p>
+                    <button class="refresh-btn" onclick="fetchSheetData()" style="margin-top: 1rem;">Try Again</button>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">In Development</div>
-                    <div class="stat-value" id="stat-dev">0</div>
+                <div id="empty-state" class="empty-state hidden">
+                    <h2>📭 No Results Found</h2>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">Try adjusting your filters or search terms</p>
                 </div>
+                <div id="cards-container" class="cards-grid hidden"></div>
             </div>
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <h2>Loading Portfolio Data...</h2>
-                <p style="color: #6b7280; margin-top: 0.5rem;">Fetching data from Google Sheets</p>
-            </div>
-            <div id="error" class="error hidden">
-                <h2>⚠️ Error Loading Data</h2>
-                <p id="error-message"></p>
-                <button class="refresh-btn" onclick="fetchSheetData()" style="margin-top: 1rem;">Try Again</button>
-            </div>
-            <div id="empty-state" class="empty-state hidden">
-                <h2>📭 No Results Found</h2>
-                <p style="color: #6b7280; margin-top: 0.5rem;">Try adjusting your filters or search terms</p>
-            </div>
-            <div id="cards-container" class="cards-grid hidden"></div>
+            <div id="detail-panel" class="detail-panel hidden"></div>
         </div>
-        <div id="detail-panel" class="detail-panel hidden"></div>
+        <!-- Descriptive Analysis Tab Content -->
+        <div class="tab-content" id="tab-descriptive-analysis">
+            <div class="analysis-container">
+                <div id="analysis-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <h2>Loading Analysis Data...</h2>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">Analyzing portfolio dataset</p>
+                </div>
+                <div id="analysis-content" class="analysis-content"></div>
+            </div>
+        </div>
     </main>
     <script src="config.js"></script>
     <script src="dashboard-script.js"></script>

@@ -7,6 +7,8 @@
 let portfolioData = [];
 let filteredData = [];
 let columnMapping = {}; // Dynamic column mapping based on headers
+let currentTab = 'portfolio-overview'; // Track current active tab
+let analysisDataLoaded = false; // Track if analysis has been loaded
 const UPDATE_INTERVAL = 24 * 60 * 60 * 1000;
 const STORAGE_KEY = 'portfolio_last_update';
 const DATA_CACHE_KEY = 'portfolio_data_cache';
@@ -810,9 +812,306 @@ function initAutoUpdate() {
     }, 60 * 60 * 1000);
 }
 
+/**
+ * Switch between tabs
+ */
+function switchTab(tabName) {
+    console.log(`Switching to tab: ${tabName}`);
+    
+    // Update current tab
+    currentTab = tabName;
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        if (content.id === `tab-${tabName}`) {
+            content.classList.add('active');
+        } else {
+            content.classList.remove('active');
+        }
+    });
+    
+    // Show/hide filters based on active tab
+    const filtersSection = document.getElementById('filters-section');
+    if (tabName === 'portfolio-overview') {
+        filtersSection.style.display = 'block';
+    } else {
+        filtersSection.style.display = 'none';
+    }
+    
+    // Load analysis data if switching to analysis tab for the first time
+    if (tabName === 'descriptive-analysis' && !analysisDataLoaded) {
+        loadDescriptiveAnalysis();
+    }
+}
+
+/**
+ * Load and display descriptive analysis
+ */
+async function loadDescriptiveAnalysis() {
+    console.log('Loading descriptive analysis...');
+    
+    const analysisContent = document.getElementById('analysis-content');
+    const analysisLoading = document.getElementById('analysis-loading');
+    
+    try {
+        // Show loading state
+        analysisLoading.classList.remove('hidden');
+        analysisContent.innerHTML = '';
+        
+        // Check if we have portfolio data to analyze
+        if (!portfolioData || portfolioData.length === 0) {
+            // Try to load from cache
+            const cached = localStorage.getItem(DATA_CACHE_KEY);
+            if (cached) {
+                portfolioData = JSON.parse(cached);
+                console.log('Using cached portfolio data for analysis');
+            } else {
+                throw new Error('No portfolio data available. Please load the Portfolio Overview tab first.');
+            }
+        }
+        
+        console.log(`Analyzing ${portfolioData.length} solutions...`);
+        
+        // Perform analysis on the data
+        const analysis = analyzePortfolioData(portfolioData);
+        
+        // Display the analysis results
+        displayAnalysisResults(analysis);
+        
+        // Mark as loaded
+        analysisDataLoaded = true;
+        console.log('✅ Descriptive analysis loaded successfully');
+        
+    } catch (error) {
+        console.error('Error loading descriptive analysis:', error);
+        analysisContent.innerHTML = `
+            <div class="analysis-section">
+                <h2>⚠️ Error Loading Analysis</h2>
+                <p style="color: #ef4444; margin-bottom: 1rem; font-size: 1rem;">${escapeHtml(error.message)}</p>
+                <p style="color: #6b7280; margin-bottom: 1rem;">Please ensure the Portfolio Overview tab has loaded data first.</p>
+                <button class="refresh-btn" onclick="switchTab('portfolio-overview')" style="margin-top: 1rem;">
+                    Go to Portfolio Overview
+                </button>
+            </div>
+        `;
+    } finally {
+        analysisLoading.classList.add('hidden');
+    }
+}
+
+/**
+ * Analyze portfolio data and calculate statistics
+ */
+function analyzePortfolioData(data) {
+    console.log('Performing data analysis...');
+    
+    const analysis = {
+        totalSolutions: data.length,
+        stageCount: {},
+        areaCount: {},
+        ownerCount: {},
+        metrics: {
+            withUXMetric: 0,
+            withBIMetric: 0,
+            withBothMetrics: 0,
+            withoutMetrics: 0
+        },
+        regulatory: 0,
+        nonRegulatory: 0
+    };
+    
+    // Analyze each solution
+    data.forEach(solution => {
+        // Count by maturity stage
+        const stage = solution.maturity || 'Not specified';
+        analysis.stageCount[stage] = (analysis.stageCount[stage] || 0) + 1;
+        
+        // Count by area
+        const area = solution.area || 'Not specified';
+        analysis.areaCount[area] = (analysis.areaCount[area] || 0) + 1;
+        
+        // Count by owner
+        const owner = solution.owner || 'Not assigned';
+        analysis.ownerCount[owner] = (analysis.ownerCount[owner] || 0) + 1;
+        
+        // Count metrics
+        const hasUX = solution.keyMetricUX && solution.keyMetricUX.trim() !== '';
+        const hasBI = solution.keyMetricBI && solution.keyMetricBI.trim() !== '';
+        
+        if (hasUX) analysis.metrics.withUXMetric++;
+        if (hasBI) analysis.metrics.withBIMetric++;
+        if (hasUX && hasBI) analysis.metrics.withBothMetrics++;
+        if (!hasUX && !hasBI) analysis.metrics.withoutMetrics++;
+        
+        // Count regulatory
+        if (solution.regulatory && solution.regulatory.toLowerCase().includes('yes')) {
+            analysis.regulatory++;
+        } else {
+            analysis.nonRegulatory++;
+        }
+    });
+    
+    // Calculate percentages
+    analysis.metrics.withAnyMetric = analysis.metrics.withUXMetric + analysis.metrics.withBIMetric - analysis.metrics.withBothMetrics;
+    
+    console.log('Analysis complete:', analysis);
+    return analysis;
+}
+
+/**
+ * Display analysis results in the UI
+ */
+function displayAnalysisResults(analysis) {
+    const analysisContent = document.getElementById('analysis-content');
+    
+    // Sort data for display
+    const sortedStages = Object.entries(analysis.stageCount).sort((a, b) => b[1] - a[1]);
+    const sortedAreas = Object.entries(analysis.areaCount).sort((a, b) => b[1] - a[1]);
+    const sortedOwners = Object.entries(analysis.ownerCount).sort((a, b) => b[1] - a[1]);
+    
+    // Calculate key insights
+    const topStage = sortedStages[0];
+    const topStagePercentage = Math.round((topStage[1] / analysis.totalSolutions) * 100);
+    const metricsPercentage = Math.round((analysis.metrics.withAnyMetric / analysis.totalSolutions) * 100);
+    const bothMetricsPercentage = Math.round((analysis.metrics.withBothMetrics / analysis.totalSolutions) * 100);
+    const regulatoryPercentage = Math.round((analysis.regulatory / analysis.totalSolutions) * 100);
+    
+    analysisContent.innerHTML = `
+        <!-- Overview Section -->
+        <div class="analysis-section">
+            <h2>Portfolio Overview</h2>
+            <div class="analysis-stats-grid">
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Total Solutions</div>
+                    <div class="analysis-stat-value">${analysis.totalSolutions}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Maturity Stages</div>
+                    <div class="analysis-stat-value">${Object.keys(analysis.stageCount).length}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">P&C Areas</div>
+                    <div class="analysis-stat-value">${Object.keys(analysis.areaCount).length}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Product Owners</div>
+                    <div class="analysis-stat-value">${Object.keys(analysis.ownerCount).length}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maturity Stage Distribution -->
+        <div class="analysis-section">
+            <h2>Solutions by Maturity Stage</h2>
+            <ul class="analysis-list">
+                ${sortedStages.map(([stage, count]) => `
+                    <li>
+                        <strong>${escapeHtml(stage)}</strong>
+                        <span class="value">${count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+            <div class="analysis-highlight">
+                <p><strong>Key Insight:</strong> The majority of solutions (${topStagePercentage}%) are in the "${escapeHtml(topStage[0])}" stage.</p>
+            </div>
+        </div>
+
+        <!-- Key Metrics Analysis -->
+        <div class="analysis-section">
+            <h2>Key Metrics Coverage</h2>
+            <div class="analysis-stats-grid">
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">UX Metrics Defined</div>
+                    <div class="analysis-stat-value">${analysis.metrics.withUXMetric}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">BI Metrics Defined</div>
+                    <div class="analysis-stat-value">${analysis.metrics.withBIMetric}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Both Metrics</div>
+                    <div class="analysis-stat-value">${analysis.metrics.withBothMetrics}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">No Metrics</div>
+                    <div class="analysis-stat-value">${analysis.metrics.withoutMetrics}</div>
+                </div>
+            </div>
+            <div class="analysis-highlight">
+                <p><strong>Coverage:</strong> ${metricsPercentage}% of solutions have at least one metric defined, with ${bothMetricsPercentage}% having both UX and BI metrics.</p>
+            </div>
+        </div>
+
+        <!-- Area Distribution -->
+        <div class="analysis-section">
+            <h2>Solutions by P&C Area</h2>
+            <ul class="analysis-list">
+                ${sortedAreas.map(([area, count]) => `
+                    <li>
+                        <strong>${escapeHtml(area)}</strong>
+                        <span class="value">${count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+
+        <!-- Regulatory Compliance -->
+        <div class="analysis-section">
+            <h2>Regulatory Compliance</h2>
+            <div class="analysis-stats-grid">
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Regulatory Demands</div>
+                    <div class="analysis-stat-value">${analysis.regulatory}</div>
+                </div>
+                <div class="analysis-stat-card">
+                    <div class="analysis-stat-label">Non-Regulatory</div>
+                    <div class="analysis-stat-value">${analysis.nonRegulatory}</div>
+                </div>
+            </div>
+            <div class="analysis-highlight">
+                <p><strong>Regulatory Mix:</strong> ${regulatoryPercentage}% of solutions are driven by regulatory demands.</p>
+            </div>
+        </div>
+
+        <!-- Owner Distribution -->
+        <div class="analysis-section">
+            <h2>Solutions by Owner</h2>
+            <ul class="analysis-list">
+                ${sortedOwners.slice(0, 10).map(([owner, count]) => `
+                    <li>
+                        <strong>${escapeHtml(owner)}</strong>
+                        <span class="value">${count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+            ${sortedOwners.length > 10 ? `<p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">Showing top 10 of ${sortedOwners.length} owners</p>` : ''}
+        </div>
+    `;
+    
+    console.log('✅ Analysis results displayed');
+}
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Portfolio Dashboard initialized');
+    
+    // Setup tab button clicks
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            switchTab(tabName);
+        });
+    });
+    console.log('✅ Tab buttons initialized');
     
     // Setup debounced search (waits 300ms after user stops typing)
     const searchInput = document.getElementById('search-input');

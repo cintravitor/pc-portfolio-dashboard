@@ -968,7 +968,7 @@ function analyzePortfolioData(data) {
 }
 
 /**
- * Display analysis results in the UI
+ * Display analysis results with charts
  */
 function displayAnalysisResults(analysis) {
     const analysisContent = document.getElementById('analysis-content');
@@ -988,7 +988,7 @@ function displayAnalysisResults(analysis) {
     analysisContent.innerHTML = `
         <!-- Overview Section -->
         <div class="analysis-section">
-            <h2>Portfolio Overview</h2>
+            <h2>📊 Portfolio Overview</h2>
             <div class="analysis-stats-grid">
                 <div class="analysis-stat-card">
                     <div class="analysis-stat-label">Total Solutions</div>
@@ -1009,95 +1009,322 @@ function displayAnalysisResults(analysis) {
             </div>
         </div>
 
-        <!-- Maturity Stage Distribution -->
-        <div class="analysis-section">
-            <h2>Solutions by Maturity Stage</h2>
-            <ul class="analysis-list">
-                ${sortedStages.map(([stage, count]) => `
-                    <li>
-                        <strong>${escapeHtml(stage)}</strong>
-                        <span class="value">${count}</span>
-                    </li>
-                `).join('')}
-            </ul>
-            <div class="analysis-highlight">
-                <p><strong>Key Insight:</strong> The majority of solutions (${topStagePercentage}%) are in the "${escapeHtml(topStage[0])}" stage.</p>
+        <!-- Charts Grid -->
+        <div class="analysis-chart-grid">
+            <!-- Maturity Stage Distribution -->
+            <div class="analysis-chart-container">
+                <h2>🔄 Solutions by Maturity Stage</h2>
+                <div class="analysis-chart-wrapper">
+                    <canvas id="chart-stages"></canvas>
+                </div>
+                <div class="analysis-highlight">
+                    <p><strong>Key Insight:</strong> ${topStagePercentage}% are in the "${escapeHtml(topStage[0])}" stage.</p>
+                </div>
+            </div>
+
+            <!-- Key Metrics Coverage -->
+            <div class="analysis-chart-container">
+                <h2>📈 Key Metrics Coverage</h2>
+                <div class="analysis-chart-wrapper">
+                    <canvas id="chart-metrics"></canvas>
+                </div>
+                <div class="analysis-highlight">
+                    <p><strong>Coverage:</strong> ${metricsPercentage}% have at least one metric (${bothMetricsPercentage}% have both)</p>
+                </div>
             </div>
         </div>
 
-        <!-- Key Metrics Analysis -->
-        <div class="analysis-section">
-            <h2>Key Metrics Coverage</h2>
-            <div class="analysis-stats-grid">
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">UX Metrics Defined</div>
-                    <div class="analysis-stat-value">${analysis.metrics.withUXMetric}</div>
-                </div>
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">BI Metrics Defined</div>
-                    <div class="analysis-stat-value">${analysis.metrics.withBIMetric}</div>
-                </div>
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">Both Metrics</div>
-                    <div class="analysis-stat-value">${analysis.metrics.withBothMetrics}</div>
-                </div>
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">No Metrics</div>
-                    <div class="analysis-stat-value">${analysis.metrics.withoutMetrics}</div>
+        <!-- Second Row Charts -->
+        <div class="analysis-chart-grid">
+            <!-- Area Distribution -->
+            <div class="analysis-chart-container">
+                <h2>🏢 Solutions by P&C Area</h2>
+                <div class="analysis-chart-wrapper">
+                    <canvas id="chart-areas"></canvas>
                 </div>
             </div>
-            <div class="analysis-highlight">
-                <p><strong>Coverage:</strong> ${metricsPercentage}% of solutions have at least one metric defined, with ${bothMetricsPercentage}% having both UX and BI metrics.</p>
+
+            <!-- Regulatory Compliance -->
+            <div class="analysis-chart-container">
+                <h2>⚖️ Regulatory Compliance</h2>
+                <div class="analysis-chart-wrapper">
+                    <canvas id="chart-regulatory"></canvas>
+                </div>
+                <div class="analysis-highlight">
+                    <p><strong>Regulatory Mix:</strong> ${regulatoryPercentage}% are driven by regulatory demands.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Area Distribution -->
-        <div class="analysis-section">
-            <h2>Solutions by P&C Area</h2>
-            <ul class="analysis-list">
-                ${sortedAreas.map(([area, count]) => `
-                    <li>
-                        <strong>${escapeHtml(area)}</strong>
-                        <span class="value">${count}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>
-
-        <!-- Regulatory Compliance -->
-        <div class="analysis-section">
-            <h2>Regulatory Compliance</h2>
-            <div class="analysis-stats-grid">
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">Regulatory Demands</div>
-                    <div class="analysis-stat-value">${analysis.regulatory}</div>
-                </div>
-                <div class="analysis-stat-card">
-                    <div class="analysis-stat-label">Non-Regulatory</div>
-                    <div class="analysis-stat-value">${analysis.nonRegulatory}</div>
-                </div>
+        <!-- Owner Distribution (Top 10) -->
+        <div class="analysis-chart-container" style="margin-top: 2rem;">
+            <h2>👥 Top 10 Product Owners</h2>
+            <div class="analysis-chart-wrapper" style="height: 400px;">
+                <canvas id="chart-owners"></canvas>
             </div>
-            <div class="analysis-highlight">
-                <p><strong>Regulatory Mix:</strong> ${regulatoryPercentage}% of solutions are driven by regulatory demands.</p>
-            </div>
-        </div>
-
-        <!-- Owner Distribution -->
-        <div class="analysis-section">
-            <h2>Solutions by Owner</h2>
-            <ul class="analysis-list">
-                ${sortedOwners.slice(0, 10).map(([owner, count]) => `
-                    <li>
-                        <strong>${escapeHtml(owner)}</strong>
-                        <span class="value">${count}</span>
-                    </li>
-                `).join('')}
-            </ul>
-            ${sortedOwners.length > 10 ? `<p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">Showing top 10 of ${sortedOwners.length} owners</p>` : ''}
+            ${sortedOwners.length > 10 ? `<p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem; text-align: center;">Showing top 10 of ${sortedOwners.length} owners</p>` : ''}
         </div>
     `;
     
+    // Create charts after DOM is updated
+    setTimeout(() => createAnalysisCharts(analysis, sortedStages, sortedAreas, sortedOwners), 100);
+    
     console.log('✅ Analysis results displayed');
+}
+
+/**
+ * Create all analysis charts using Chart.js
+ */
+function createAnalysisCharts(analysis, sortedStages, sortedAreas, sortedOwners) {
+    // Color palette
+    const stageColors = {
+        'Live': 'rgba(6, 95, 70, 0.8)',
+        'Development': 'rgba(30, 64, 175, 0.8)',
+        'Ideation': 'rgba(146, 64, 14, 0.8)',
+        'Hold': 'rgba(153, 27, 27, 0.8)',
+        'Discovery': 'rgba(107, 33, 168, 0.8)'
+    };
+    
+    const defaultColors = [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(20, 184, 166, 0.8)',
+        'rgba(251, 146, 60, 0.8)'
+    ];
+
+    // 1. Maturity Stage Chart (Bar Chart)
+    const stagesCanvas = document.getElementById('chart-stages');
+    if (stagesCanvas) {
+        new Chart(stagesCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedStages.map(([stage]) => stage),
+                datasets: [{
+                    label: 'Number of Solutions',
+                    data: sortedStages.map(([_, count]) => count),
+                    backgroundColor: sortedStages.map(([stage]) => stageColors[stage] || defaultColors[0]),
+                    borderRadius: 8,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        ticks: { font: { size: 12, weight: '600' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Key Metrics Chart (Doughnut Chart)
+    const metricsCanvas = document.getElementById('chart-metrics');
+    if (metricsCanvas) {
+        new Chart(metricsCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['UX Only', 'BI Only', 'Both Metrics', 'No Metrics'],
+                datasets: [{
+                    data: [
+                        analysis.metrics.withUXMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withBIMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withBothMetrics,
+                        analysis.metrics.withoutMetrics
+                    ],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(156, 163, 175, 0.6)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12, weight: '600' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. P&C Area Chart (Horizontal Bar Chart)
+    const areasCanvas = document.getElementById('chart-areas');
+    if (areasCanvas) {
+        new Chart(areasCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedAreas.map(([area]) => area.length > 20 ? area.substring(0, 20) + '...' : area),
+                datasets: [{
+                    label: 'Solutions',
+                    data: sortedAreas.map(([_, count]) => count),
+                    backgroundColor: sortedAreas.map((_, i) => defaultColors[i % defaultColors.length]),
+                    borderRadius: 6,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            title: function(context) {
+                                return sortedAreas[context[0].dataIndex][0];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 11 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        ticks: { font: { size: 11 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 4. Regulatory Compliance Chart (Pie Chart)
+    const regulatoryCanvas = document.getElementById('chart-regulatory');
+    if (regulatoryCanvas) {
+        new Chart(regulatoryCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Regulatory', 'Non-Regulatory'],
+                datasets: [{
+                    data: [analysis.regulatory, analysis.nonRegulatory],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(59, 130, 246, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 13, weight: '600' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 5. Top 10 Owners Chart (Horizontal Bar Chart)
+    const ownersCanvas = document.getElementById('chart-owners');
+    if (ownersCanvas) {
+        const top10Owners = sortedOwners.slice(0, 10);
+        new Chart(ownersCanvas, {
+            type: 'bar',
+            data: {
+                labels: top10Owners.map(([owner]) => owner.length > 25 ? owner.substring(0, 25) + '...' : owner),
+                datasets: [{
+                    label: 'Solutions',
+                    data: top10Owners.map(([_, count]) => count),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderRadius: 6,
+                    barThickness: 35
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            title: function(context) {
+                                return top10Owners[context[0].dataIndex][0];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        ticks: { font: { size: 11 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    console.log('✅ All charts created successfully');
 }
 
 // Initialize on DOM ready

@@ -431,6 +431,38 @@ select:focus {
     margin: 0;
 }
 
+/* Analysis Charts */
+.analysis-chart-container {
+    background: white;
+    border-radius: 0.875rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.analysis-chart-wrapper {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+.analysis-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .analysis-chart-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .analysis-chart-wrapper {
+        height: 250px;
+    }
+}
+
 .content-left {
     flex: 1;
     transition: all 0.3s ease;
@@ -633,12 +665,41 @@ select:focus {
     letter-spacing: 0.05em;
 }
 
-.status-live { background: #d1fae5; color: #065f46; }
-.status-development { background: #dbeafe; color: #1e40af; }
-.status-ideation { background: #fef3c7; color: #92400e; }
-.status-hold { background: #fee2e2; color: #991b1b; }
-.status-discovery { background: #e9d5ff; color: #6b21a8; }
-.status-default { background: #f3f4f6; color: #374151; }
+.status-live { 
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); 
+    color: #065f46; 
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(6, 95, 70, 0.2);
+}
+.status-development { 
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+    color: #1e40af; 
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
+}
+.status-ideation { 
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
+    color: #92400e; 
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(146, 64, 14, 0.2);
+}
+.status-hold { 
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); 
+    color: #991b1b; 
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(153, 27, 27, 0.2);
+}
+.status-discovery { 
+    background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); 
+    color: #6b21a8; 
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(107, 33, 168, 0.2);
+}
+.status-default { 
+    background: #f3f4f6; 
+    color: #374151; 
+    font-weight: 600;
+}
 
 .hidden { display: none !important; }
 

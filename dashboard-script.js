@@ -272,7 +272,7 @@ function renderCards() {
     container.classList.remove('hidden');
 
     container.innerHTML = filteredData.map(product => `
-        <div class="product-card fade-in" onclick="showDetailPanel(${product.id})" data-product-id="${product.id}">
+        <div class="product-card fade-in" data-product-id="${product.id}">
             <div class="card-header">
                 <div class="card-title">
                     ${escapeHtml(product.name)}
@@ -345,7 +345,7 @@ function showDetailPanel(productId) {
 
     panel.innerHTML = `
         <div class="detail-header">
-            <button class="detail-close" onclick="hideDetailPanel()">×</button>
+            <button class="detail-close">×</button>
             <div class="detail-title">${escapeHtml(product.name)}</div>
             <div class="detail-subtitle">${escapeHtml(product.area)}</div>
         </div>
@@ -458,6 +458,14 @@ function showDetailPanel(productId) {
  * Hide detail panel
  */
 function hideDetailPanel() {
+    // Destroy all chart instances to prevent memory leaks
+    Object.values(chartInstances).forEach(chart => {
+        if (chart && chart.destroy) {
+            chart.destroy();
+        }
+    });
+    chartInstances = {};
+    
     const panel = document.getElementById('detail-panel');
     const mainContent = document.getElementById('main-content');
     const contentLeft = document.getElementById('content-left');
@@ -486,15 +494,19 @@ function truncateText(text, maxLength) {
 let chartInstances = {};
 
 function renderMetricChart(canvasId, monthlyData, targetValue, metricName) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    
-    // Destroy existing chart if it exists
-    if (chartInstances[canvasId]) {
-        chartInstances[canvasId].destroy();
-    }
-    
-    const ctx = canvas.getContext('2d');
+    try {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas element '${canvasId}' not found`);
+            return;
+        }
+        
+        // Destroy existing chart if it exists
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     // Parse monthly data (convert strings to numbers, handle empty values)
@@ -645,6 +657,14 @@ function renderMetricChart(canvasId, monthlyData, targetValue, metricName) {
             }
         }
     });
+    } catch (error) {
+        console.error('Error rendering chart:', error);
+        const canvas = document.getElementById(canvasId);
+        if (canvas && canvas.parentElement) {
+            canvas.parentElement.innerHTML = 
+                '<p style="color: #ef4444; text-align: center; padding: 2rem;">Chart rendering failed. Please refresh the page.</p>';
+        }
+    }
 }
 
 /**
@@ -705,7 +725,10 @@ function showLoading(show) {
  */
 function showError(message) {
     const errorDiv = document.getElementById('error');
-    errorDiv.textContent = message;
+    const errorMessage = document.getElementById('error-message');
+    if (errorMessage) {
+        errorMessage.textContent = message;
+    }
     errorDiv.classList.remove('hidden');
 }
 
@@ -797,6 +820,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const debouncedFilter = debounce(applyFilters, 300);
         searchInput.addEventListener('input', debouncedFilter);
     }
+    
+    // Event delegation for clicks (better performance and cleaner code)
+    document.addEventListener('click', (e) => {
+        // Handle product card clicks
+        const card = e.target.closest('.product-card');
+        if (card && !e.target.closest('.detail-panel')) {
+            const productId = parseInt(card.dataset.productId, 10);
+            if (!isNaN(productId)) {
+                showDetailPanel(productId);
+            }
+            return;
+        }
+        
+        // Handle detail panel close button
+        if (e.target.closest('.detail-close')) {
+            hideDetailPanel();
+            return;
+        }
+        
+        // Handle clear filters button
+        if (e.target.closest('.clear-filters')) {
+            clearFilters();
+            return;
+        }
+        
+        // Handle refresh button (keep onclick in HTML for now to avoid conflicts)
+        // The HTML button still has onclick="fetchSheetData()" which is fine
+    });
     
     initAutoUpdate();
 });

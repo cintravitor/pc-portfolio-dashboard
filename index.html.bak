@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&C Portfolio Dashboard - 2025</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard-style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>P&C Portfolio Dashboard</h1>
+                    <span class="header-badge">2025</span>
+                </div>
+                <div class="header-actions">
+                    <span class="last-update" id="last-update">Last updated: Never</span>
+                    <button class="refresh-btn" onclick="fetchSheetData()">Refresh Data</button>
+                </div>
+            </div>
+            <div class="filters-section">
+                <div class="filters-container">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search solutions..." oninput="applyFilters()">
+                    </div>
+                    <select id="filter-area" onchange="applyFilters()"><option value="">All Areas</option></select>
+                    <select id="filter-maturity" onchange="applyFilters()"><option value="">All Stages</option></select>
+                    <select id="filter-owner" onchange="applyFilters()"><option value="">All Owners</option></select>
+                    <button onclick="clearFilters()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="main-content">
+        <div id="stats-bar" class="stats-bar" style="display:none;"></div>
+        <div id="loading" class="loading"><div class="spinner"></div><p>Loading...</p></div>
+        <div id="error" class="error hidden"></div>
+        <div id="empty-state" class="empty-state hidden"><p>No results found</p></div>
+        <div id="cards-container" class="cards-grid hidden"></div>
+    </main>
+    <script src="config.js"></script>
+    <script src="dashboard-script.js"></script>
+</body>
+</html>
+

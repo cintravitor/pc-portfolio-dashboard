@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Portfolio Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Product Portfolio Dashboard</h1>
+            <div class="status-bar">
+                <span id="last-update">Last updated: Never</span>
+                <button id="refresh-btn" onclick="fetchSheetData()">Refresh Data</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Loading indicator -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Fetching data from Google Sheets...</p>
+            </div>
+
+            <!-- Error message -->
+            <div id="error" class="error hidden"></div>
+
+            <!-- Data table container -->
+            <div id="table-container" class="table-container">
+                <p class="placeholder">Click "Refresh Data" to load the portfolio data.</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Data synced automatically every 24 hours</p>
+        </footer>
+    </div>
+
+    <!-- Load configuration and main script -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

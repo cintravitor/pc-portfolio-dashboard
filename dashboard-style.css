@@ -1,18 +1,61 @@
-/* Dashboard-specific styles */
+/* Dashboard-specific styles - Mercury Light Theme */
 :root {
+    /* Mercury color palette */
     --primary: #667eea;
     --secondary: #764ba2;
+    --mercury-accent: #6366f1;
+    --mercury-glow: #818cf8;
+    --mercury-silver: #e8eaf0;
+    
+    /* Status colors */
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
+    
+    /* Text colors */
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Mercury Light: Almost transparent background with subtle radial gradients */
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(196, 181, 253, 0.04) 0%, transparent 40%),
+        linear-gradient(135deg, #fafbfd 0%, #f5f7fb 100%);
+    background-attachment: fixed;
     min-height: 100vh;
+    color: var(--text-primary);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Subtle animated shimmer effect overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, 
+        transparent 30%, 
+        rgba(255, 255, 255, 0.03) 50%, 
+        transparent 70%);
+    background-size: 200% 200%;
+    animation: shimmer 15s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .header {

@@ -850,6 +850,283 @@ function switchTab(tabName) {
     if (tabName === 'descriptive-analysis' && !analysisDataLoaded) {
         loadDescriptiveAnalysis();
     }
+    
+    // Load strategic view when switching to that tab
+    if (tabName === 'strategic-view') {
+        renderStrategicView();
+    }
+}
+
+/**
+ * Calculate performance vs target for a single product
+ * Returns percentage of months where actual >= target across UX and BI metrics
+ */
+function calculatePerformanceVsTarget(product) {
+    let totalMonths = 0;
+    let achievedMonths = 0;
+    
+    // Helper to check if value is valid (not N/A, not empty, is numeric)
+    const isValidValue = (val) => {
+        if (!val || val === '' || val === 'N/A' || val === '-') return false;
+        const num = parseFloat(val);
+        return !isNaN(num);
+    };
+    
+    // Check UX metrics
+    if (product.monthlyUX && Array.isArray(product.monthlyUX) && isValidValue(product.targetUX)) {
+        const targetUX = parseFloat(product.targetUX);
+        
+        product.monthlyUX.forEach(monthValue => {
+            if (isValidValue(monthValue)) {
+                totalMonths++;
+                const actualValue = parseFloat(monthValue);
+                if (actualValue >= targetUX) {
+                    achievedMonths++;
+                }
+            }
+        });
+    }
+    
+    // Check BI metrics
+    if (product.monthlyBI && Array.isArray(product.monthlyBI) && isValidValue(product.targetBI)) {
+        const targetBI = parseFloat(product.targetBI);
+        
+        product.monthlyBI.forEach(monthValue => {
+            if (isValidValue(monthValue)) {
+                totalMonths++;
+                const actualValue = parseFloat(monthValue);
+                if (actualValue >= targetBI) {
+                    achievedMonths++;
+                }
+            }
+        });
+    }
+    
+    // Return percentage (0-100)
+    if (totalMonths === 0) return 0; // No data available
+    return Math.round((achievedMonths / totalMonths) * 100);
+}
+
+/**
+ * Calculate risk score for a single product (0-10 scale)
+ * Higher score = higher risk
+ */
+function calculateRiskScore(product) {
+    let riskScore = 0;
+    
+    // Base risk from maturity stage
+    const maturity = product.maturity?.toLowerCase() || '';
+    
+    if (maturity.includes('development') || maturity === '1. development') {
+        riskScore += 4; // Highest risk - early stage
+    } else if (maturity.includes('growth') || maturity === '2. growth') {
+        riskScore += 2; // Medium-high risk - scaling phase
+    } else if (maturity.includes('mature') || maturity === '3. mature') {
+        riskScore += 0; // Low risk - stable
+    } else if (maturity.includes('decline') || maturity === '4. decline') {
+        riskScore += 3; // High risk - declining
+    } else {
+        riskScore += 2; // Unknown maturity = medium risk
+    }
+    
+    // Add risk if key metrics are missing or N/A
+    const isInvalid = (val) => !val || val === '' || val === 'N/A' || val === '-';
+    
+    if (isInvalid(product.keyMetricUX)) {
+        riskScore += 1.5; // No UX tracking
+    }
+    
+    if (isInvalid(product.keyMetricBI)) {
+        riskScore += 1.5; // No BI tracking
+    }
+    
+    if (isInvalid(product.targetUX)) {
+        riskScore += 1; // No UX target
+    }
+    
+    if (isInvalid(product.targetBI)) {
+        riskScore += 1; // No BI target
+    }
+    
+    // Add risk if owner is not assigned
+    if (isInvalid(product.owner)) {
+        riskScore += 1; // No clear ownership
+    }
+    
+    // Cap risk score at 10
+    return Math.min(riskScore, 10);
+}
+
+/**
+ * Render Strategic View with real calculated data
+ * Uses portfolioData to compute actual metrics
+ */
+function renderStrategicView() {
+    console.log('Rendering Strategic View with real calculations...');
+    
+    const strategicContent = document.getElementById('strategic-content');
+    
+    // Check if we have data to analyze
+    if (!portfolioData || portfolioData.length === 0) {
+        strategicContent.innerHTML = `
+            <div class="analysis-section">
+                <h2>⚠️ No Data Available</h2>
+                <p style="color: #6b7280; margin-bottom: 1rem;">Please load the Portfolio Overview tab first to see strategic metrics.</p>
+                <button class="refresh-btn" onclick="switchTab('portfolio-overview')" style="margin-top: 1rem;">
+                    Go to Portfolio Overview
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log(`Analyzing ${portfolioData.length} products for strategic metrics...`);
+    
+    // Calculate metrics for all products
+    const productMetrics = portfolioData.map(product => ({
+        id: product.id,
+        name: product.name,
+        performanceScore: calculatePerformanceVsTarget(product),
+        riskScore: calculateRiskScore(product)
+    }));
+    
+    // Calculate portfolio-wide metrics
+    
+    // 1. Portfolio Health Score (average of all performance scores)
+    const validPerformanceScores = productMetrics
+        .map(p => p.performanceScore)
+        .filter(score => score > 0); // Only count products with actual data
+    
+    const portfolioHealthScore = validPerformanceScores.length > 0
+        ? Math.round(validPerformanceScores.reduce((sum, score) => sum + score, 0) / validPerformanceScores.length)
+        : 0;
+    
+    // 2. Risk Breakdown (categorize products by risk score)
+    // Risk levels: High (7-10), Medium (4-6), Low (0-3)
+    const riskBreakdown = {
+        high: productMetrics.filter(p => p.riskScore >= 7).length,
+        medium: productMetrics.filter(p => p.riskScore >= 4 && p.riskScore < 7).length,
+        low: productMetrics.filter(p => p.riskScore < 4).length
+    };
+    
+    // 3. Target Achievement Rate (overall percentage)
+    const targetAchievement = portfolioHealthScore; // Same as health score for now
+    
+    console.log('Strategic metrics calculated:', {
+        portfolioHealthScore,
+        riskBreakdown,
+        targetAchievement,
+        totalProducts: portfolioData.length,
+        productsWithData: validPerformanceScores.length
+    });
+    
+    // Create the strategic view HTML structure using vanilla JS
+    const cardsGrid = document.createElement('div');
+    cardsGrid.className = 'strategic-cards-grid';
+    
+    // Card 1: Portfolio Health Score (using real calculated data)
+    const healthCard = createStrategicCard(
+        '📊',
+        'Portfolio Health',
+        `${portfolioHealthScore}%`,
+        `Based on ${validPerformanceScores.length} products with data`
+    );
+    
+    // Card 2: Risk Breakdown (using real calculated data)
+    const riskCard = createStrategicCard(
+        '⚠️',
+        'Portfolio Risk Distribution',
+        '', // No single value for this card
+        ''
+    );
+    
+    // Add breakdown items to risk card with real data
+    const breakdown = document.createElement('div');
+    breakdown.className = 'strategic-breakdown';
+    
+    breakdown.innerHTML = `
+        <div class="strategic-breakdown-item">
+            <span class="strategic-breakdown-label">High Risk (7-10)</span>
+            <span class="strategic-breakdown-value risk-high">${riskBreakdown.high}</span>
+        </div>
+        <div class="strategic-breakdown-item">
+            <span class="strategic-breakdown-label">Medium Risk (4-6)</span>
+            <span class="strategic-breakdown-value risk-medium">${riskBreakdown.medium}</span>
+        </div>
+        <div class="strategic-breakdown-item">
+            <span class="strategic-breakdown-label">Low Risk (0-3)</span>
+            <span class="strategic-breakdown-value risk-low">${riskBreakdown.low}</span>
+        </div>
+    `;
+    
+    riskCard.querySelector('.strategic-card-body').appendChild(breakdown);
+    
+    // Card 3: Target Achievement (using real calculated data)
+    const targetCard = createStrategicCard(
+        '🎯',
+        'Performance vs Target',
+        `${targetAchievement}%`,
+        'Average target achievement across all products'
+    );
+    
+    // Append all cards to grid
+    cardsGrid.appendChild(healthCard);
+    cardsGrid.appendChild(riskCard);
+    cardsGrid.appendChild(targetCard);
+    
+    // Clear and update strategic content
+    strategicContent.innerHTML = '';
+    strategicContent.appendChild(cardsGrid);
+    
+    console.log('✅ Strategic View rendered with real calculated metrics');
+}
+
+/**
+ * Helper function to create a strategic card element
+ * Uses pure vanilla JavaScript and DOM manipulation
+ */
+function createStrategicCard(icon, title, value, label) {
+    const card = document.createElement('div');
+    card.className = 'strategic-card';
+    
+    // Create card header
+    const header = document.createElement('div');
+    header.className = 'strategic-card-header';
+    
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'strategic-card-icon';
+    iconDiv.textContent = icon;
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'strategic-card-title';
+    titleDiv.textContent = title;
+    
+    header.appendChild(iconDiv);
+    header.appendChild(titleDiv);
+    
+    // Create card body
+    const body = document.createElement('div');
+    body.className = 'strategic-card-body';
+    
+    if (value) {
+        const valueDiv = document.createElement('div');
+        valueDiv.className = 'strategic-metric-value';
+        valueDiv.textContent = value;
+        body.appendChild(valueDiv);
+    }
+    
+    if (label) {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'strategic-metric-label';
+        labelDiv.textContent = label;
+        body.appendChild(labelDiv);
+    }
+    
+    // Assemble card
+    card.appendChild(header);
+    card.appendChild(body);
+    
+    return card;
 }
 
 /**

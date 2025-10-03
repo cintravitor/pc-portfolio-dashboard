@@ -21,6 +21,16 @@
 
 function doGet(e) {
   try {
+    // Check if a specific action is requested via query parameter
+    // Usage: YOUR_WEB_APP_URL?action=descriptive
+    const action = e.parameter.action;
+    
+    if (action === 'descriptive') {
+      // Call the descriptive data function
+      return getDescriptiveData();
+    }
+    
+    // Default: return all data from active spreadsheet
     // Get the active spreadsheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
@@ -47,6 +57,84 @@ function doGet(e) {
       success: false,
       error: error.toString(),
       message: 'Failed to fetch data from Google Sheet'
+    };
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(errorResponse))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Get Descriptive Data from specific Google Sheet
+ * Connects to the P&C Portfolio spreadsheet and returns the entire dataset
+ * 
+ * To call this from client-side JavaScript:
+ * fetch(WEB_APP_URL + '?action=descriptive')
+ *   .then(response => response.json())
+ *   .then(data => console.log(data));
+ */
+function getDescriptiveData() {
+  try {
+    // Spreadsheet ID from the provided URL
+    const spreadsheetId = '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI';
+    
+    // Open the specific spreadsheet by ID
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    
+    // Get the sheet by GID (1988087509)
+    // Note: We'll get the active sheet or you can specify by name
+    const sheet = spreadsheet.getActiveSheet();
+    
+    // Alternative: Get sheet by name if you know the name
+    // const sheet = spreadsheet.getSheetByName('Sheet1');
+    
+    if (!sheet) {
+      throw new Error('Sheet not found in the specified spreadsheet');
+    }
+    
+    // Get all data from the sheet
+    const data = sheet.getDataRange().getValues();
+    
+    if (!data || data.length === 0) {
+      throw new Error('No data found in the spreadsheet');
+    }
+    
+    // Get sheet metadata
+    const sheetName = sheet.getName();
+    const sheetId = sheet.getSheetId();
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    
+    // Create comprehensive JSON response
+    const jsonData = {
+      success: true,
+      spreadsheetId: spreadsheetId,
+      sheetName: sheetName,
+      sheetId: sheetId,
+      data: data,
+      metadata: {
+        rowCount: data.length,
+        columnCount: data.length > 0 ? data[0].length : 0,
+        lastRow: lastRow,
+        lastColumn: lastColumn,
+        headers: data.length > 0 ? data[0] : []
+      },
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Return JSON with CORS headers
+    return ContentService
+      .createTextOutput(JSON.stringify(jsonData))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    // Return detailed error response
+    const errorResponse = {
+      success: false,
+      error: error.toString(),
+      message: 'Failed to fetch descriptive data from Google Sheet',
+      spreadsheetId: '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI'
     };
     
     return ContentService

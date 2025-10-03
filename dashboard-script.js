@@ -691,11 +691,10 @@ function updateStats() {
  */
 function getStatusClass(maturity) {
     const m = (maturity || '').toLowerCase();
-    if (m.includes('live')) return 'status-live';
     if (m.includes('development')) return 'status-development';
-    if (m.includes('ideation')) return 'status-ideation';
-    if (m.includes('hold')) return 'status-hold';
-    if (m.includes('discovery')) return 'status-discovery';
+    if (m.includes('growth')) return 'status-growth';
+    if (m.includes('mature')) return 'status-mature';
+    if (m.includes('decline')) return 'status-decline';
     return 'status-default';
 }
 
@@ -1076,13 +1075,12 @@ function displayAnalysisResults(analysis) {
  * Create all analysis charts using Chart.js
  */
 function createAnalysisCharts(analysis, sortedStages, sortedAreas, sortedOwners) {
-    // Color palette
+    // Color palette matching maturity stages
     const stageColors = {
-        'Live': 'rgba(6, 95, 70, 0.8)',
-        'Development': 'rgba(30, 64, 175, 0.8)',
-        'Ideation': 'rgba(146, 64, 14, 0.8)',
-        'Hold': 'rgba(153, 27, 27, 0.8)',
-        'Discovery': 'rgba(107, 33, 168, 0.8)'
+        '1. Development': 'rgba(59, 130, 246, 0.85)',
+        '2. Growth': 'rgba(16, 185, 129, 0.85)',
+        '3. Mature': 'rgba(168, 85, 247, 0.85)',
+        '4. Decline': 'rgba(251, 146, 60, 0.85)'
     };
     
     const defaultColors = [

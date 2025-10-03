@@ -21,15 +21,6 @@
 
 function doGet(e) {
   try {
-    // Check if a specific action is requested via query parameter
-    const action = e.parameter.action;
-    
-    if (action === 'descriptive') {
-      // Return descriptive analysis data
-      return getDescriptiveData();
-    }
-    
-    // Default: return all data
     // Get the active spreadsheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
@@ -56,113 +47,6 @@ function doGet(e) {
       success: false,
       error: error.toString(),
       message: 'Failed to fetch data from Google Sheet'
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(errorResponse))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-/**
- * Get descriptive analysis data
- * This function can be called with ?action=descriptive query parameter
- * Note: Current implementation does analysis client-side for better performance
- * This function is provided for optional server-side analysis if needed
- */
-function getDescriptiveData() {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const data = sheet.getDataRange().getValues();
-    
-    if (data.length < 3) {
-      throw new Error('Insufficient data in spreadsheet');
-    }
-    
-    // Headers are in row 1 (index 1), data starts from row 2
-    const headers = data[1];
-    const dataRows = data.slice(2);
-    
-    // Find column indices
-    const nameIdx = headers.indexOf("Solution name");
-    const maturityIdx = headers.indexOf("Maturity Stage");
-    const areaIdx = headers.indexOf("P'n'C Area");
-    const ownerIdx = headers.indexOf("Owner's Name");
-    const keyMetricUXIdx = headers.indexOf("Key Metric\nUser Experience");
-    const keyMetricBIIdx = headers.indexOf("Key Metric\nBusiness Impact");
-    const regulatoryIdx = headers.indexOf("Is a regulatory demand?");
-    
-    // Perform analysis
-    const analysis = {
-      totalSolutions: 0,
-      stageCount: {},
-      areaCount: {},
-      ownerCount: {},
-      metricsCount: {
-        withUX: 0,
-        withBI: 0,
-        withBoth: 0,
-        withNone: 0
-      },
-      regulatoryCount: {
-        yes: 0,
-        no: 0
-      }
-    };
-    
-    // Analyze each row
-    dataRows.forEach(row => {
-      // Only count rows with a valid name
-      const name = row[nameIdx] ? row[nameIdx].toString().trim() : '';
-      if (!name) return;
-      
-      analysis.totalSolutions++;
-      
-      // Count by maturity stage
-      const maturity = row[maturityIdx] ? row[maturityIdx].toString().trim() : 'Not specified';
-      analysis.stageCount[maturity] = (analysis.stageCount[maturity] || 0) + 1;
-      
-      // Count by area
-      const area = row[areaIdx] ? row[areaIdx].toString().trim() : 'Not specified';
-      analysis.areaCount[area] = (analysis.areaCount[area] || 0) + 1;
-      
-      // Count by owner
-      const owner = row[ownerIdx] ? row[ownerIdx].toString().trim() : 'Not assigned';
-      analysis.ownerCount[owner] = (analysis.ownerCount[owner] || 0) + 1;
-      
-      // Count metrics
-      const hasUX = row[keyMetricUXIdx] && row[keyMetricUXIdx].toString().trim() !== '';
-      const hasBI = row[keyMetricBIIdx] && row[keyMetricBIIdx].toString().trim() !== '';
-      
-      if (hasUX) analysis.metricsCount.withUX++;
-      if (hasBI) analysis.metricsCount.withBI++;
-      if (hasUX && hasBI) analysis.metricsCount.withBoth++;
-      if (!hasUX && !hasBI) analysis.metricsCount.withNone++;
-      
-      // Count regulatory
-      const regulatory = row[regulatoryIdx] ? row[regulatoryIdx].toString().toLowerCase() : '';
-      if (regulatory.includes('yes')) {
-        analysis.regulatoryCount.yes++;
-      } else {
-        analysis.regulatoryCount.no++;
-      }
-    });
-    
-    const jsonData = {
-      success: true,
-      analysis: analysis,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(jsonData))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    const errorResponse = {
-      success: false,
-      error: error.toString(),
-      message: 'Failed to generate descriptive analysis'
     };
     
     return ContentService

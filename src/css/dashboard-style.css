@@ -1933,6 +1933,244 @@ select:focus {
     }
 }
 
+/* ==================== INSIGHTS & ANALYTICS STYLES (CONSOLIDATED TAB) ==================== */
+
+/* Main container for Insights & Analytics tab */
+.insights-analytics-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.insights-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* Section styling for the three main tiers */
+.insights-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    border-radius: 1.25rem;
+    padding: 2.5rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: 
+        0 8px 32px var(--glass-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+}
+
+.insights-section:hover {
+    box-shadow: 
+        0 12px 40px var(--glass-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+/* Section Headers */
+.insights-section-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+}
+
+.insights-section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.insights-section-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Executive Summary Section (Tier 1) */
+.executive-summary-section {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(168, 85, 247, 0.02) 100%);
+}
+
+.executive-summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Detailed Breakdowns Section (Tier 2) */
+.detailed-breakdowns-section {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(59, 130, 246, 0.03) 100%);
+}
+
+.detailed-breakdowns-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Deep Analytics Section (Tier 3) */
+.deep-analytics-section {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.02) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.deep-analytics-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Responsive adjustments for Insights & Analytics */
+@media (max-width: 768px) {
+    .insights-analytics-container {
+        padding: 1rem;
+    }
+    
+    .insights-section {
+        padding: 1.5rem;
+    }
+    
+    .insights-section-title {
+        font-size: 1.5rem;
+    }
+    
+    .insights-section-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .insights-content {
+        gap: 2rem;
+    }
+}
+
+/* ==================== DRILL-DOWN FILTER PILL STYLES ==================== */
+
+/* Filter pill shown at top of Insights & Analytics when drill-down is active */
+.drill-down-filter-pill {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 146, 60, 0.08) 100%);
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-pill-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.filter-pill-icon {
+    font-size: 1.5rem;
+}
+
+.filter-pill-text {
+    flex: 1;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.filter-pill-text strong {
+    font-weight: 600;
+    color: #d97706;
+}
+
+.filter-pill-count {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.filter-pill-clear {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #d97706;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-pill-clear:hover {
+    background: rgba(245, 158, 11, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Clickable anomaly cards */
+.anomaly-clickable {
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.anomaly-clickable:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.anomaly-clickable:active {
+    transform: translateY(-1px);
+}
+
+/* Drill-down hint shown on anomaly cards */
+.drill-down-hint {
+    font-size: 0.75rem;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.anomaly-clickable:hover .drill-down-hint {
+    opacity: 1;
+}
+
+/* Mobile responsive for drill-down pill */
+@media (max-width: 768px) {
+    .drill-down-filter-pill {
+        padding: 1rem;
+    }
+    
+    .filter-pill-content {
+        gap: 0.75rem;
+    }
+    
+    .filter-pill-text {
+        font-size: 0.875rem;
+    }
+    
+    .filter-pill-clear {
+        width: 100%;
+        text-align: center;
+    }
+}
+
 /* ==================== PLANNING VIEW STYLES ==================== */
 
 .planning-container {

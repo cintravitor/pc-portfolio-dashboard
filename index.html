@@ -23,10 +23,9 @@
             </div>
             <!-- Tab Navigation -->
             <div class="tab-navigation">
-                <button class="tab-btn active" data-tab="portfolio-overview">Portfolio Overview</button>
-                <button class="tab-btn" data-tab="descriptive-analysis">Descriptive Analysis</button>
-                <button class="tab-btn" data-tab="strategic-view">Strategic View</button>
-                <button class="tab-btn" data-tab="planning-view">Planning View</button>
+                <button class="tab-btn active" data-tab="portfolio-overview">Explore</button>
+                <button class="tab-btn" data-tab="insights-analytics">Insights & Analytics</button>
+                <button class="tab-btn" data-tab="planning-view">Planning & Action</button>
             </div>
             <div class="filters-section" id="filters-section">
                 <div class="filters-container">
@@ -109,30 +108,24 @@
             </div>
             <div id="detail-panel" class="detail-panel hidden"></div>
         </div>
-        <!-- Descriptive Analysis Tab Content -->
-        <div class="tab-content" id="tab-descriptive-analysis">
-            <div class="analysis-container">
-                <div id="analysis-loading" class="loading hidden">
+        <!-- Insights & Analytics Tab Content (Merged from Descriptive Analysis + Strategic View) -->
+        <div class="tab-content" id="tab-insights-analytics">
+            <div class="insights-analytics-container">
+                <div id="insights-loading" class="loading hidden">
                     <div class="spinner"></div>
-                    <h2>Loading Analysis Data...</h2>
-                    <p style="color: #6b7280; margin-top: 0.5rem;">Analyzing portfolio dataset</p>
+                    <h2>Loading Insights & Analytics...</h2>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">Analyzing portfolio data and calculating metrics</p>
                 </div>
-                <div id="analysis-content" class="analysis-content"></div>
-            </div>
-        </div>
-        <!-- Strategic View Tab Content (Now Executive View) -->
-        <div class="tab-content" id="tab-strategic-view">
-            <div class="executive-container">
-                <div id="executive-content" class="executive-content">
-                    <!-- Executive View content will be dynamically rendered here -->
+                <div id="insights-content" class="insights-content">
+                    <!-- Insights & Analytics content will be dynamically rendered here -->
                 </div>
             </div>
         </div>
-        <!-- Planning View Tab Content -->
+        <!-- Planning & Action Tab Content -->
         <div class="tab-content" id="tab-planning-view">
             <div class="planning-container">
                 <div id="planning-content" class="planning-content">
-                    <!-- Planning View content will be dynamically rendered here -->
+                    <!-- Planning & Action content will be dynamically rendered here -->
                 </div>
             </div>
         </div>

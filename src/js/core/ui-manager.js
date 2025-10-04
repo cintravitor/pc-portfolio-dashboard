@@ -54,19 +54,22 @@ function switchTab(tabName) {
         filtersSection.style.display = 'none';
     }
     
-    // Load analysis data if switching to analysis tab for the first time
-    if (tabName === 'descriptive-analysis' && !window.State.isAnalysisDataLoaded()) {
-        loadDescriptiveAnalysis();
-    }
-    
-    // Load strategic view when switching to that tab
-    if (tabName === 'strategic-view') {
-        renderStrategicView();
+    // Load insights & analytics when switching to that tab (merged from descriptive-analysis + strategic-view)
+    if (tabName === 'insights-analytics') {
+        renderInsightsAnalytics();
     }
     
     // Load planning view when switching to that tab
     if (tabName === 'planning-view') {
         renderPlanningView();
+    }
+    
+    // LEGACY SUPPORT: Keep old tab names for backward compatibility
+    if (tabName === 'descriptive-analysis' && !window.State.isAnalysisDataLoaded()) {
+        loadDescriptiveAnalysis();
+    }
+    if (tabName === 'strategic-view') {
+        renderStrategicView();
     }
 }
 
@@ -1980,10 +1983,566 @@ function renderStrategicView() {
     renderExecutiveView();
 }
 
-// ==================== DESCRIPTIVE ANALYSIS ====================
+// ==================== INSIGHTS & ANALYTICS (MERGED TAB) ====================
+
+/**
+ * Consolidated Insights & Analytics dashboard
+ * Merges content from previous Strategic View and Descriptive Analysis tabs
+ * 
+ * INFORMATION HIERARCHY:
+ * 1. Executive Summary (Health Score, Target Achievement, Risk Distribution)
+ * 2. Detailed Breakdowns (Maturity, Area, Owner)
+ * 3. Deep Analytics (Key statistics, Metrics coverage, Additional insights)
+ */
+async function renderInsightsAnalytics() {
+    console.log('Rendering Insights & Analytics...');
+    
+    const insightsContent = document.getElementById('insights-content');
+    const insightsLoading = document.getElementById('insights-loading');
+    
+    if (!insightsContent) {
+        console.error('Insights content container not found');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        insightsLoading.classList.remove('hidden');
+        insightsContent.innerHTML = '';
+        
+        // Get portfolio data
+        let portfolioData = window.State.getPortfolioData();
+        
+        // Check if we have portfolio data to analyze
+        if (!portfolioData || portfolioData.length === 0) {
+            // Try to load from cache
+            portfolioData = window.DataManager.loadCachedData();
+            if (!portfolioData || portfolioData.length === 0) {
+                throw new Error('No portfolio data available. Please load the Explore tab first.');
+            }
+            console.log('Using cached portfolio data for insights');
+        }
+        
+        console.log(`Analyzing ${portfolioData.length} solutions for insights...`);
+        
+        // Get both executive metrics and descriptive analysis
+        const metrics = window.DataManager.calculatePortfolioMetrics();
+        const analysis = window.DataManager.analyzePortfolioData(portfolioData);
+        
+        // Check if we have valid data
+        if (!metrics || !analysis) {
+            throw new Error('Unable to calculate portfolio metrics. Please refresh data.');
+        }
+        
+        // Clear and start building the consolidated view
+        insightsContent.innerHTML = '';
+        
+        // ========== SECTION 1: EXECUTIVE SUMMARY ==========
+        const executiveSummarySection = createExecutiveSummarySection(metrics);
+        insightsContent.appendChild(executiveSummarySection);
+        
+        // ========== SECTION 2: DETAILED BREAKDOWNS ==========
+        const detailedBreakdownsSection = createDetailedBreakdownsSection(analysis, metrics);
+        insightsContent.appendChild(detailedBreakdownsSection);
+        
+        // ========== SECTION 3: DEEP ANALYTICS ==========
+        const deepAnalyticsSection = createDeepAnalyticsSection(analysis);
+        insightsContent.appendChild(deepAnalyticsSection);
+        
+        // Mark as loaded in State
+        window.State.setAnalysisDataLoaded(true);
+        
+        // Check for active drill-down filter
+        const drillDownFilter = window.State.getDrillDownFilter?.();
+        if (drillDownFilter && drillDownFilter.active) {
+            console.log('Drill-down filter detected, applying...');
+            setTimeout(() => {
+                applyDrillDownFilter();
+            }, 150);
+        }
+        
+        console.log('✅ Insights & Analytics rendered successfully');
+        
+    } catch (error) {
+        console.error('Error loading insights & analytics:', error);
+        insightsContent.innerHTML = `
+            <div class="analysis-section">
+                <h2>⚠️ Error Loading Insights</h2>
+                <p style="color: #ef4444; margin-bottom: 1rem; font-size: 1rem;">${escapeHtml(error.message)}</p>
+                <p style="color: #6b7280; margin-bottom: 1rem;">Please ensure the Explore tab has loaded data first.</p>
+                <button class="refresh-btn" onclick="switchTab('portfolio-overview')" style="margin-top: 1rem;">
+                    Go to Explore
+                </button>
+            </div>
+        `;
+    } finally {
+        insightsLoading.classList.add('hidden');
+    }
+}
+
+/**
+ * SECTION 1: Executive Summary
+ * Contains Health Score, Target Achievement, and Risk Distribution
+ */
+function createExecutiveSummarySection(metrics) {
+    const section = document.createElement('div');
+    section.className = 'insights-section executive-summary-section';
+    section.id = 'executive-summary-section';
+    
+    // Create section header
+    const header = document.createElement('div');
+    header.className = 'insights-section-header';
+    header.innerHTML = `
+        <h2 class="insights-section-title">📊 Executive Summary</h2>
+        <p class="insights-section-subtitle">Portfolio health at a glance</p>
+    `;
+    section.appendChild(header);
+    
+    // Create content container
+    const content = document.createElement('div');
+    content.className = 'executive-summary-content';
+    
+    // Health Score Card
+    const healthCard = createHealthScoreSection(metrics);
+    content.appendChild(healthCard);
+    
+    // KPI Cards for Drill-Down
+    const kpiCards = createDrillDownKPICards(metrics);
+    content.appendChild(kpiCards);
+    
+    // Risk & Opportunity Matrix
+    const riskMatrix = createRiskOpportunityMatrix(metrics);
+    content.appendChild(riskMatrix);
+    
+    section.appendChild(content);
+    return section;
+}
+
+/**
+ * SECTION 2: Detailed Breakdowns
+ * Contains Maturity, Area, and Owner distributions
+ */
+function createDetailedBreakdownsSection(analysis, metrics) {
+    const section = document.createElement('div');
+    section.className = 'insights-section detailed-breakdowns-section';
+    section.id = 'detailed-breakdowns-section';
+    
+    // Create section header
+    const header = document.createElement('div');
+    header.className = 'insights-section-header';
+    header.innerHTML = `
+        <h2 class="insights-section-title">🔍 Detailed Breakdowns</h2>
+        <p class="insights-section-subtitle">Portfolio composition and distribution</p>
+    `;
+    section.appendChild(header);
+    
+    // Create content container
+    const content = document.createElement('div');
+    content.className = 'detailed-breakdowns-content';
+    
+    // Sort data for display
+    const sortedStages = Object.entries(analysis.stageCount).sort((a, b) => b[1] - a[1]);
+    const sortedAreas = Object.entries(analysis.areaCount).sort((a, b) => b[1] - a[1]);
+    const sortedOwners = Object.entries(analysis.ownerCount).sort((a, b) => b[1] - a[1]);
+    
+    // Calculate key insights
+    const topStage = sortedStages[0];
+    const topStagePercentage = Math.round((topStage[1] / analysis.totalSolutions) * 100);
+    
+    // Create charts grid
+    const chartsGrid = document.createElement('div');
+    chartsGrid.className = 'analysis-chart-grid';
+    chartsGrid.innerHTML = `
+        <!-- Maturity Stage Distribution -->
+        <div class="analysis-chart-container">
+            <h3>🔄 Solutions by Maturity Stage</h3>
+            <div class="analysis-chart-wrapper">
+                <canvas id="insights-chart-stages"></canvas>
+            </div>
+            <div class="analysis-highlight">
+                <p><strong>Key Insight:</strong> ${topStagePercentage}% are in the "${escapeHtml(topStage[0])}" stage.</p>
+            </div>
+        </div>
+
+        <!-- P&C Area Distribution -->
+        <div class="analysis-chart-container">
+            <h3>🏢 Solutions by P&C Area</h3>
+            <div class="analysis-chart-wrapper">
+                <canvas id="insights-chart-areas"></canvas>
+            </div>
+        </div>
+    `;
+    
+    content.appendChild(chartsGrid);
+    
+    // Owner Distribution (Top 10)
+    const ownerChart = document.createElement('div');
+    ownerChart.className = 'analysis-chart-container';
+    ownerChart.style.marginTop = '2rem';
+    ownerChart.innerHTML = `
+        <h3>👥 Top 10 Product Owners</h3>
+        <div class="analysis-chart-wrapper" style="height: 400px;">
+            <canvas id="insights-chart-owners"></canvas>
+        </div>
+        ${sortedOwners.length > 10 ? `<p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem; text-align: center;">Showing top 10 of ${sortedOwners.length} owners</p>` : ''}
+    `;
+    content.appendChild(ownerChart);
+    
+    section.appendChild(content);
+    
+    // Create charts after DOM is updated
+    setTimeout(() => createInsightsBreakdownCharts(analysis, sortedStages, sortedAreas, sortedOwners), 100);
+    
+    return section;
+}
+
+/**
+ * SECTION 3: Deep Analytics
+ * Contains detailed statistics, metrics coverage, and regulatory compliance
+ */
+function createDeepAnalyticsSection(analysis) {
+    const section = document.createElement('div');
+    section.className = 'insights-section deep-analytics-section';
+    section.id = 'deep-analytics-section';
+    
+    // Create section header
+    const header = document.createElement('div');
+    header.className = 'insights-section-header';
+    header.innerHTML = `
+        <h2 class="insights-section-title">📈 Deep Analytics</h2>
+        <p class="insights-section-subtitle">Comprehensive portfolio metrics and insights</p>
+    `;
+    section.appendChild(header);
+    
+    // Create content container
+    const content = document.createElement('div');
+    content.className = 'deep-analytics-content';
+    
+    // Calculate percentages
+    const metricsPercentage = Math.round((analysis.metrics.withAnyMetric / analysis.totalSolutions) * 100);
+    const bothMetricsPercentage = Math.round((analysis.metrics.withBothMetrics / analysis.totalSolutions) * 100);
+    const regulatoryPercentage = Math.round((analysis.regulatory / analysis.totalSolutions) * 100);
+    
+    // Portfolio Overview Stats
+    const statsCard = document.createElement('div');
+    statsCard.className = 'analysis-section';
+    statsCard.innerHTML = `
+        <h3>📊 Portfolio Overview</h3>
+        <div class="analysis-stats-grid">
+            <div class="analysis-stat-card">
+                <div class="analysis-stat-label">Total Solutions</div>
+                <div class="analysis-stat-value">${analysis.totalSolutions}</div>
+            </div>
+            <div class="analysis-stat-card">
+                <div class="analysis-stat-label">Maturity Stages</div>
+                <div class="analysis-stat-value">${Object.keys(analysis.stageCount).length}</div>
+            </div>
+            <div class="analysis-stat-card">
+                <div class="analysis-stat-label">P&C Areas</div>
+                <div class="analysis-stat-value">${Object.keys(analysis.areaCount).length}</div>
+            </div>
+            <div class="analysis-stat-card">
+                <div class="analysis-stat-label">Product Owners</div>
+                <div class="analysis-stat-value">${Object.keys(analysis.ownerCount).length}</div>
+            </div>
+        </div>
+    `;
+    content.appendChild(statsCard);
+    
+    // Charts Grid for Metrics and Regulatory
+    const chartsGrid = document.createElement('div');
+    chartsGrid.className = 'analysis-chart-grid';
+    chartsGrid.style.marginTop = '2rem';
+    chartsGrid.innerHTML = `
+        <!-- Key Metrics Coverage -->
+        <div class="analysis-chart-container">
+            <h3>📈 Key Metrics Coverage</h3>
+            <div class="analysis-chart-wrapper">
+                <canvas id="insights-chart-metrics"></canvas>
+            </div>
+            <div class="analysis-highlight">
+                <p><strong>Coverage:</strong> ${metricsPercentage}% have at least one metric (${bothMetricsPercentage}% have both)</p>
+            </div>
+        </div>
+
+        <!-- Regulatory Compliance -->
+        <div class="analysis-chart-container">
+            <h3>⚖️ Regulatory Compliance</h3>
+            <div class="analysis-chart-wrapper">
+                <canvas id="insights-chart-regulatory"></canvas>
+            </div>
+            <div class="analysis-highlight">
+                <p><strong>Regulatory Mix:</strong> ${regulatoryPercentage}% are driven by regulatory demands.</p>
+            </div>
+        </div>
+    `;
+    content.appendChild(chartsGrid);
+    
+    section.appendChild(content);
+    
+    // Create charts after DOM is updated
+    setTimeout(() => createInsightsDeepAnalyticsCharts(analysis), 100);
+    
+    return section;
+}
+
+/**
+ * Create charts for Detailed Breakdowns section
+ */
+function createInsightsBreakdownCharts(analysis, sortedStages, sortedAreas, sortedOwners) {
+    const stageColors = {
+        '1. Development': 'rgba(59, 130, 246, 0.85)',
+        '2. Growth': 'rgba(16, 185, 129, 0.85)',
+        '3. Mature': 'rgba(168, 85, 247, 0.85)',
+        '4. Decline': 'rgba(251, 146, 60, 0.85)'
+    };
+    
+    const defaultColors = [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(20, 184, 166, 0.8)',
+        'rgba(251, 146, 60, 0.8)'
+    ];
+    
+    // 1. Maturity Stage Chart
+    const stagesCanvas = document.getElementById('insights-chart-stages');
+    if (stagesCanvas) {
+        new Chart(stagesCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedStages.map(([stage]) => stage),
+                datasets: [{
+                    label: 'Number of Solutions',
+                    data: sortedStages.map(([_, count]) => count),
+                    backgroundColor: sortedStages.map(([stage]) => stageColors[stage] || defaultColors[0]),
+                    borderRadius: 8,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        ticks: { font: { size: 12, weight: '600' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 2. P&C Area Chart
+    const areasCanvas = document.getElementById('insights-chart-areas');
+    if (areasCanvas) {
+        new Chart(areasCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedAreas.map(([area]) => area),
+                datasets: [{
+                    label: 'Number of Solutions',
+                    data: sortedAreas.map(([_, count]) => count),
+                    backgroundColor: defaultColors,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        ticks: { font: { size: 12, weight: '600' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 3. Top 10 Owners Chart
+    const ownersCanvas = document.getElementById('insights-chart-owners');
+    if (ownersCanvas) {
+        const top10Owners = sortedOwners.slice(0, 10);
+        new Chart(ownersCanvas, {
+            type: 'bar',
+            data: {
+                labels: top10Owners.map(([owner]) => owner),
+                datasets: [{
+                    label: 'Number of Solutions',
+                    data: top10Owners.map(([_, count]) => count),
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        ticks: { font: { size: 11 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    console.log('✅ Breakdown charts created');
+}
+
+/**
+ * Create charts for Deep Analytics section
+ */
+function createInsightsDeepAnalyticsCharts(analysis) {
+    // 1. Key Metrics Chart
+    const metricsCanvas = document.getElementById('insights-chart-metrics');
+    if (metricsCanvas) {
+        new Chart(metricsCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['UX Only', 'BI Only', 'Both Metrics', 'No Metrics'],
+                datasets: [{
+                    data: [
+                        analysis.metrics.withUXMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withBIMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withBothMetrics,
+                        analysis.metrics.withoutMetrics
+                    ],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(156, 163, 175, 0.6)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12, weight: '600' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 2. Regulatory Chart
+    const regulatoryCanvas = document.getElementById('insights-chart-regulatory');
+    if (regulatoryCanvas) {
+        new Chart(regulatoryCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Regulatory', 'Non-Regulatory'],
+                datasets: [{
+                    data: [analysis.regulatory, analysis.nonRegulatory],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(59, 130, 246, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12, weight: '600' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    console.log('✅ Deep analytics charts created');
+}
+
+// ==================== DESCRIPTIVE ANALYSIS (LEGACY - Keep for Backward Compatibility) ====================
 
 /**
  * Load and display descriptive analysis
+ * @deprecated Use renderInsightsAnalytics() instead
  */
 async function loadDescriptiveAnalysis() {
     console.log('Loading descriptive analysis...');
@@ -2401,11 +2960,12 @@ function createAnalysisCharts(analysis, sortedStages, sortedAreas, sortedOwners)
 // ==================== PLANNING VIEW ====================
 
 /**
- * Render Planning View - Unified workspace for Portfolio Managers
- * Combines anomaly alerts, filters, and key charts in one integrated view
+ * Render Planning & Action Workspace - Focused anomaly detection with drill-down
+ * REFACTORED: Removed duplicate charts (now in Insights & Analytics tab)
+ * ENHANCED: Added drill-down capability to filter Insights & Analytics
  */
 function renderPlanningView() {
-    console.log('Rendering Planning View...');
+    console.log('Rendering Planning & Action Workspace...');
     
     const planningContent = document.getElementById('planning-content');
     
@@ -2422,16 +2982,16 @@ function renderPlanningView() {
         planningContent.innerHTML = `
             <div class="executive-empty-state">
                 <h2>⚠️ No Data Available</h2>
-                <p>Please load the Portfolio Overview tab first to see planning insights.</p>
-                <button class="refresh-btn" onclick="window.UIManager.switchTab('portfolio-overview')" style="margin-top: 1.5rem;">
-                    Go to Portfolio Overview
+                <p>Please load the Explore tab first to see anomaly detection.</p>
+                <button class="refresh-btn" onclick="switchTab('portfolio-overview')" style="margin-top: 1.5rem;">
+                    Go to Explore
                 </button>
             </div>
         `;
         return;
     }
     
-    console.log('Planning View data loaded:', portfolioData.length, 'products');
+    console.log('Planning & Action data loaded:', portfolioData.length, 'products');
     
     // Clear and start building
     planningContent.innerHTML = '';
@@ -2440,29 +3000,20 @@ function renderPlanningView() {
     const headerSection = createPlanningHeaderSection();
     planningContent.appendChild(headerSection);
     
-    // ========== 1. ANOMALY ALERTS SECTION ==========
+    // ========== ANOMALY ALERTS SECTION (with drill-down capability) ==========
     const anomalySection = createAnomalyAlertsSection();
     planningContent.appendChild(anomalySection);
     
-    // ========== 2. FILTERS SECTION ==========
-    const filtersSection = createPlanningFiltersSection();
-    planningContent.appendChild(filtersSection);
-    
-    // ========== 3. KEY INSIGHTS & CHARTS SECTION ==========
-    const chartsSection = createPlanningChartsSection();
-    planningContent.appendChild(chartsSection);
-    
-    // Apply initial rendering of charts after DOM insertion
+    // Setup drill-down click handlers after DOM is ready
     setTimeout(() => {
-        renderPlanningCharts(portfolioData);
-        setupPlanningFilters();
+        setupAnomalyDrillDownHandlers();
     }, 100);
     
-    console.log('✅ Planning View rendered successfully');
+    console.log('✅ Planning & Action Workspace rendered successfully');
 }
 
 /**
- * Create Planning View header section
+ * Create Planning & Action header section
  */
 function createPlanningHeaderSection() {
     const section = document.createElement('div');
@@ -2470,8 +3021,8 @@ function createPlanningHeaderSection() {
     
     section.innerHTML = `
         <div class="planning-header-content">
-            <h1 class="planning-title">📋 Planning View</h1>
-            <p class="planning-subtitle">Unified workspace with anomaly detection, filtering, and key portfolio insights</p>
+            <h1 class="planning-title">🎯 Planning & Action Workspace</h1>
+            <p class="planning-subtitle">Proactive anomaly detection with one-click drill-down to detailed insights</p>
         </div>
     `;
     
@@ -2512,10 +3063,14 @@ function createAnomalyAlertsSection() {
                         <p class="anomaly-category-desc">Owners managing more than 3 products in Development/Growth stages</p>
                         <div class="anomaly-list">
                             ${anomalyReport.ownerOverload.map(item => `
-                                <div class="anomaly-card owner-overload">
+                                <div class="anomaly-card owner-overload anomaly-clickable" 
+                                     data-anomaly-type="owner-overload" 
+                                     data-owner="${escapeHtml(item.owner)}"
+                                     title="Click to view ${item.owner}'s products in Insights & Analytics">
                                     <div class="anomaly-card-header">
                                         <span class="anomaly-owner">${escapeHtml(item.owner)}</span>
                                         <span class="anomaly-count">${item.productCount} products</span>
+                                        <span class="drill-down-hint">🔍 Click to analyze</span>
                                     </div>
                                     <div class="anomaly-card-body">
                                         <ul class="anomaly-products-list">
@@ -2542,10 +3097,16 @@ function createAnomalyAlertsSection() {
                         <p class="anomaly-category-desc">Products with missing metrics, targets, or below-target performance</p>
                         <div class="anomaly-list">
                             ${anomalyReport.dataHealthIssues.slice(0, 10).map(item => `
-                                <div class="anomaly-card data-health-issue">
+                                <div class="anomaly-card data-health-issue anomaly-clickable" 
+                                     data-anomaly-type="data-health" 
+                                     data-product-name="${escapeHtml(item.name)}"
+                                     data-area="${escapeHtml(item.area)}"
+                                     data-owner="${escapeHtml(item.owner)}"
+                                     title="Click to view ${item.name} details in Insights & Analytics">
                                     <div class="anomaly-card-header">
                                         <span class="anomaly-product">${escapeHtml(item.name)}</span>
                                         <span class="anomaly-issue-count">${item.issueCount} issue${item.issueCount > 1 ? 's' : ''}</span>
+                                        <span class="drill-down-hint">🔍 Click to analyze</span>
                                     </div>
                                     <div class="anomaly-card-meta">
                                         <span class="anomaly-meta-item">📍 ${escapeHtml(item.area)}</span>
@@ -2566,8 +3127,8 @@ function createAnomalyAlertsSection() {
                             ${anomalyReport.dataHealthIssues.length > 10 ? `
                                 <div class="anomaly-more">
                                     <p>... and ${anomalyReport.dataHealthIssues.length - 10} more products with issues</p>
-                                    <button class="btn-secondary" onclick="console.log(window.DataManager.checkAnomalies())">
-                                        View Full Report in Console
+                                    <button class="btn-secondary" onclick="drillDownToAllDataHealthIssues()">
+                                        🔍 View All Issues in Insights & Analytics
                                     </button>
                                 </div>
                             ` : ''}
@@ -3348,6 +3909,291 @@ function getStatusClass(maturity) {
     if (m.includes('mature')) return 'status-mature';
     if (m.includes('decline')) return 'status-decline';
     return 'status-default';
+}
+
+// ==================== DRILL-DOWN FUNCTIONALITY ====================
+
+/**
+ * Setup click handlers for anomaly cards to enable drill-down to Insights & Analytics
+ * This creates a seamless flow from Planning & Action → Insights & Analytics with filtering
+ */
+function setupAnomalyDrillDownHandlers() {
+    console.log('Setting up anomaly drill-down handlers...');
+    
+    // Get all clickable anomaly cards
+    const anomalyCards = document.querySelectorAll('.anomaly-clickable');
+    
+    anomalyCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const anomalyType = this.dataset.anomalyType;
+            const owner = this.dataset.owner;
+            const productName = this.dataset.productName;
+            const area = this.dataset.area;
+            
+            console.log('Anomaly card clicked:', { anomalyType, owner, productName, area });
+            
+            // Create filter object based on anomaly type
+            let filterConfig = {
+                type: anomalyType,
+                owner: owner,
+                productName: productName,
+                area: area
+            };
+            
+            // Trigger drill-down
+            drillDownToInsightsAnalytics(filterConfig);
+        });
+        
+        // Add hover effect
+        card.style.cursor = 'pointer';
+    });
+    
+    console.log(`✅ ${anomalyCards.length} anomaly cards made clickable`);
+}
+
+/**
+ * Drill-down function: Switches to Insights & Analytics tab and applies filter
+ * @param {Object} filterConfig - Configuration for filtering { type, owner, productName, area }
+ */
+function drillDownToInsightsAnalytics(filterConfig) {
+    console.log('Drilling down to Insights & Analytics with filter:', filterConfig);
+    
+    // Store drill-down filter in State
+    window.State.setDrillDownFilter({
+        active: true,
+        ...filterConfig
+    });
+    
+    // Switch to Insights & Analytics tab
+    switchTab('insights-analytics');
+    
+    // The renderInsightsAnalytics() function will check for active drill-down filter
+    // and apply it automatically
+}
+
+/**
+ * Helper function for "View All Issues" button
+ */
+function drillDownToAllDataHealthIssues() {
+    const anomalyReport = window.DataManager.checkAnomalies();
+    const allIssueProducts = anomalyReport.dataHealthIssues.map(item => item.name);
+    
+    drillDownToInsightsAnalytics({
+        type: 'data-health-all',
+        products: allIssueProducts
+    });
+}
+
+/**
+ * Add drill-down filter to State management
+ * This extends the State object with drill-down filter capability
+ */
+if (!window.State.getDrillDownFilter) {
+    let drillDownFilter = {
+        active: false,
+        type: null,
+        owner: null,
+        productName: null,
+        area: null,
+        products: []
+    };
+    
+    window.State.getDrillDownFilter = function() {
+        return drillDownFilter;
+    };
+    
+    window.State.setDrillDownFilter = function(filter) {
+        drillDownFilter = { ...drillDownFilter, ...filter };
+        console.log('Drill-down filter updated:', drillDownFilter);
+    };
+    
+    window.State.clearDrillDownFilter = function() {
+        drillDownFilter = {
+            active: false,
+            type: null,
+            owner: null,
+            productName: null,
+            area: null,
+            products: []
+        };
+        console.log('Drill-down filter cleared');
+    };
+}
+
+/**
+ * Filter Insights & Analytics content based on drill-down filter
+ * Used by the Planning & Action tab to create a drill-down view
+ * 
+ * This function is called automatically when Insights & Analytics tab renders
+ * and detects an active drill-down filter
+ */
+function applyDrillDownFilter() {
+    const filter = window.State.getDrillDownFilter();
+    
+    if (!filter || !filter.active) {
+        console.log('No active drill-down filter');
+        return;
+    }
+    
+    console.log('Applying drill-down filter to Insights & Analytics:', filter);
+    
+    // Get portfolio data
+    const portfolioData = window.State.getPortfolioData();
+    if (!portfolioData || portfolioData.length === 0) {
+        console.warn('No portfolio data available for filtering');
+        return;
+    }
+    
+    // Filter data based on anomaly type
+    let filteredData = portfolioData;
+    let filterDescription = '';
+    
+    switch (filter.type) {
+        case 'owner-overload':
+            filteredData = portfolioData.filter(p => p.owner === filter.owner);
+            filterDescription = `Owner: ${filter.owner} (Over-allocated)`;
+            break;
+            
+        case 'data-health':
+            filteredData = portfolioData.filter(p => p.name === filter.productName);
+            filterDescription = `Product: ${filter.productName} (Data Health Issues)`;
+            break;
+            
+        case 'data-health-all':
+            filteredData = portfolioData.filter(p => filter.products.includes(p.name));
+            filterDescription = `All Products with Data Health Issues (${filter.products.length})`;
+            break;
+            
+        default:
+            console.warn('Unknown anomaly type:', filter.type);
+    }
+    
+    console.log(`Filtered ${filteredData.length} products based on drill-down`);
+    
+    // Show filter pill at top of Insights & Analytics tab
+    showDrillDownFilterPill(filterDescription, filteredData.length);
+    
+    // Re-render Insights & Analytics with filtered data
+    // Note: This will require modifying renderInsightsAnalytics() to accept optional filtered data
+    reRenderInsightsWithFilteredData(filteredData);
+}
+
+/**
+ * Show a filter pill at the top of Insights & Analytics to indicate drill-down is active
+ */
+function showDrillDownFilterPill(description, count) {
+    const insightsContent = document.getElementById('insights-content');
+    
+    if (!insightsContent) {
+        return;
+    }
+    
+    // Check if pill already exists, remove it
+    const existingPill = document.getElementById('drill-down-filter-pill');
+    if (existingPill) {
+        existingPill.remove();
+    }
+    
+    // Create filter pill
+    const filterPill = document.createElement('div');
+    filterPill.id = 'drill-down-filter-pill';
+    filterPill.className = 'drill-down-filter-pill';
+    filterPill.innerHTML = `
+        <div class="filter-pill-content">
+            <span class="filter-pill-icon">🔍</span>
+            <span class="filter-pill-text">
+                <strong>Drill-down Active:</strong> ${escapeHtml(description)} 
+                <span class="filter-pill-count">(${count} products)</span>
+            </span>
+            <button class="filter-pill-clear" onclick="clearDrillDownFilter()" title="Clear filter and view all data">
+                ✕ Clear Filter
+            </button>
+        </div>
+    `;
+    
+    // Insert at the top of insights content
+    insightsContent.insertBefore(filterPill, insightsContent.firstChild);
+    
+    console.log('✅ Drill-down filter pill displayed');
+}
+
+/**
+ * Clear drill-down filter and re-render Insights & Analytics with full data
+ */
+function clearDrillDownFilter() {
+    console.log('Clearing drill-down filter...');
+    
+    // Clear filter from State
+    window.State.clearDrillDownFilter();
+    
+    // Remove filter pill
+    const filterPill = document.getElementById('drill-down-filter-pill');
+    if (filterPill) {
+        filterPill.remove();
+    }
+    
+    // Re-render Insights & Analytics with full data
+    renderInsightsAnalytics();
+    
+    console.log('✅ Drill-down filter cleared, showing all data');
+}
+
+/**
+ * Re-render Insights & Analytics with filtered data
+ * @param {Array} filteredData - Filtered portfolio data
+ */
+function reRenderInsightsWithFilteredData(filteredData) {
+    console.log(`Re-rendering Insights & Analytics with ${filteredData.length} filtered products...`);
+    
+    const insightsContent = document.getElementById('insights-content');
+    if (!insightsContent) {
+        console.error('Insights content container not found');
+        return;
+    }
+    
+    // Store original data temporarily
+    const originalData = window.State.getPortfolioData();
+    
+    // Temporarily replace portfolio data with filtered data
+    window.State.setPortfolioData(filteredData);
+    
+    // Calculate metrics and analysis with filtered data
+    const metrics = window.DataManager.calculatePortfolioMetrics();
+    const analysis = window.DataManager.analyzePortfolioData(filteredData);
+    
+    // Restore original data
+    window.State.setPortfolioData(originalData);
+    
+    // Clear existing sections (except filter pill)
+    const filterPill = document.getElementById('drill-down-filter-pill');
+    insightsContent.innerHTML = '';
+    if (filterPill) {
+        insightsContent.appendChild(filterPill);
+    }
+    
+    // Render sections with filtered data
+    if (metrics && analysis) {
+        const executiveSummarySection = createExecutiveSummarySection(metrics);
+        insightsContent.appendChild(executiveSummarySection);
+        
+        const detailedBreakdownsSection = createDetailedBreakdownsSection(analysis, metrics);
+        insightsContent.appendChild(detailedBreakdownsSection);
+        
+        const deepAnalyticsSection = createDeepAnalyticsSection(analysis);
+        insightsContent.appendChild(deepAnalyticsSection);
+        
+        console.log('✅ Insights & Analytics re-rendered with filtered data');
+    } else {
+        insightsContent.innerHTML += `
+            <div class="analysis-section">
+                <h2>⚠️ No Data Available</h2>
+                <p style="color: #6b7280;">The filtered view has no data to display.</p>
+                <button class="refresh-btn" onclick="clearDrillDownFilter()" style="margin-top: 1rem;">
+                    Clear Filter
+                </button>
+            </div>
+        `;
+    }
 }
 
 // ==================== EXPORTS ====================

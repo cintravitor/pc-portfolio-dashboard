@@ -1264,6 +1264,141 @@ select:focus {
     line-height: 1;
 }
 
+/* Data Quality Warning Cards */
+.stat-card-warning {
+    background: linear-gradient(135deg, 
+        rgba(251, 146, 60, 0.15) 0%, 
+        rgba(251, 191, 36, 0.15) 100%);
+    border: 1px solid rgba(251, 146, 60, 0.3);
+    box-shadow: 
+        0 4px 16px rgba(251, 146, 60, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.stat-card-warning:hover {
+    background: linear-gradient(135deg, 
+        rgba(251, 146, 60, 0.25) 0%, 
+        rgba(251, 191, 36, 0.25) 100%);
+    border: 1px solid rgba(251, 146, 60, 0.5);
+    box-shadow: 
+        0 8px 24px rgba(251, 146, 60, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+}
+
+.stat-card-warning .stat-label {
+    color: #ea580c;
+    font-weight: 600;
+}
+
+.stat-card-warning .stat-value {
+    color: #ea580c;
+    font-weight: 800;
+}
+
+/* Data Quality Filter Notification */
+.data-quality-notification {
+    background: linear-gradient(135deg, 
+        rgba(251, 146, 60, 0.95) 0%, 
+        rgba(251, 191, 36, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 16px rgba(251, 146, 60, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: slideDown 0.3s ease-out;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.notification-text {
+    flex: 1;
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.notification-text strong {
+    font-weight: 700;
+}
+
+.notification-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notification-close:active {
+    transform: translateY(0);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments for data quality cards */
+@media (max-width: 1024px) {
+    .stat-card-warning {
+        min-width: 180px;
+    }
+    
+    .notification-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .data-quality-notification {
+        padding: 0.875rem 1rem;
+    }
+    
+    .notification-text {
+        font-size: 0.875rem;
+    }
+    
+    .notification-close {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .loading, .error, .empty-state {
     text-align: center;
     padding: 4rem 2rem;

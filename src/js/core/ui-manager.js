@@ -113,8 +113,133 @@ function setupTacticalFilters() {
         sortBySelect.addEventListener('change', applyFiltersFromUI);
     }
     
+    // Setup click-to-filter for data quality stat cards
+    setupDataQualityFilters();
+    
     console.log('✅ Tactical filters and sorting configured');
 }
+
+/**
+ * Setup click-to-filter event listeners for data quality stat cards
+ */
+function setupDataQualityFilters() {
+    const missingUXCard = document.querySelector('[data-filter-type="missing-ux-metric"]');
+    const missingBICard = document.querySelector('[data-filter-type="missing-bi-metric"]');
+    
+    if (missingUXCard) {
+        missingUXCard.addEventListener('click', () => {
+            filterByMissingMetric('UX');
+        });
+    }
+    
+    if (missingBICard) {
+        missingBICard.addEventListener('click', () => {
+            filterByMissingMetric('BI');
+        });
+    }
+}
+
+/**
+ * Filter products by missing metrics (UX or BI)
+ * @param {string} metricType - Either 'UX' or 'BI'
+ */
+function filterByMissingMetric(metricType) {
+    const portfolioData = window.DataManager.getPortfolioData();
+    
+    // Filter products with missing metrics
+    const filtered = portfolioData.filter(product => {
+        if (metricType === 'UX') {
+            // Check if UX metric is missing
+            if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
+                const lastValue = product.monthlyUX[product.monthlyUX.length - 1];
+                return !lastValue || 
+                       lastValue === 'N/A' || 
+                       lastValue === '' || 
+                       lastValue === '0' ||
+                       parseFloat(lastValue) === 0;
+            }
+            return true; // No monthlyUX array
+        } else {
+            // Check if BI metric is missing
+            if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
+                const lastValue = product.monthlyBI[product.monthlyBI.length - 1];
+                return !lastValue || 
+                       lastValue === 'N/A' || 
+                       lastValue === '' || 
+                       lastValue === '0' ||
+                       parseFloat(lastValue) === 0;
+            }
+            return true; // No monthlyBI array
+        }
+    });
+    
+    // Update filtered data in state
+    window.State.setFilteredData(filtered);
+    
+    // Clear all filter UI controls (so they show "All")
+    document.getElementById('search-input').value = '';
+    document.getElementById('filter-area').value = '';
+    document.getElementById('filter-maturity').value = '';
+    document.getElementById('filter-owner').value = '';
+    
+    // Render filtered cards
+    renderCards();
+    updateStats();
+    
+    // Show notification about what was filtered
+    showDataQualityFilterNotification(metricType, filtered.length);
+}
+
+/**
+ * Show notification when data quality filter is applied
+ * @param {string} metricType - Either 'UX' or 'BI'
+ * @param {number} count - Number of filtered products
+ */
+function showDataQualityFilterNotification(metricType, count) {
+    // Remove existing notification if any
+    const existingNotification = document.querySelector('.data-quality-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification banner
+    const notification = document.createElement('div');
+    notification.className = 'data-quality-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">⚠️</span>
+            <span class="notification-text">
+                Showing <strong>${count} product${count !== 1 ? 's' : ''}</strong> with missing ${metricType} metric updates
+            </span>
+            <button class="notification-close" onclick="clearDataQualityFilter()">
+                <span>✕</span> Clear Filter
+            </button>
+        </div>
+    `;
+    
+    // Insert notification at top of content area
+    const contentLeft = document.getElementById('content-left');
+    const statsBar = document.getElementById('stats-bar');
+    contentLeft.insertBefore(notification, statsBar.nextSibling);
+}
+
+/**
+ * Clear data quality filter and show all products
+ * Exposed globally for onclick handler
+ */
+function clearDataQualityFilter() {
+    // Remove notification
+    const notification = document.querySelector('.data-quality-notification');
+    if (notification) {
+        notification.remove();
+    }
+    
+    // Clear filters and show all products
+    clearFilters();
+}
+
+// Expose globally for HTML onclick
+window.clearDataQualityFilter = clearDataQualityFilter;
 
 /**
  * Populate filter dropdowns with unique values
@@ -914,11 +1039,16 @@ function updateStats() {
     statsBar.style.display = 'flex';
 
     const stats = window.DataManager.getProductStats();
+    const missingMetrics = window.DataManager.countMissingMetrics();
     
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-showing').textContent = stats.showing;
     document.getElementById('stat-live').textContent = stats.live;
     document.getElementById('stat-dev').textContent = stats.dev;
+    
+    // Update new data quality cards
+    document.getElementById('stat-missing-ux').textContent = missingMetrics.missingUX;
+    document.getElementById('stat-missing-bi').textContent = missingMetrics.missingBI;
 }
 
 /**

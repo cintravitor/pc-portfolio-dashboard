@@ -1088,6 +1088,71 @@ function getProductStats() {
     };
 }
 
+/**
+ * Count products with missing metric updates
+ * Identifies products where the most recent monthly metric value is missing, N/A, empty, or zero
+ * 
+ * @returns {Object} Object containing counts of products with missing UX and BI metrics
+ * @returns {number} return.missingUX - Count of products with missing UX metric updates
+ * @returns {number} return.missingBI - Count of products with missing BI metric updates
+ */
+function countMissingMetrics() {
+    const portfolioData = window.State.getPortfolioData();
+    
+    if (!portfolioData || portfolioData.length === 0) {
+        return {
+            missingUX: 0,
+            missingBI: 0
+        };
+    }
+    
+    let missingUX = 0;
+    let missingBI = 0;
+    
+    portfolioData.forEach(product => {
+        // Check UX metric - get last value from monthlyUX array
+        if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
+            // Get the last (most recent) value
+            const lastUXValue = product.monthlyUX[product.monthlyUX.length - 1];
+            
+            // Check if it's missing, N/A, empty, or zero
+            if (!lastUXValue || 
+                lastUXValue === 'N/A' || 
+                lastUXValue === '' || 
+                lastUXValue === '0' ||
+                parseFloat(lastUXValue) === 0) {
+                missingUX++;
+            }
+        } else {
+            // No monthlyUX array at all
+            missingUX++;
+        }
+        
+        // Check BI metric - get last value from monthlyBI array
+        if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
+            // Get the last (most recent) value
+            const lastBIValue = product.monthlyBI[product.monthlyBI.length - 1];
+            
+            // Check if it's missing, N/A, empty, or zero
+            if (!lastBIValue || 
+                lastBIValue === 'N/A' || 
+                lastBIValue === '' || 
+                lastBIValue === '0' ||
+                parseFloat(lastBIValue) === 0) {
+                missingBI++;
+            }
+        } else {
+            // No monthlyBI array at all
+            missingBI++;
+        }
+    });
+    
+    return {
+        missingUX,
+        missingBI
+    };
+}
+
 // ==================== EXPORTS ====================
 
 /**
@@ -1127,6 +1192,7 @@ window.DataManager = {
     getFilteredData,
     getProductById,
     getProductStats,
+    countMissingMetrics,
     
     // Utility reference (for backward compatibility)
     debounce: window.Utils ? window.Utils.debounce : null

@@ -89,16 +89,43 @@ Full documentation is available in the [`docs/`](./docs/) folder:
 
 ## 🚦 Getting Started
 
-### Local Development
+### For Users
 
-1. Clone the repository
-2. Start a local server:
-   ```bash
-   python3 -m http.server 8080
-   ```
-3. Open http://localhost:8080 in your browser
+1. Visit the live dashboard: [GitHub Pages URL]
+2. Explore the 4 main views:
+   - **Strategic View** - Executive KPIs
+   - **Portfolio Overview** - Product cards and filters
+   - **Descriptive Analysis** - Statistics and insights
+   - **Planning View** - Anomaly detection and planning
 
-### Configuration
+### For Developers
+
+#### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/cintravitor/pc-portfolio-dashboard.git
+cd pc-portfolio-dashboard
+
+# Start local server
+python3 -m http.server 8080
+
+# Open in browser
+open http://localhost:8080
+```
+
+#### Contributing
+
+We welcome contributions! Please see:
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+- **[docs/DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)** - Developer documentation
+
+**Quick Links:**
+- 🐛 [Report a Bug](.github/ISSUE_TEMPLATE/bug_report.md)
+- ✨ [Request a Feature](.github/ISSUE_TEMPLATE/feature_request.md)
+- 🔀 [Submit a Pull Request](.github/pull_request_template.md)
+
+#### Configuration
 
 Edit `src/js/config.js` to set your Google Apps Script web app URL:
 
@@ -124,14 +151,62 @@ Data is fetched from Google Sheets via Google Apps Script. The backend script (`
 
 The dashboard automatically checks for updates every 24 hours. Manual refresh is available via the "Refresh Data" button.
 
-## 📝 License
+## 🤝 Contributing
 
-[Your License]
+We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make your changes**
+4. **Test thoroughly**
+5. **Commit your changes** (`git commit -m 'feat: add amazing feature'`)
+6. **Push to your branch** (`git push origin feature/amazing-feature`)
+7. **Open a Pull Request**
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+
+### Development Resources
+
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - How to contribute
+- **[DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)** - Technical documentation
+- **[PRODUCT_ROADMAP.md](./docs/PRODUCT_ROADMAP.md)** - Future plans
+- **[USER_STORIES.md](./docs/USER_STORIES.md)** - Feature specifications
+
+### Code of Conduct
+
+We are committed to providing a welcoming and inclusive environment. Please read our Code of Conduct in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## 👥 Contributors
 
-[Your Team]
+Thank you to all contributors who have helped make this project better!
+
+<!-- Contributors will be listed here -->
+
+Want to see your name here? Check out [CONTRIBUTING.md](./CONTRIBUTING.md) to get started!
+
+## 📝 License
+
+[Your License Here]
+
+## 🌟 Acknowledgments
+
+- Built with vanilla JavaScript for simplicity and performance
+- Powered by Google Sheets and Google Apps Script
+- Visualizations by Chart.js
+- Inspired by modern dashboard design principles
+
+## 📞 Contact & Support
+
+- **Issues:** [GitHub Issues](https://github.com/cintravitor/pc-portfolio-dashboard/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/cintravitor/pc-portfolio-dashboard/discussions)
+- **Documentation:** [docs/](./docs/)
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: October 4, 2025  
+**Version**: 4.0  
+**Status**: ✅ Production Ready
+
+Made with ❤️ by the P&C team

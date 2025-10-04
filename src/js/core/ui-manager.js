@@ -63,6 +63,11 @@ function switchTab(tabName) {
     if (tabName === 'strategic-view') {
         renderStrategicView();
     }
+    
+    // Load planning view when switching to that tab
+    if (tabName === 'planning-view') {
+        renderPlanningView();
+    }
 }
 
 // ==================== FILTER UI ====================
@@ -1843,6 +1848,719 @@ function createAnalysisCharts(analysis, sortedStages, sortedAreas, sortedOwners)
     console.log('✅ All charts created successfully');
 }
 
+// ==================== PLANNING VIEW ====================
+
+/**
+ * Render Planning View - Unified workspace for Portfolio Managers
+ * Combines anomaly alerts, filters, and key charts in one integrated view
+ */
+function renderPlanningView() {
+    console.log('Rendering Planning View...');
+    
+    const planningContent = document.getElementById('planning-content');
+    
+    if (!planningContent) {
+        console.error('Planning content container not found');
+        return;
+    }
+    
+    // Get portfolio data from State
+    const portfolioData = window.State.getPortfolioData();
+    
+    // Check if we have data to analyze
+    if (!portfolioData || portfolioData.length === 0) {
+        planningContent.innerHTML = `
+            <div class="executive-empty-state">
+                <h2>⚠️ No Data Available</h2>
+                <p>Please load the Portfolio Overview tab first to see planning insights.</p>
+                <button class="refresh-btn" onclick="window.UIManager.switchTab('portfolio-overview')" style="margin-top: 1.5rem;">
+                    Go to Portfolio Overview
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('Planning View data loaded:', portfolioData.length, 'products');
+    
+    // Clear and start building
+    planningContent.innerHTML = '';
+    
+    // Create header section
+    const headerSection = createPlanningHeaderSection();
+    planningContent.appendChild(headerSection);
+    
+    // ========== 1. ANOMALY ALERTS SECTION ==========
+    const anomalySection = createAnomalyAlertsSection();
+    planningContent.appendChild(anomalySection);
+    
+    // ========== 2. FILTERS SECTION ==========
+    const filtersSection = createPlanningFiltersSection();
+    planningContent.appendChild(filtersSection);
+    
+    // ========== 3. KEY INSIGHTS & CHARTS SECTION ==========
+    const chartsSection = createPlanningChartsSection();
+    planningContent.appendChild(chartsSection);
+    
+    // Apply initial rendering of charts after DOM insertion
+    setTimeout(() => {
+        renderPlanningCharts(portfolioData);
+        setupPlanningFilters();
+    }, 100);
+    
+    console.log('✅ Planning View rendered successfully');
+}
+
+/**
+ * Create Planning View header section
+ */
+function createPlanningHeaderSection() {
+    const section = document.createElement('div');
+    section.className = 'planning-header';
+    
+    section.innerHTML = `
+        <div class="planning-header-content">
+            <h1 class="planning-title">📋 Planning View</h1>
+            <p class="planning-subtitle">Unified workspace with anomaly detection, filtering, and key portfolio insights</p>
+        </div>
+    `;
+    
+    return section;
+}
+
+/**
+ * Create Anomaly Alerts Section with clear user-friendly list
+ */
+function createAnomalyAlertsSection() {
+    const section = document.createElement('div');
+    section.className = 'planning-section anomaly-section';
+    
+    // Get anomaly report from Data Manager
+    const anomalyReport = window.DataManager.checkAnomalies();
+    
+    const totalAnomalies = anomalyReport.summary.totalAnomalies;
+    const hasAnomalies = totalAnomalies > 0;
+    
+    section.innerHTML = `
+        <div class="planning-section-header">
+            <h2 class="planning-section-title">
+                <span class="section-icon">⚠️</span>
+                Anomaly Detection
+                ${hasAnomalies ? `<span class="anomaly-badge">${totalAnomalies}</span>` : ''}
+            </h2>
+            <p class="planning-section-subtitle">Automated detection of portfolio risks and data quality issues</p>
+        </div>
+        
+        <div class="anomaly-content">
+            ${hasAnomalies ? `
+                <!-- Owner Overload Alerts -->
+                ${anomalyReport.ownerOverload.length > 0 ? `
+                    <div class="anomaly-category">
+                        <h3 class="anomaly-category-title">
+                            👥 Owner Over-allocation (${anomalyReport.ownerOverload.length})
+                        </h3>
+                        <p class="anomaly-category-desc">Owners managing more than 3 products in Development/Growth stages</p>
+                        <div class="anomaly-list">
+                            ${anomalyReport.ownerOverload.map(item => `
+                                <div class="anomaly-card owner-overload">
+                                    <div class="anomaly-card-header">
+                                        <span class="anomaly-owner">${escapeHtml(item.owner)}</span>
+                                        <span class="anomaly-count">${item.productCount} products</span>
+                                    </div>
+                                    <div class="anomaly-card-body">
+                                        <ul class="anomaly-products-list">
+                                            ${item.products.map(product => `
+                                                <li>${escapeHtml(product)}</li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                    <div class="anomaly-card-action">
+                                        <span class="anomaly-recommendation">💡 Consider redistributing workload or prioritizing products</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Data Health Issues -->
+                ${anomalyReport.dataHealthIssues.length > 0 ? `
+                    <div class="anomaly-category">
+                        <h3 class="anomaly-category-title">
+                            🏥 Data Health Issues (${anomalyReport.dataHealthIssues.length})
+                        </h3>
+                        <p class="anomaly-category-desc">Products with missing metrics, targets, or below-target performance</p>
+                        <div class="anomaly-list">
+                            ${anomalyReport.dataHealthIssues.slice(0, 10).map(item => `
+                                <div class="anomaly-card data-health-issue">
+                                    <div class="anomaly-card-header">
+                                        <span class="anomaly-product">${escapeHtml(item.name)}</span>
+                                        <span class="anomaly-issue-count">${item.issueCount} issue${item.issueCount > 1 ? 's' : ''}</span>
+                                    </div>
+                                    <div class="anomaly-card-meta">
+                                        <span class="anomaly-meta-item">📍 ${escapeHtml(item.area)}</span>
+                                        <span class="anomaly-meta-item">👤 ${escapeHtml(item.owner)}</span>
+                                        <span class="anomaly-meta-item">📊 ${escapeHtml(item.maturity)}</span>
+                                    </div>
+                                    <div class="anomaly-card-body">
+                                        <ul class="anomaly-issues-list">
+                                            ${item.issues.map(issue => `
+                                                <li class="anomaly-issue">
+                                                    ${getIssueIcon(issue)} ${escapeHtml(issue)}
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${anomalyReport.dataHealthIssues.length > 10 ? `
+                                <div class="anomaly-more">
+                                    <p>... and ${anomalyReport.dataHealthIssues.length - 10} more products with issues</p>
+                                    <button class="btn-secondary" onclick="console.log(window.DataManager.checkAnomalies())">
+                                        View Full Report in Console
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            ` : `
+                <div class="anomaly-empty-state">
+                    <div class="anomaly-empty-icon">✅</div>
+                    <h3>No Anomalies Detected</h3>
+                    <p>Your portfolio is healthy! All owners are balanced and data quality is good.</p>
+                    <ul class="anomaly-empty-checklist">
+                        <li>✅ All owners have ≤3 products in Development/Growth</li>
+                        <li>✅ All products have complete metrics</li>
+                        <li>✅ All metrics are meeting targets</li>
+                    </ul>
+                </div>
+            `}
+        </div>
+    `;
+    
+    return section;
+}
+
+/**
+ * Get icon for specific issue type
+ */
+function getIssueIcon(issue) {
+    if (issue.includes('Missing UX')) return '📊';
+    if (issue.includes('Missing BI')) return '💼';
+    if (issue.includes('Below UX')) return '📉';
+    if (issue.includes('Below BI')) return '📊';
+    if (issue.includes('Target')) return '🎯';
+    return '⚠️';
+}
+
+/**
+ * Create Planning Filters Section
+ */
+function createPlanningFiltersSection() {
+    const section = document.createElement('div');
+    section.className = 'planning-section filters-section-planning';
+    
+    section.innerHTML = `
+        <div class="planning-section-header">
+            <h2 class="planning-section-title">
+                <span class="section-icon">🔍</span>
+                Portfolio Filters
+            </h2>
+            <p class="planning-section-subtitle">Filter the visualizations below to focus on specific segments</p>
+        </div>
+        
+        <div class="planning-filters-container">
+            <div class="planning-filter-group">
+                <label class="planning-filter-label">P&C Area</label>
+                <select id="planning-filter-area" class="planning-filter-select">
+                    <option value="">All Areas</option>
+                </select>
+            </div>
+            
+            <div class="planning-filter-group">
+                <label class="planning-filter-label">Maturity Stage</label>
+                <select id="planning-filter-maturity" class="planning-filter-select">
+                    <option value="">All Stages</option>
+                </select>
+            </div>
+            
+            <div class="planning-filter-group">
+                <label class="planning-filter-label">Owner</label>
+                <select id="planning-filter-owner" class="planning-filter-select">
+                    <option value="">All Owners</option>
+                </select>
+            </div>
+            
+            <button class="planning-filter-clear" onclick="clearPlanningFilters()">
+                Clear Filters
+            </button>
+        </div>
+        
+        <div class="planning-filter-summary" id="planning-filter-summary">
+            Showing all <span id="planning-filtered-count">0</span> products
+        </div>
+    `;
+    
+    return section;
+}
+
+/**
+ * Create Planning Charts Section with rationale tooltips
+ */
+function createPlanningChartsSection() {
+    const section = document.createElement('div');
+    section.className = 'planning-section charts-section-planning';
+    
+    section.innerHTML = `
+        <div class="planning-section-header">
+            <h2 class="planning-section-title">
+                <span class="section-icon">📊</span>
+                Key Portfolio Insights
+            </h2>
+            <p class="planning-section-subtitle">Distribution charts dynamically updated based on your filter selection</p>
+        </div>
+        
+        <div class="planning-charts-grid">
+            <!-- Maturity Distribution Chart -->
+            <div class="planning-chart-card">
+                <div class="planning-chart-header">
+                    <h3 class="planning-chart-title">🔄 Maturity Stage Distribution</h3>
+                    <button class="chart-info-btn" data-tooltip="maturity">
+                        <span class="info-icon">ℹ️</span>
+                    </button>
+                </div>
+                <div class="chart-tooltip" id="tooltip-maturity" style="display: none;">
+                    <h4>Why This Matters</h4>
+                    <p><strong>Pipeline Health:</strong> This chart helps identify potential bottlenecks in your product pipeline.</p>
+                    <ul>
+                        <li><strong>High Development:</strong> May signal resourcing constraints or slow time-to-market</li>
+                        <li><strong>High Mature:</strong> Could indicate need for new strategic investments or innovation</li>
+                        <li><strong>Balanced Distribution:</strong> Shows healthy portfolio lifecycle management</li>
+                    </ul>
+                    <p class="tooltip-action">💡 Use this to prioritize resource allocation and identify pipeline risks.</p>
+                </div>
+                <div class="planning-chart-wrapper">
+                    <canvas id="planning-chart-maturity"></canvas>
+                </div>
+            </div>
+            
+            <!-- Area Distribution Chart -->
+            <div class="planning-chart-card">
+                <div class="planning-chart-header">
+                    <h3 class="planning-chart-title">🏢 Solutions by P&C Area</h3>
+                    <button class="chart-info-btn" data-tooltip="area">
+                        <span class="info-icon">ℹ️</span>
+                    </button>
+                </div>
+                <div class="chart-tooltip" id="tooltip-area" style="display: none;">
+                    <h4>Why This Matters</h4>
+                    <p><strong>Strategic Alignment:</strong> Shows how your portfolio investments align with organizational priorities.</p>
+                    <ul>
+                        <li><strong>Over-investment:</strong> Too many products in one area may indicate duplication or lack of focus</li>
+                        <li><strong>Under-investment:</strong> Sparse coverage may reveal strategic gaps</li>
+                        <li><strong>Balanced Coverage:</strong> Reflects holistic approach to P&C needs</li>
+                    </ul>
+                    <p class="tooltip-action">💡 Use this to ensure balanced coverage across all P&C functions.</p>
+                </div>
+                <div class="planning-chart-wrapper">
+                    <canvas id="planning-chart-area"></canvas>
+                </div>
+            </div>
+            
+            <!-- Metrics Coverage Chart -->
+            <div class="planning-chart-card">
+                <div class="planning-chart-header">
+                    <h3 class="planning-chart-title">📈 Metrics Coverage</h3>
+                    <button class="chart-info-btn" data-tooltip="metrics">
+                        <span class="info-icon">ℹ️</span>
+                    </button>
+                </div>
+                <div class="chart-tooltip" id="tooltip-metrics" style="display: none;">
+                    <h4>Why This Matters</h4>
+                    <p><strong>Data Quality:</strong> Measures how well your portfolio performance is being tracked.</p>
+                    <ul>
+                        <li><strong>No Metrics:</strong> Cannot measure success or make data-driven decisions</li>
+                        <li><strong>Partial Coverage:</strong> Incomplete picture of product performance</li>
+                        <li><strong>Full Coverage:</strong> Enables comprehensive performance management</li>
+                    </ul>
+                    <p class="tooltip-action">💡 Use this to identify products needing metric definition work.</p>
+                </div>
+                <div class="planning-chart-wrapper">
+                    <canvas id="planning-chart-metrics"></canvas>
+                </div>
+            </div>
+            
+            <!-- Owner Distribution Chart -->
+            <div class="planning-chart-card">
+                <div class="planning-chart-header">
+                    <h3 class="planning-chart-title">👥 Top 10 Product Owners</h3>
+                    <button class="chart-info-btn" data-tooltip="owners">
+                        <span class="info-icon">ℹ️</span>
+                    </button>
+                </div>
+                <div class="chart-tooltip" id="tooltip-owners" style="display: none;">
+                    <h4>Why This Matters</h4>
+                    <p><strong>Workload Balance:</strong> Identifies potential capacity constraints or over-allocation.</p>
+                    <ul>
+                        <li><strong>High Product Count:</strong> Owner may be stretched thin, risking quality</li>
+                        <li><strong>Uneven Distribution:</strong> May indicate need for team expansion or rebalancing</li>
+                        <li><strong>Even Distribution:</strong> Shows healthy resource allocation</li>
+                    </ul>
+                    <p class="tooltip-action">💡 Use this to balance workload and ensure owner capacity for success.</p>
+                </div>
+                <div class="planning-chart-wrapper">
+                    <canvas id="planning-chart-owners"></canvas>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return section;
+}
+
+/**
+ * Setup Planning Filters
+ * Populates filter dropdowns and adds event listeners
+ */
+function setupPlanningFilters() {
+    const portfolioData = window.State.getPortfolioData();
+    
+    // Get filter options using DataManager
+    const filterOptions = window.DataManager.getFilterOptions();
+    
+    // Populate Area filter
+    const areaSelect = document.getElementById('planning-filter-area');
+    if (areaSelect) {
+        areaSelect.innerHTML = '<option value="">All Areas</option>' +
+            filterOptions.areas.map(area => `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`).join('');
+        
+        areaSelect.addEventListener('change', applyPlanningFilters);
+    }
+    
+    // Populate Maturity filter
+    const maturitySelect = document.getElementById('planning-filter-maturity');
+    if (maturitySelect) {
+        maturitySelect.innerHTML = '<option value="">All Stages</option>' +
+            filterOptions.maturities.map(maturity => `<option value="${escapeHtml(maturity)}">${escapeHtml(maturity)}</option>`).join('');
+        
+        maturitySelect.addEventListener('change', applyPlanningFilters);
+    }
+    
+    // Populate Owner filter
+    const ownerSelect = document.getElementById('planning-filter-owner');
+    if (ownerSelect) {
+        ownerSelect.innerHTML = '<option value="">All Owners</option>' +
+            filterOptions.owners.map(owner => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join('');
+        
+        ownerSelect.addEventListener('change', applyPlanningFilters);
+    }
+    
+    // Setup tooltip toggles
+    document.querySelectorAll('.chart-info-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tooltipId = 'tooltip-' + this.dataset.tooltip;
+            const tooltip = document.getElementById(tooltipId);
+            
+            // Hide all other tooltips
+            document.querySelectorAll('.chart-tooltip').forEach(t => {
+                if (t.id !== tooltipId) {
+                    t.style.display = 'none';
+                }
+            });
+            
+            // Toggle this tooltip
+            if (tooltip) {
+                tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    // Initial render with all data
+    updatePlanningFilterSummary(portfolioData.length);
+    
+    console.log('✅ Planning filters setup complete');
+}
+
+/**
+ * Apply Planning Filters and re-render charts
+ */
+function applyPlanningFilters() {
+    const portfolioData = window.State.getPortfolioData();
+    
+    // Get filter values
+    const areaFilter = document.getElementById('planning-filter-area')?.value || '';
+    const maturityFilter = document.getElementById('planning-filter-maturity')?.value || '';
+    const ownerFilter = document.getElementById('planning-filter-owner')?.value || '';
+    
+    // Filter data
+    const filteredData = portfolioData.filter(product => {
+        const matchesArea = !areaFilter || product.area === areaFilter;
+        const matchesMaturity = !maturityFilter || product.maturity === maturityFilter;
+        const matchesOwner = !ownerFilter || product.owner === ownerFilter;
+        
+        return matchesArea && matchesMaturity && matchesOwner;
+    });
+    
+    // Update filter summary
+    updatePlanningFilterSummary(filteredData.length);
+    
+    // Re-render charts with filtered data
+    renderPlanningCharts(filteredData);
+    
+    console.log('Planning filters applied:', filteredData.length, 'products shown');
+}
+
+/**
+ * Clear Planning Filters
+ */
+function clearPlanningFilters() {
+    // Reset all filter dropdowns
+    const areaSelect = document.getElementById('planning-filter-area');
+    const maturitySelect = document.getElementById('planning-filter-maturity');
+    const ownerSelect = document.getElementById('planning-filter-owner');
+    
+    if (areaSelect) areaSelect.value = '';
+    if (maturitySelect) maturitySelect.value = '';
+    if (ownerSelect) ownerSelect.value = '';
+    
+    // Re-apply filters (which will show all data)
+    applyPlanningFilters();
+}
+
+// Expose globally for onclick handler
+window.clearPlanningFilters = clearPlanningFilters;
+
+/**
+ * Update filter summary text
+ */
+function updatePlanningFilterSummary(count) {
+    const summaryText = document.getElementById('planning-filtered-count');
+    if (summaryText) {
+        summaryText.textContent = count;
+    }
+}
+
+/**
+ * Render all Planning View charts with Chart.js
+ */
+function renderPlanningCharts(data) {
+    console.log('Rendering planning charts with', data.length, 'products');
+    
+    // Chart colors
+    const stageColors = {
+        '1. Development': 'rgba(59, 130, 246, 0.85)',
+        '2. Growth': 'rgba(16, 185, 129, 0.85)',
+        '3. Mature': 'rgba(168, 85, 247, 0.85)',
+        '4. Decline': 'rgba(251, 146, 60, 0.85)'
+    };
+    
+    const defaultColors = [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(20, 184, 166, 0.8)',
+        'rgba(251, 146, 60, 0.8)'
+    ];
+    
+    // Analyze filtered data
+    const analysis = window.DataManager.analyzePortfolioData(data);
+    
+    // 1. Maturity Stage Distribution (Pie Chart)
+    const maturityCanvas = document.getElementById('planning-chart-maturity');
+    if (maturityCanvas && window.Chart) {
+        const sortedStages = Object.entries(analysis.stageCount).sort((a, b) => b[1] - a[1]);
+        
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(maturityCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        new Chart(maturityCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: sortedStages.map(([stage]) => stage),
+                datasets: [{
+                    data: sortedStages.map(([_, count]) => count),
+                    backgroundColor: sortedStages.map(([stage]) => stageColors[stage] || defaultColors[0]),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.parsed / total) * 100);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 2. Area Distribution (Horizontal Bar Chart)
+    const areaCanvas = document.getElementById('planning-chart-area');
+    if (areaCanvas && window.Chart) {
+        const sortedAreas = Object.entries(analysis.areaCount).sort((a, b) => b[1] - a[1]);
+        
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(areaCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        new Chart(areaCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedAreas.map(([area]) => area.length > 20 ? area.substring(0, 20) + '...' : area),
+                datasets: [{
+                    label: 'Solutions',
+                    data: sortedAreas.map(([_, count]) => count),
+                    backgroundColor: sortedAreas.map((_, i) => defaultColors[i % defaultColors.length]),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 3. Metrics Coverage (Pie Chart)
+    const metricsCanvas = document.getElementById('planning-chart-metrics');
+    if (metricsCanvas && window.Chart) {
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(metricsCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        new Chart(metricsCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Both Metrics', 'UX Only', 'BI Only', 'No Metrics'],
+                datasets: [{
+                    data: [
+                        analysis.metrics.withBothMetrics,
+                        analysis.metrics.withUXMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withBIMetric - analysis.metrics.withBothMetrics,
+                        analysis.metrics.withoutMetrics
+                    ],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(239, 68, 68, 0.85)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12
+                    }
+                }
+            }
+        });
+    }
+    
+    // 4. Owner Distribution (Horizontal Bar Chart - Top 10)
+    const ownersCanvas = document.getElementById('planning-chart-owners');
+    if (ownersCanvas && window.Chart) {
+        const sortedOwners = Object.entries(analysis.ownerCount).sort((a, b) => b[1] - a[1]);
+        const top10Owners = sortedOwners.slice(0, 10);
+        
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(ownersCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        new Chart(ownersCanvas, {
+            type: 'bar',
+            data: {
+                labels: top10Owners.map(([owner]) => owner.length > 25 ? owner.substring(0, 25) + '...' : owner),
+                datasets: [{
+                    label: 'Solutions',
+                    data: top10Owners.map(([_, count]) => count),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    console.log('✅ Planning charts rendered successfully');
+}
+
 // ==================== UI STATE ====================
 
 /**
@@ -1932,6 +2650,7 @@ window.UIManager = {
     updateLastUpdateDisplay,
     renderStrategicView,
     renderExecutiveView,
+    renderPlanningView,
     loadDescriptiveAnalysis,
     showLoading,
     showError,

@@ -48,6 +48,7 @@ The dashboard follows a modern, modular architecture:
 - **Executive View**: Portfolio health score, risk & opportunity matrix
 - **Portfolio Overview**: Filterable and sortable product cards
 - **Descriptive Analysis**: Statistical insights and charts
+- **Anomaly Detection**: Automated detection of owner over-allocation and data quality issues
 - **Real-time Updates**: Auto-refresh from Google Sheets
 - **Offline Support**: Local caching for offline access
 
@@ -67,6 +68,7 @@ Full documentation is available in the [`docs/`](./docs/) folder:
 - [Architecture Overview](./docs/ARCHITECTURE_REFACTOR_COMPLETE.md)
 - [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
 - [Setup Instructions](./docs/SETUP_COMPLETE.md)
+- [Anomaly Detection](./docs/ANOMALY_DETECTION_IMPLEMENTATION.md) - **NEW**
 
 ## 🚦 Getting Started
 

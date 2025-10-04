@@ -608,6 +608,182 @@ function analyzeHealthFactors(portfolioData, productMetrics) {
 }
 
 /**
+ * Check for anomalies in the portfolio data
+ * Identifies owner over-allocation and data quality issues
+ * 
+ * @returns {Object} Consolidated anomaly report with categorized anomalies
+ */
+function checkAnomalies() {
+    console.log('Running anomaly detection checks...');
+    
+    // Get portfolio data from State
+    const portfolioData = window.State.getPortfolioData();
+    
+    if (!portfolioData || portfolioData.length === 0) {
+        console.warn('No portfolio data available for anomaly detection');
+        return {
+            ownerOverload: [],
+            dataHealthIssues: []
+        };
+    }
+    
+    // ===== 1. OWNER OVER-ALLOCATION DETECTION =====
+    // Flag owners with more than 3 products in Development or Growth stages
+    
+    // Group products by owner
+    const ownerProductMap = {};
+    
+    portfolioData.forEach(product => {
+        const owner = product.owner || 'Not assigned';
+        const maturity = (product.maturity || '').toLowerCase();
+        
+        // Check if product is in Development or Growth stage
+        const isDevelopmentOrGrowth = maturity.includes('development') || 
+                                      maturity === '1. development' ||
+                                      maturity.includes('growth') ||
+                                      maturity === '2. growth';
+        
+        if (isDevelopmentOrGrowth) {
+            if (!ownerProductMap[owner]) {
+                ownerProductMap[owner] = [];
+            }
+            ownerProductMap[owner].push({
+                id: product.id,
+                name: product.name,
+                maturity: product.maturity
+            });
+        }
+    });
+    
+    // Identify owners with more than 3 products in Development/Growth
+    const ownerOverload = [];
+    Object.entries(ownerProductMap).forEach(([owner, products]) => {
+        if (products.length > 3) {
+            ownerOverload.push({
+                owner: owner,
+                productCount: products.length,
+                products: products.map(p => p.name)
+            });
+        }
+    });
+    
+    // Sort by product count (descending)
+    ownerOverload.sort((a, b) => b.productCount - a.productCount);
+    
+    // ===== 2. METRIC HEALTH CHECKS =====
+    // Identify data quality issues for each product
+    
+    const dataHealthIssues = [];
+    
+    // Helper to check if value is invalid (missing or N/A)
+    const isInvalid = (val) => {
+        if (!val || val === '' || val === 'N/A' || val === '-') return true;
+        return false;
+    };
+    
+    // Helper to check if a value is a valid number
+    const isValidNumber = (val) => {
+        if (isInvalid(val)) return false;
+        const num = parseFloat(val);
+        return !isNaN(num);
+    };
+    
+    // Helper to get the most recent non-empty monthly value
+    const getMostRecentValue = (monthlyArray) => {
+        if (!monthlyArray || !Array.isArray(monthlyArray)) return null;
+        
+        // Iterate from end to beginning to find most recent value
+        for (let i = monthlyArray.length - 1; i >= 0; i--) {
+            const val = monthlyArray[i];
+            if (isValidNumber(val)) {
+                return parseFloat(val);
+            }
+        }
+        return null;
+    };
+    
+    portfolioData.forEach(product => {
+        const issues = [];
+        
+        // Check 1: Missing UX metric definition
+        if (isInvalid(product.keyMetricUX)) {
+            issues.push('Missing UX Metric');
+        }
+        
+        // Check 2: Missing BI metric definition
+        if (isInvalid(product.keyMetricBI)) {
+            issues.push('Missing BI Metric');
+        }
+        
+        // Check 3: Missing UX target
+        if (isInvalid(product.targetUX) && !isInvalid(product.keyMetricUX)) {
+            issues.push('Missing UX Target');
+        }
+        
+        // Check 4: Missing BI target
+        if (isInvalid(product.targetBI) && !isInvalid(product.keyMetricBI)) {
+            issues.push('Missing BI Target');
+        }
+        
+        // Check 5: Most recent UX monthly value below target
+        if (!isInvalid(product.keyMetricUX) && isValidNumber(product.targetUX)) {
+            const mostRecentUX = getMostRecentValue(product.monthlyUX);
+            const targetUX = parseFloat(product.targetUX);
+            
+            if (mostRecentUX !== null && mostRecentUX < targetUX) {
+                issues.push(`Below UX Target (${mostRecentUX} < ${targetUX})`);
+            }
+        }
+        
+        // Check 6: Most recent BI monthly value below target
+        if (!isInvalid(product.keyMetricBI) && isValidNumber(product.targetBI)) {
+            const mostRecentBI = getMostRecentValue(product.monthlyBI);
+            const targetBI = parseFloat(product.targetBI);
+            
+            if (mostRecentBI !== null && mostRecentBI < targetBI) {
+                issues.push(`Below BI Target (${mostRecentBI} < ${targetBI})`);
+            }
+        }
+        
+        // If any issues found, add to report
+        if (issues.length > 0) {
+            dataHealthIssues.push({
+                id: product.id,
+                name: product.name,
+                area: product.area,
+                owner: product.owner,
+                maturity: product.maturity,
+                issueCount: issues.length,
+                issues: issues
+            });
+        }
+    });
+    
+    // Sort data health issues by issue count (descending)
+    dataHealthIssues.sort((a, b) => b.issueCount - a.issueCount);
+    
+    // ===== CONSTRUCT ANOMALY REPORT =====
+    const anomalyReport = {
+        ownerOverload: ownerOverload,
+        dataHealthIssues: dataHealthIssues,
+        summary: {
+            totalOwnerOverloads: ownerOverload.length,
+            totalDataHealthIssues: dataHealthIssues.length,
+            totalAnomalies: ownerOverload.length + dataHealthIssues.length,
+            timestamp: new Date().toISOString()
+        }
+    };
+    
+    console.log('✅ Anomaly detection complete:', {
+        ownerOverloads: anomalyReport.summary.totalOwnerOverloads,
+        dataHealthIssues: anomalyReport.summary.totalDataHealthIssues,
+        totalAnomalies: anomalyReport.summary.totalAnomalies
+    });
+    
+    return anomalyReport;
+}
+
+/**
  * Calculate comprehensive portfolio metrics for Executive View
  * Returns a structured object with all high-level, actionable insights
  */
@@ -879,6 +1055,7 @@ window.DataManager = {
     calculateRiskScore,
     analyzePortfolioData,
     calculatePortfolioMetrics,
+    checkAnomalies,
     
     // Getters (proxy to State)
     getPortfolioData,

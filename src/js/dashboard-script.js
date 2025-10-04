@@ -10,6 +10,71 @@
 // ==================== DATA LOADING & INITIALIZATION ====================
 
 /**
+ * Test anomaly detection with current portfolio data
+ * Logs results to console for verification
+ */
+function testAnomalyDetection() {
+    console.log('='.repeat(60));
+    console.log('ANOMALY DETECTION TEST');
+    console.log('='.repeat(60));
+    
+    const portfolioData = window.State.getPortfolioData();
+    
+    if (!portfolioData || portfolioData.length === 0) {
+        console.warn('⚠️ No portfolio data available. Load data first.');
+        return;
+    }
+    
+    // Run anomaly detection
+    const anomalyReport = window.DataManager.checkAnomalies();
+    
+    // Log full report
+    console.log('\n📊 ANOMALY REPORT:');
+    console.log(JSON.stringify(anomalyReport, null, 2));
+    
+    console.log('\n📈 SUMMARY:');
+    console.log(`  • Total Owner Overloads: ${anomalyReport.summary.totalOwnerOverloads}`);
+    console.log(`  • Total Data Health Issues: ${anomalyReport.summary.totalDataHealthIssues}`);
+    console.log(`  • Total Anomalies: ${anomalyReport.summary.totalAnomalies}`);
+    console.log(`  • Generated: ${anomalyReport.summary.timestamp}`);
+    
+    if (anomalyReport.ownerOverload.length > 0) {
+        console.log('\n⚠️ OWNER OVERLOAD (>3 products in Development/Growth):');
+        anomalyReport.ownerOverload.forEach((item, index) => {
+            console.log(`  ${index + 1}. ${item.owner} (${item.productCount} products):`);
+            item.products.forEach(productName => {
+                console.log(`     - ${productName}`);
+            });
+        });
+    } else {
+        console.log('\n✅ No owner overloads detected');
+    }
+    
+    if (anomalyReport.dataHealthIssues.length > 0) {
+        console.log(`\n🏥 DATA HEALTH ISSUES (${anomalyReport.dataHealthIssues.length} products with issues):`);
+        console.log('  Top 10 products with most issues:');
+        anomalyReport.dataHealthIssues.slice(0, 10).forEach((item, index) => {
+            console.log(`  ${index + 1}. ${item.name} (${item.issueCount} issues):`);
+            item.issues.forEach(issue => {
+                console.log(`     - ${issue}`);
+            });
+        });
+        
+        if (anomalyReport.dataHealthIssues.length > 10) {
+            console.log(`  ... and ${anomalyReport.dataHealthIssues.length - 10} more products with issues`);
+        }
+    } else {
+        console.log('\n✅ No data health issues detected');
+    }
+    
+    console.log('\n' + '='.repeat(60));
+    console.log('TEST COMPLETE');
+    console.log('='.repeat(60));
+    
+    return anomalyReport;
+}
+
+/**
  * Main initialization function
  * Orchestrates data loading and UI setup
  */
@@ -23,6 +88,7 @@ async function initialize() {
     initAutoUpdate();
     
     console.log('✅ Dashboard ready');
+    console.log('\n💡 TIP: Run testAnomalyDetection() in console to test anomaly detection');
 }
 
 /**
@@ -159,6 +225,9 @@ window.applyFilters = function() {
 window.clearFilters = function() {
     window.UIManager.clearFilters();
 };
+
+// Expose test function globally for manual testing in console
+window.testAnomalyDetection = testAnomalyDetection;
 
 // ==================== INITIALIZATION ====================
 

@@ -84,11 +84,25 @@ async function initialize() {
     // Setup UI event listeners
     setupEventListeners();
     
+    // Try to load cached data first for instant display
+    const cachedData = window.DataManager.loadCachedData();
+    if (cachedData && cachedData.length > 0) {
+        console.log(`📦 Loading ${cachedData.length} products from cache...`);
+        window.State.setPortfolioData(cachedData);
+        window.UIManager.renderCards();
+        window.UIManager.updateStats();
+        window.UIManager.updateLastUpdateDisplay();
+        console.log('✅ Cached data loaded');
+    } else {
+        console.log('⚠️ No cached data found - click "Refresh Data" button to load');
+    }
+    
     // Initialize auto-update system
     initAutoUpdate();
     
     console.log('✅ Dashboard ready');
-    console.log('\n💡 TIP: Run testAnomalyDetection() in console to test anomaly detection');
+    console.log('\n💡 TIP: Click "Refresh Data" to load latest data from Google Sheets');
+    console.log('💡 TIP: Run testAnomalyDetection() in console to test anomaly detection');
 }
 
 /**

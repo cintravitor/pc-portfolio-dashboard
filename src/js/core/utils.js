@@ -247,6 +247,31 @@ function isInRange(value, min, max) {
     return value >= min && value <= max;
 }
 
+// ==================== UI UTILITIES ====================
+
+/**
+ * Get CSS class for maturity stage status badge
+ * 
+ * @param {string} maturity - Maturity stage (e.g., '1. Development', '2. Growth')
+ * @returns {string} CSS class name
+ * 
+ * @example
+ * getStatusClass('1. Development'); // Returns: 'status-development'
+ * getStatusClass('2. Growth'); // Returns: 'status-growth'
+ */
+function getStatusClass(maturity) {
+    if (!maturity || typeof maturity !== 'string') return 'status-unknown';
+    
+    const maturityLower = maturity.toLowerCase();
+    
+    if (maturityLower.includes('development')) return 'status-development';
+    if (maturityLower.includes('growth')) return 'status-growth';
+    if (maturityLower.includes('mature')) return 'status-mature';
+    if (maturityLower.includes('decline')) return 'status-decline';
+    
+    return 'status-unknown';
+}
+
 // ==================== DOM UTILITIES ====================
 
 /**
@@ -467,6 +492,9 @@ window.Utils = {
     // Validation
     isEmpty,
     isInRange,
+    
+    // UI
+    getStatusClass,
     
     // DOM
     getElement,

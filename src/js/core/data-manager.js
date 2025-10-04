@@ -1,19 +1,20 @@
 /**
  * Data Manager Module
  * Handles all data-related operations: fetching, processing, caching, and calculations
+ * 
+ * REFACTORED: Now uses centralized State management (window.State)
+ * - Removed global variables (portfolioData, filteredData, columnMapping)
+ * - All state access goes through window.State getters/setters
+ * - Utility functions accessed via window.Utils
  */
 
-// ==================== DATA STATE ====================
-
-// Global data variables
-let portfolioData = [];
-let filteredData = [];
-let columnMapping = {}; // Dynamic column mapping based on headers
-
-// Constants
-const UPDATE_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
-const STORAGE_KEY = 'portfolio_last_update';
-const DATA_CACHE_KEY = 'portfolio_data_cache';
+// ==================== NOTE: STATE MANAGEMENT ====================
+// This module NO LONGER maintains its own state variables.
+// All state is managed through window.State:
+// - window.State.getPortfolioData() / setPortfolioData()
+// - window.State.getFilteredData() / setFilteredData()
+// - window.State.getColumnMapping() / setColumnMapping()
+// - window.State.getConstants() for configuration values
 
 // ==================== DATA FETCHING ====================
 
@@ -63,8 +64,8 @@ async function fetchSheetData() {
         
         const headers = rows[1]; // Get the actual column headers from row 1
         
-        // Create dynamic column mapping
-        columnMapping = {
+        // Create dynamic column mapping - Store in State
+        const columnMapping = {
             area: headers.indexOf("P'n'C Area"),
             name: headers.indexOf("Solution name"),
             problem: headers.indexOf("Which Problem it Solves"),
@@ -99,10 +100,13 @@ async function fetchSheetData() {
             columnMapping.monthsBI = months.map(month => headers.indexOf(month, keyMetricBIIdx));
         }
         
+        // Store column mapping in State
+        window.State.setColumnMapping(columnMapping);
+        
         // Transform data rows (starting from row 2)
         const dataRows = rows.slice(2);
         
-        portfolioData = dataRows
+        const portfolioData = dataRows
             .filter(row => {
                 const hasName = row[columnMapping.name] && row[columnMapping.name].toString().trim();
                 if (!hasName && row.some(cell => cell && cell.toString().trim())) {
@@ -135,6 +139,9 @@ async function fetchSheetData() {
         
         console.log(`Processed ${portfolioData.length} products`);
 
+        // Store in centralized State
+        window.State.setPortfolioData(portfolioData);
+        
         // Cache and update
         cacheData(portfolioData);
         updateLastFetchTime();
@@ -153,8 +160,11 @@ async function fetchSheetData() {
  * Apply filters to the data
  */
 function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '', sortBy = '') {
+    // Get portfolio data from State
+    const portfolioData = window.State.getPortfolioData();
+    
     // First, filter the data
-    filteredData = portfolioData.filter(product => {
+    let filteredData = portfolioData.filter(product => {
         const matchesSearch = !searchTerm || 
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.problem.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -172,6 +182,9 @@ function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', own
     if (sortBy) {
         filteredData = sortData(filteredData, sortBy);
     }
+
+    // Store filtered data in State
+    window.State.setFilteredData(filteredData);
 
     return filteredData;
 }
@@ -227,6 +240,7 @@ function sortData(data, sortBy) {
  * Get unique filter values
  */
 function getFilterOptions() {
+    const portfolioData = window.State.getPortfolioData();
     return {
         areas: [...new Set(portfolioData.map(p => p.area).filter(Boolean))].sort(),
         maturities: [...new Set(portfolioData.map(p => p.maturity).filter(Boolean))].sort(),
@@ -241,6 +255,7 @@ function getFilterOptions() {
  */
 function cacheData(data) {
     try {
+        const DATA_CACHE_KEY = window.State.getConstant('DATA_CACHE_KEY');
         localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(data));
     } catch (e) {
         console.warn('Failed to cache data:', e);
@@ -252,10 +267,13 @@ function cacheData(data) {
  */
 function loadCachedData() {
     try {
+        const DATA_CACHE_KEY = window.State.getConstant('DATA_CACHE_KEY');
         const cached = localStorage.getItem(DATA_CACHE_KEY);
         if (cached) {
-            portfolioData = JSON.parse(cached);
-            return portfolioData;
+            const data = JSON.parse(cached);
+            // Store loaded data in State
+            window.State.setPortfolioData(data);
+            return data;
         }
     } catch (e) {
         console.warn('Failed to load cached data:', e);
@@ -268,7 +286,10 @@ function loadCachedData() {
  */
 function updateLastFetchTime() {
     const now = new Date();
+    const STORAGE_KEY = window.State.getConstant('STORAGE_KEY');
     localStorage.setItem(STORAGE_KEY, now.toISOString());
+    // Also store in State
+    window.State.setLastUpdateTime(now.getTime());
     return now;
 }
 
@@ -276,6 +297,7 @@ function updateLastFetchTime() {
  * Get last update time
  */
 function getLastUpdateTime() {
+    const STORAGE_KEY = window.State.getConstant('STORAGE_KEY');
     const lastUpdate = localStorage.getItem(STORAGE_KEY);
     return lastUpdate ? new Date(lastUpdate) : null;
 }
@@ -284,6 +306,8 @@ function getLastUpdateTime() {
  * Check if data should be refreshed
  */
 function shouldRefreshData() {
+    const STORAGE_KEY = window.State.getConstant('STORAGE_KEY');
+    const UPDATE_INTERVAL = window.State.getConstant('UPDATE_INTERVAL');
     const lastUpdate = localStorage.getItem(STORAGE_KEY);
     if (!lastUpdate) return true;
     const timeDiff = new Date() - new Date(lastUpdate);
@@ -590,6 +614,9 @@ function analyzeHealthFactors(portfolioData, productMetrics) {
 function calculatePortfolioMetrics() {
     console.log('Calculating portfolio metrics for Executive View...');
     
+    // Get portfolio data from State
+    const portfolioData = window.State.getPortfolioData();
+    
     if (!portfolioData || portfolioData.length === 0) {
         console.warn('No portfolio data available for metrics calculation');
         return null;
@@ -775,49 +802,44 @@ function calculatePortfolioMetrics() {
 
 // ==================== UTILITIES ====================
 
-/**
- * Debounce utility - delays function execution until after wait period
- * Prevents excessive filtering on every keystroke
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func.apply(this, args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
 // ==================== GETTERS ====================
+// These functions provide convenient access to state data
+// They proxy to window.State for consistency
 
 /**
  * Get current portfolio data
+ * @returns {Array} Portfolio data array
  */
 function getPortfolioData() {
-    return portfolioData;
+    return window.State.getPortfolioData();
 }
 
 /**
  * Get current filtered data
+ * @returns {Array} Filtered data array
  */
 function getFilteredData() {
-    return filteredData;
+    return window.State.getFilteredData();
 }
 
 /**
  * Get data by product ID
+ * @param {number} id - Product ID
+ * @returns {Object|undefined} Product object or undefined
  */
 function getProductById(id) {
+    const portfolioData = window.State.getPortfolioData();
     return portfolioData.find(p => p.id === id);
 }
 
 /**
  * Get statistics for live and dev products
+ * @returns {Object} Statistics object with total, showing, live, and dev counts
  */
 function getProductStats() {
+    const portfolioData = window.State.getPortfolioData();
+    const filteredData = window.State.getFilteredData();
+    
     return {
         total: portfolioData.length,
         showing: filteredData.length,
@@ -828,7 +850,14 @@ function getProductStats() {
 
 // ==================== EXPORTS ====================
 
-// Expose public API globally for access by other modules
+/**
+ * Expose public API globally for access by other modules
+ * 
+ * REFACTORED ARCHITECTURE:
+ * - All state access goes through window.State (see core/state.js)
+ * - Utility functions accessed via window.Utils (see core/utils.js)
+ * - This module now focuses purely on data operations
+ */
 window.DataManager = {
     // Data fetching
     fetchSheetData,
@@ -851,13 +880,15 @@ window.DataManager = {
     analyzePortfolioData,
     calculatePortfolioMetrics,
     
-    // Utilities
-    debounce,
-    
-    // Getters
+    // Getters (proxy to State)
     getPortfolioData,
     getFilteredData,
     getProductById,
-    getProductStats
+    getProductStats,
+    
+    // Utility reference (for backward compatibility)
+    debounce: window.Utils ? window.Utils.debounce : null
 };
+
+console.log('✅ Data Manager module loaded (Refactored)');
 

@@ -1,14 +1,19 @@
-# macOS
-.DS_Store
+# Archive folder - contains old backup files
+archive/
 
-# Editor directories
+# Node modules
+node_modules/
+
+# Local environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
 .vscode/
 .idea/
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-
+*.swp
+*.swo

@@ -1,25 +1,32 @@
 /**
  * UI Manager Module
  * Handles all user interface operations: rendering, tab management, events, and DOM manipulation
+ * 
+ * REFACTORED: Now uses centralized State management (window.State)
+ * - Removed local state variables (currentTab, analysisDataLoaded, chartJsLoaded, chartInstances)
+ * - All state access goes through window.State getters/setters
+ * - Utility functions accessed via window.Utils
  */
 
-// ==================== STATE ====================
-
-let currentTab = 'portfolio-overview'; // Track current active tab
-let analysisDataLoaded = false; // Track if analysis has been loaded
-let chartJsLoaded = false; // Track Chart.js loading state
-let chartInstances = {}; // Store chart instances to prevent memory leaks
+// ==================== NOTE: STATE MANAGEMENT ====================
+// This module NO LONGER maintains its own state variables.
+// All UI state is managed through window.State:
+// - window.State.getCurrentTab() / setCurrentTab()
+// - window.State.isAnalysisDataLoaded() / setAnalysisDataLoaded()
+// - window.State.isChartJsLoaded() / setChartJsLoaded()
+// - window.State.getChartInstance() / setChartInstance() / removeChartInstance()
 
 // ==================== TAB MANAGEMENT ====================
 
 /**
  * Switch between tabs
+ * @param {string} tabName - Tab identifier
  */
 function switchTab(tabName) {
     console.log(`Switching to tab: ${tabName}`);
     
-    // Update current tab
-    currentTab = tabName;
+    // Update current tab in State
+    window.State.setCurrentTab(tabName);
     
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -48,7 +55,7 @@ function switchTab(tabName) {
     }
     
     // Load analysis data if switching to analysis tab for the first time
-    if (tabName === 'descriptive-analysis' && !analysisDataLoaded) {
+    if (tabName === 'descriptive-analysis' && !window.State.isAnalysisDataLoaded()) {
         loadDescriptiveAnalysis();
     }
     
@@ -362,12 +369,14 @@ function showDetailPanel(productId) {
  */
 function hideDetailPanel() {
     // Destroy all chart instances to prevent memory leaks
+    const chartInstances = window.State.getChartInstances();
     Object.values(chartInstances).forEach(chart => {
         if (chart && chart.destroy) {
             chart.destroy();
         }
     });
-    chartInstances = {};
+    // Clear all chart instances in State
+    window.State.clearAllChartInstances();
     
     const panel = document.getElementById('detail-panel');
     const mainContent = document.getElementById('main-content');
@@ -390,7 +399,7 @@ function hideDetailPanel() {
  * This improves initial page load by ~200ms and saves ~120KB
  */
 function loadChartJs() {
-    if (window.Chart || chartJsLoaded) {
+    if (window.Chart || window.State.isChartJsLoaded()) {
         return Promise.resolve();
     }
     
@@ -399,7 +408,7 @@ function loadChartJs() {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
         script.onload = () => {
-            chartJsLoaded = true;
+            window.State.setChartJsLoaded(true);
             console.log('Chart.js loaded successfully');
             resolve();
         };
@@ -419,9 +428,10 @@ function renderMetricChart(canvasId, monthlyData, targetValue, metricName) {
             return;
         }
         
-        // Destroy existing chart if it exists
-        if (chartInstances[canvasId]) {
-            chartInstances[canvasId].destroy();
+        // Destroy existing chart if it exists (use State)
+        const existingChart = window.State.getChartInstance(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
         }
         
         const ctx = canvas.getContext('2d');
@@ -449,7 +459,8 @@ function renderMetricChart(canvasId, monthlyData, targetValue, metricName) {
         return;
     }
     
-    chartInstances[canvasId] = new Chart(ctx, {
+    // Create chart and store in State
+    const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: months,
@@ -575,6 +586,10 @@ function renderMetricChart(canvasId, monthlyData, targetValue, metricName) {
             }
         }
     });
+        
+        // Store chart instance in State
+        window.State.setChartInstance(canvasId, chart);
+        
     } catch (error) {
         console.error('Error rendering chart:', error);
         const canvas = document.getElementById(canvasId);
@@ -1447,8 +1462,8 @@ async function loadDescriptiveAnalysis() {
         // Display the analysis results
         displayAnalysisResults(analysis);
         
-        // Mark as loaded
-        analysisDataLoaded = true;
+        // Mark as loaded in State
+        window.State.setAnalysisDataLoaded(true);
         console.log('✅ Descriptive analysis loaded successfully');
         
     } catch (error) {
@@ -1896,7 +1911,14 @@ function getStatusClass(maturity) {
 
 // ==================== EXPORTS ====================
 
-// Expose public API
+/**
+ * Expose public API
+ * 
+ * REFACTORED ARCHITECTURE:
+ * - All UI state is now managed through window.State
+ * - Utility functions accessed via window.Utils
+ * - This module now focuses purely on UI rendering and interaction
+ */
 window.UIManager = {
     switchTab,
     setupTacticalFilters,
@@ -1915,4 +1937,6 @@ window.UIManager = {
     showError,
     hideError
 };
+
+console.log('✅ UI Manager module loaded (Refactored)');
 

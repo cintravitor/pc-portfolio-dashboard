@@ -81,6 +81,14 @@
                     <p id="error-message"></p>
                     <button class="refresh-btn" onclick="fetchSheetData()" style="margin-top: 1rem;">Try Again</button>
                 </div>
+                <!-- Active Filter Pills Container -->
+                <div id="filter-pills-container" class="filter-pills-container" style="display: none;">
+                    <div class="filter-pills-label">Active Filters:</div>
+                    <div id="filter-pills" class="filter-pills"></div>
+                    <button class="clear-all-pills" onclick="clearFilters()" title="Clear all filters">
+                        Clear All
+                    </button>
+                </div>
                 <div id="empty-state" class="empty-state hidden">
                     <h2>📭 No Results Found</h2>
                     <p style="color: #6b7280; margin-top: 0.5rem;">Try adjusting your filters or search terms</p>

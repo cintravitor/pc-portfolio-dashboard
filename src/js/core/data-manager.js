@@ -614,8 +614,6 @@ function analyzeHealthFactors(portfolioData, productMetrics) {
  * @returns {Object} Consolidated anomaly report with categorized anomalies
  */
 function checkAnomalies() {
-    console.log('Running anomaly detection checks...');
-    
     // Get portfolio data from State
     const portfolioData = window.State.getPortfolioData();
     
@@ -773,13 +771,6 @@ function checkAnomalies() {
             timestamp: new Date().toISOString()
         }
     };
-    
-    console.log('✅ Anomaly detection complete:', {
-        ownerOverloads: anomalyReport.summary.totalOwnerOverloads,
-        dataHealthIssues: anomalyReport.summary.totalDataHealthIssues,
-        totalAnomalies: anomalyReport.summary.totalAnomalies
-    });
-    
     return anomalyReport;
 }
 
@@ -978,6 +969,79 @@ function calculatePortfolioMetrics() {
 
 // ==================== UTILITIES ====================
 
+/**
+ * Get summary metrics for a product card (optimized display)
+ * Returns compact metric status for at-a-glance viewing
+ * 
+ * @param {Object} product - Product object
+ * @returns {Object} Summary metrics with status indicators
+ */
+function getCardSummaryMetrics(product) {
+    // Helper to check if value is invalid
+    const isInvalid = (val) => !val || val === '' || val === 'N/A' || val === '-';
+    
+    // Helper to check if value is a valid number
+    const isValidNumber = (val) => {
+        if (isInvalid(val)) return false;
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0;
+    };
+    
+    // Helper to get most recent monthly value
+    const getMostRecentValue = (monthlyArray) => {
+        if (!Array.isArray(monthlyArray) || monthlyArray.length === 0) {
+            return null;
+        }
+        
+        // Find the last non-empty, non-N/A value
+        for (let i = monthlyArray.length - 1; i >= 0; i--) {
+            const val = monthlyArray[i];
+            if (isValidNumber(val)) {
+                return parseFloat(val);
+            }
+        }
+        return null;
+    };
+    
+    // Calculate UX status
+    let uxStatus = 'gray'; // Default: no data
+    const mostRecentUX = getMostRecentValue(product.monthlyUX);
+    const targetUX = isValidNumber(product.targetUX) ? parseFloat(product.targetUX) : null;
+    
+    if (mostRecentUX !== null && targetUX !== null) {
+        uxStatus = mostRecentUX >= targetUX ? 'green' : 'red';
+    } else if (isInvalid(product.keyMetricUX)) {
+        uxStatus = 'gray'; // No metric defined
+    }
+    
+    // Calculate BI status
+    let biStatus = 'gray'; // Default: no data
+    const mostRecentBI = getMostRecentValue(product.monthlyBI);
+    const targetBI = isValidNumber(product.targetBI) ? parseFloat(product.targetBI) : null;
+    
+    if (mostRecentBI !== null && targetBI !== null) {
+        biStatus = mostRecentBI >= targetBI ? 'green' : 'red';
+    } else if (isInvalid(product.keyMetricBI)) {
+        biStatus = 'gray'; // No metric defined
+    }
+    
+    // Return summary object
+    return {
+        owner: product.owner || 'Not assigned',
+        problem: product.problem || 'No problem statement defined',
+        maturity: product.maturity || 'Not specified',
+        area: product.area || 'Not specified',
+        uxStatus: uxStatus,
+        biStatus: biStatus,
+        uxMetric: product.keyMetricUX || 'N/A',
+        biMetric: product.keyMetricBI || 'N/A',
+        uxValue: mostRecentUX !== null ? mostRecentUX : null,
+        biValue: mostRecentBI !== null ? mostRecentBI : null,
+        uxTarget: targetUX,
+        biTarget: targetBI
+    };
+}
+
 // ==================== GETTERS ====================
 // These functions provide convenient access to state data
 // They proxy to window.State for consistency
@@ -1056,6 +1120,7 @@ window.DataManager = {
     analyzePortfolioData,
     calculatePortfolioMetrics,
     checkAnomalies,
+    getCardSummaryMetrics,
     
     // Getters (proxy to State)
     getPortfolioData,

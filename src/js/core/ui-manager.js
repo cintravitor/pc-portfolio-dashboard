@@ -151,6 +151,7 @@ function applyFiltersFromUI() {
     
     renderCards();
     updateStats();
+    renderFilterPills(); // Update filter pills UI
 }
 
 /**
@@ -165,10 +166,156 @@ function clearFilters() {
     applyFiltersFromUI();
 }
 
+// ==================== FILTER PILLS ====================
+
+/**
+ * Render active filter pills
+ * Shows visual tags for each active filter with remove buttons
+ */
+function renderFilterPills() {
+    const pillsContainer = document.getElementById('filter-pills-container');
+    const pillsElement = document.getElementById('filter-pills');
+    
+    if (!pillsContainer || !pillsElement) {
+        console.warn('Filter pills container not found');
+        return;
+    }
+    
+    // Get current filter values
+    const searchTerm = document.getElementById('search-input')?.value || '';
+    const areaFilter = document.getElementById('filter-area')?.value || '';
+    const maturityFilter = document.getElementById('filter-maturity')?.value || '';
+    const ownerFilter = document.getElementById('filter-owner')?.value || '';
+    const sortBy = document.getElementById('sort-by')?.value || '';
+    
+    // Build array of active filters
+    const activeFilters = [];
+    
+    if (searchTerm.trim()) {
+        activeFilters.push({
+            type: 'search',
+            label: 'Search',
+            value: searchTerm,
+            icon: '🔍'
+        });
+    }
+    
+    if (areaFilter) {
+        activeFilters.push({
+            type: 'area',
+            label: 'Area',
+            value: areaFilter,
+            icon: '🏢'
+        });
+    }
+    
+    if (maturityFilter) {
+        activeFilters.push({
+            type: 'maturity',
+            label: 'Maturity',
+            value: maturityFilter,
+            icon: '🔄'
+        });
+    }
+    
+    if (ownerFilter) {
+        activeFilters.push({
+            type: 'owner',
+            label: 'Owner',
+            value: ownerFilter,
+            icon: '👤'
+        });
+    }
+    
+    if (sortBy) {
+        const sortLabels = {
+            'name-asc': 'Name (A-Z)',
+            'name-desc': 'Name (Z-A)',
+            'maturity-asc': 'Maturity Stage',
+            'area-asc': 'Area (A-Z)',
+            'owner-asc': 'Owner (A-Z)'
+        };
+        activeFilters.push({
+            type: 'sort',
+            label: 'Sort',
+            value: sortLabels[sortBy] || sortBy,
+            icon: '⬆️'
+        });
+    }
+    
+    // Show or hide container based on active filters
+    if (activeFilters.length === 0) {
+        pillsContainer.style.display = 'none';
+        return;
+    }
+    
+    pillsContainer.style.display = 'flex';
+    
+    // Render pills
+    pillsElement.innerHTML = activeFilters.map((filter, index) => `
+        <div class="filter-pill" data-filter-type="${filter.type}" data-filter-index="${index}">
+            <span class="filter-pill-icon">${filter.icon}</span>
+            <span class="filter-pill-text">
+                <strong>${escapeHtml(filter.label)}:</strong> ${escapeHtml(filter.value)}
+            </span>
+            <button class="filter-pill-remove" 
+                    onclick="removeFilterPill('${filter.type}')" 
+                    title="Remove ${escapeHtml(filter.label)} filter"
+                    aria-label="Remove ${escapeHtml(filter.label)} filter">
+                ×
+            </button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Remove a specific filter pill
+ * @param {string} filterType - Type of filter to remove ('search', 'area', 'maturity', 'owner', 'sort')
+ */
+function removeFilterPill(filterType) {
+    // Clear the specific filter
+    switch (filterType) {
+        case 'search':
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+            break;
+            
+        case 'area':
+            const areaFilter = document.getElementById('filter-area');
+            if (areaFilter) areaFilter.value = '';
+            break;
+            
+        case 'maturity':
+            const maturityFilter = document.getElementById('filter-maturity');
+            if (maturityFilter) maturityFilter.value = '';
+            break;
+            
+        case 'owner':
+            const ownerFilter = document.getElementById('filter-owner');
+            if (ownerFilter) ownerFilter.value = '';
+            break;
+            
+        case 'sort':
+            const sortBy = document.getElementById('sort-by');
+            if (sortBy) sortBy.value = '';
+            break;
+            
+        default:
+            console.warn('Unknown filter type:', filterType);
+            return;
+    }
+    
+    // Re-apply filters and update UI
+    applyFiltersFromUI();
+}
+
+// Expose removeFilterPill globally for onclick handlers
+window.removeFilterPill = removeFilterPill;
+
 // ==================== CARD RENDERING ====================
 
 /**
- * Render product cards
+ * Render product cards (optimized compact design)
  */
 function renderCards() {
     const container = document.getElementById('cards-container');
@@ -184,46 +331,91 @@ function renderCards() {
     emptyState.classList.add('hidden');
     container.classList.remove('hidden');
 
-    container.innerHTML = filteredData.map(product => `
-        <div class="product-card fade-in" data-product-id="${product.id}">
-            <div class="card-header">
-                <div class="card-title">
+    container.innerHTML = filteredData.map(product => {
+        // Get summary metrics for compact display
+        const summary = window.DataManager.getCardSummaryMetrics(product);
+        
+        // Generate metric status indicators
+        const uxIndicator = getMetricIndicator('UX', summary.uxStatus, summary.uxMetric, summary.uxValue, summary.uxTarget);
+        const biIndicator = getMetricIndicator('BI', summary.biStatus, summary.biMetric, summary.biValue, summary.biTarget);
+        
+        return `
+        <div class="product-card product-card-compact fade-in" data-product-id="${product.id}">
+            <div class="card-header-compact">
+                <div class="card-title-compact">
                     ${escapeHtml(product.name)}
                 </div>
-                <div class="card-subtitle">
-                    ${escapeHtml(product.area)}
-                </div>
+                <span class="status-badge-compact ${getStatusClass(summary.maturity)}">
+                    ${escapeHtml(summary.maturity)}
+                </span>
             </div>
-            <div class="card-body">
-                <div class="card-field">
-                    <div class="field-label">Maturity Stage</div>
-                    <div class="field-value">
-                        <span class="status-badge ${getStatusClass(product.maturity)}">
-                            ${escapeHtml(product.maturity) || 'Not specified'}
-                        </span>
+            
+            <div class="card-body-compact">
+                <div class="card-meta-row">
+                    <div class="card-meta-item">
+                        <span class="meta-icon">🏢</span>
+                        <span class="meta-text">${escapeHtml(summary.area)}</span>
+                    </div>
+                    <div class="card-meta-item">
+                        <span class="meta-icon">👤</span>
+                        <span class="meta-text">${truncateText(escapeHtml(summary.owner), 25)}</span>
                     </div>
                 </div>
-                <div class="card-field">
-                    <div class="field-label">Problem it Solves</div>
-                    <div class="field-value ${!product.problem ? 'empty' : ''}">
-                        ${truncateText(escapeHtml(product.problem), 150) || 'Not specified'}
-                    </div>
+                
+                <div class="card-problem">
+                    ${truncateText(escapeHtml(summary.problem), 80)}
                 </div>
-                <div class="card-field">
-                    <div class="field-label">Owner</div>
-                    <div class="field-value ${!product.owner ? 'empty' : ''}">
-                        ${escapeHtml(product.owner) || 'Not assigned'}
-                    </div>
-                </div>
-                <div class="card-field">
-                    <div class="field-label">Target User</div>
-                    <div class="field-value ${!product.targetUser ? 'empty' : ''}">
-                        ${escapeHtml(product.targetUser) || 'Not specified'}
+                
+                <div class="card-metrics">
+                    <div class="metric-label">Metrics vs Target:</div>
+                    <div class="metric-indicators">
+                        ${uxIndicator}
+                        ${biIndicator}
                     </div>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
+}
+
+/**
+ * Generate metric indicator HTML
+ * @param {string} label - Metric label (UX or BI)
+ * @param {string} status - Status color (green, red, gray)
+ * @param {string} metricName - Name of the metric
+ * @param {number|null} value - Current value
+ * @param {number|null} target - Target value
+ * @returns {string} HTML for metric indicator
+ */
+function getMetricIndicator(label, status, metricName, value, target) {
+    let icon, tooltip, statusClass;
+    
+    switch (status) {
+        case 'green':
+            icon = '🟢';
+            statusClass = 'metric-green';
+            tooltip = `${label}: ${metricName}\nCurrent: ${value !== null ? value.toFixed(1) : 'N/A'} | Target: ${target !== null ? target.toFixed(1) : 'N/A'}\n✓ Meeting target`;
+            break;
+        case 'red':
+            icon = '🔴';
+            statusClass = 'metric-red';
+            tooltip = `${label}: ${metricName}\nCurrent: ${value !== null ? value.toFixed(1) : 'N/A'} | Target: ${target !== null ? target.toFixed(1) : 'N/A'}\n✗ Below target`;
+            break;
+        case 'gray':
+        default:
+            icon = '⚪';
+            statusClass = 'metric-gray';
+            tooltip = `${label}: ${metricName === 'N/A' ? 'Not defined' : 'No data available'}`;
+            break;
+    }
+    
+    return `
+        <div class="metric-indicator ${statusClass}" title="${tooltip}">
+            <span class="metric-icon">${icon}</span>
+            <span class="metric-label-text">${label}</span>
+        </div>
+    `;
 }
 
 // ==================== DETAIL PANEL ====================
@@ -265,80 +457,119 @@ function showDetailPanel(productId) {
             <div class="detail-subtitle">${escapeHtml(product.area)}</div>
         </div>
         <div class="detail-body">
-            <!-- Solution Scope Section -->
-            <div class="detail-section">
-                <div class="detail-section-title">Solution Scope</div>
-                <ul class="scope-list">
-                    ${scopeItems}
-                </ul>
-            </div>
-
-            <!-- Journey & Platform Section -->
-            <div class="detail-section">
-                <div class="detail-section-title">Journey & Platform</div>
-                <div class="detail-field">
-                    <div class="detail-field-label">Main Journey Stage</div>
-                    <div class="detail-field-value ${!product.journeyMain ? 'empty' : ''}">
-                        ${escapeHtml(product.journeyMain) || 'Not specified'}
+            <!-- SECTION 1: Core Details (Always Visible) -->
+            <div class="detail-collapsible-section">
+                <div class="detail-collapsible-header" data-section="core">
+                    <div class="collapsible-header-content">
+                        <span class="collapsible-icon">📋</span>
+                        <h3 class="collapsible-title">Core Details</h3>
+                        <span class="collapsible-subtitle">Essential product information</span>
                     </div>
+                    <span class="collapsible-toggle">–</span>
                 </div>
-                ${product.journeyCollateral ? `
-                <div class="detail-field">
-                    <div class="detail-field-label">Collateral Journey Stage</div>
-                    <div class="detail-field-value">${escapeHtml(product.journeyCollateral)}</div>
-                </div>
-                ` : ''}
-                <div class="detail-field">
-                    <div class="detail-field-label">User Interface Platform</div>
-                    <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
-                        ${escapeHtml(product.platform) || 'Not specified'}
+                <div class="detail-collapsible-content expanded" id="section-core">
+                    <!-- Solution Scope -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">Solution Scope</div>
+                        <ul class="scope-list">
+                            ${scopeItems}
+                        </ul>
                     </div>
-                </div>
-            </div>
-
-            <!-- Key Metrics Section -->
-            <div class="detail-section">
-                <div class="detail-section-title">Key Metrics - User Experience</div>
-                <div class="detail-field">
-                    <div class="detail-field-label">${escapeHtml(product.keyMetricUX) || 'Metric'}</div>
-                    <div class="chart-container">
-                        <canvas id="chart-ux"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Business Impact Section -->
-            <div class="detail-section">
-                <div class="detail-section-title">Key Metrics - Business Impact</div>
-                <div class="detail-field">
-                    <div class="detail-field-label">${escapeHtml(product.keyMetricBI) || 'Metric'}</div>
-                    <div class="chart-container">
-                        <canvas id="chart-bi"></canvas>
+                    
+                    <!-- Ownership & Compliance -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">Ownership & Compliance</div>
+                        <div class="detail-field">
+                            <div class="detail-field-label">Owner</div>
+                            <div class="detail-field-value">${escapeHtml(product.owner) || 'Not assigned'}</div>
+                        </div>
+                        <div class="detail-field">
+                            <div class="detail-field-label">Maturity Stage</div>
+                            <div class="detail-field-value">
+                                <span class="status-badge ${getStatusClass(product.maturity)}">
+                                    ${escapeHtml(product.maturity) || 'Not specified'}
+                                </span>
+                            </div>
+                        </div>
+                        ${product.regulatory ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Regulatory Demand</div>
+                            <div class="detail-field-value">${escapeHtml(product.regulatory)}</div>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
 
-            <!-- Ownership & Compliance -->
-            <div class="detail-section">
-                <div class="detail-section-title">Ownership & Compliance</div>
-                <div class="detail-field">
-                    <div class="detail-field-label">Owner</div>
-                    <div class="detail-field-value">${escapeHtml(product.owner) || 'Not assigned'}</div>
+            <!-- SECTION 2: Metrics & Performance (Collapsible, Collapsed by Default) -->
+            <div class="detail-collapsible-section">
+                <div class="detail-collapsible-header collapsed" data-section="metrics">
+                    <div class="collapsible-header-content">
+                        <span class="collapsible-icon">📊</span>
+                        <h3 class="collapsible-title">Metrics & Performance</h3>
+                        <span class="collapsible-subtitle">KPI tracking and trend charts</span>
+                    </div>
+                    <span class="collapsible-toggle">+</span>
                 </div>
-                <div class="detail-field">
-                    <div class="detail-field-label">Maturity Stage</div>
-                    <div class="detail-field-value">
-                        <span class="status-badge ${getStatusClass(product.maturity)}">
-                            ${escapeHtml(product.maturity) || 'Not specified'}
-                        </span>
+                <div class="detail-collapsible-content collapsed" id="section-metrics">
+                    <!-- Key Metrics - UX -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">Key Metrics - User Experience</div>
+                        <div class="detail-field">
+                            <div class="detail-field-label">${escapeHtml(product.keyMetricUX) || 'Metric'}</div>
+                            <div class="chart-container">
+                                <canvas id="chart-ux"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics - BI -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">Key Metrics - Business Impact</div>
+                        <div class="detail-field">
+                            <div class="detail-field-label">${escapeHtml(product.keyMetricBI) || 'Metric'}</div>
+                            <div class="chart-container">
+                                <canvas id="chart-bi"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                ${product.regulatory ? `
-                <div class="detail-field">
-                    <div class="detail-field-label">Regulatory Demand</div>
-                    <div class="detail-field-value">${escapeHtml(product.regulatory)}</div>
+            </div>
+
+            <!-- SECTION 3: Project Narrative (Collapsible, Collapsed by Default) -->
+            <div class="detail-collapsible-section">
+                <div class="detail-collapsible-header collapsed" data-section="narrative">
+                    <div class="collapsible-header-content">
+                        <span class="collapsible-icon">📝</span>
+                        <h3 class="collapsible-title">Project Narrative</h3>
+                        <span class="collapsible-subtitle">Journey stages and platform details</span>
+                    </div>
+                    <span class="collapsible-toggle">+</span>
                 </div>
-                ` : ''}
+                <div class="detail-collapsible-content collapsed" id="section-narrative">
+                    <!-- Journey & Platform -->
+                    <div class="detail-section">
+                        <div class="detail-section-title">Journey & Platform</div>
+                        <div class="detail-field">
+                            <div class="detail-field-label">Main Journey Stage</div>
+                            <div class="detail-field-value ${!product.journeyMain ? 'empty' : ''}">
+                                ${escapeHtml(product.journeyMain) || 'Not specified'}
+                            </div>
+                        </div>
+                        ${product.journeyCollateral ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Collateral Journey Stage</div>
+                            <div class="detail-field-value">${escapeHtml(product.journeyCollateral)}</div>
+                        </div>
+                        ` : ''}
+                        <div class="detail-field">
+                            <div class="detail-field-label">User Interface Platform</div>
+                            <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
+                                ${escapeHtml(product.platform) || 'Not specified'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -346,6 +577,9 @@ function showDetailPanel(productId) {
     panel.classList.remove('hidden');
     mainContent.classList.add('detail-open');
     contentLeft.classList.add('shrink');
+    
+    // Setup collapsible section event listeners
+    setupCollapsibleSections();
     
     // Load Chart.js and render charts after panel is visible
     setTimeout(() => {
@@ -367,6 +601,71 @@ function showDetailPanel(productId) {
                 }
             });
     }, 100);
+}
+
+/**
+ * Setup event listeners for collapsible sections in detail panel
+ */
+function setupCollapsibleSections() {
+    const headers = document.querySelectorAll('.detail-collapsible-header');
+    
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            toggleCollapsibleSection(header);
+        });
+    });
+}
+
+/**
+ * Toggle a collapsible section's expanded/collapsed state
+ * @param {HTMLElement} header - The header element that was clicked
+ */
+function toggleCollapsibleSection(header) {
+    const sectionId = header.getAttribute('data-section');
+    const content = document.getElementById(`section-${sectionId}`);
+    const toggle = header.querySelector('.collapsible-toggle');
+    
+    if (!content || !toggle) return;
+    
+    // Check current state
+    const isCollapsed = header.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        // Expand
+        header.classList.remove('collapsed');
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+        toggle.textContent = '–';
+        
+        // If expanding metrics section, load charts if not already loaded
+        if (sectionId === 'metrics') {
+            setTimeout(() => {
+                const uxChart = document.getElementById('chart-ux');
+                const biChart = document.getElementById('chart-bi');
+                
+                // Check if charts need to be rendered
+                if (uxChart && !uxChart.chart) {
+                    const product = window.State.getPortfolioData().find(p => {
+                        const selectedCard = document.querySelector('.product-card.selected');
+                        return selectedCard && p.id === parseInt(selectedCard.getAttribute('data-product-id'));
+                    });
+                    
+                    if (product) {
+                        loadChartJs().then(() => {
+                            renderMetricChart('chart-ux', product.monthlyUX, product.targetUX, product.keyMetricUX);
+                            renderMetricChart('chart-bi', product.monthlyBI, product.targetBI, product.keyMetricBI);
+                        });
+                    }
+                }
+            }, 300); // Wait for expand animation
+        }
+    } else {
+        // Collapse
+        header.classList.add('collapsed');
+        content.classList.remove('expanded');
+        content.classList.add('collapsed');
+        toggle.textContent = '+';
+    }
 }
 
 /**
@@ -677,6 +976,10 @@ function renderExecutiveView() {
     const healthSection = createHealthScoreSection(metrics);
     executiveContent.appendChild(healthSection);
     
+    // ========== 1.5. CLICKABLE KPI CARDS FOR DRILL-DOWN ==========
+    const kpiCardsSection = createDrillDownKPICards(metrics);
+    executiveContent.appendChild(kpiCardsSection);
+    
     // ========== 2. RISK & OPPORTUNITY MATRIX ==========
     const matrixSection = createRiskOpportunityMatrix(metrics);
     executiveContent.appendChild(matrixSection);
@@ -779,6 +1082,106 @@ function createHealthScoreSection(metrics) {
     narrativeDiv.className = 'executive-narrative';
     narrativeDiv.innerHTML = narrative;
     section.appendChild(narrativeDiv);
+    
+    return section;
+}
+
+/**
+ * Create Drill-Down KPI Cards - Clickable cards that filter Portfolio Overview
+ * These cards act as a command center for executives to drill into specific product segments
+ */
+function createDrillDownKPICards(metrics) {
+    const section = document.createElement('div');
+    section.className = 'executive-section kpi-drill-down-section';
+    
+    section.innerHTML = `
+        <h2 class="executive-section-title">🎯 Portfolio Command Center</h2>
+        <p class="executive-section-subtitle">Click any card to drill down into specific product segments</p>
+        
+        <div class="kpi-cards-grid">
+            <!-- High Risk Products Card -->
+            <div class="kpi-drill-card high-risk" data-drill-type="high-risk" onclick="drillDownToTacticalView('high-risk')">
+                <div class="kpi-drill-card-icon">🚨</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.riskBreakdown.high}</div>
+                    <div class="kpi-drill-card-label">High Risk Products</div>
+                    <div class="kpi-drill-card-sublabel">Risk Score ≥ 7</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+            
+            <!-- Medium Risk Products Card -->
+            <div class="kpi-drill-card medium-risk" data-drill-type="medium-risk" onclick="drillDownToTacticalView('medium-risk')">
+                <div class="kpi-drill-card-icon">⚠️</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.riskBreakdown.medium}</div>
+                    <div class="kpi-drill-card-label">Medium Risk Products</div>
+                    <div class="kpi-drill-card-sublabel">Risk Score 4-6</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+            
+            <!-- Low Risk Products Card -->
+            <div class="kpi-drill-card low-risk" data-drill-type="low-risk" onclick="drillDownToTacticalView('low-risk')">
+                <div class="kpi-drill-card-icon">✅</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.riskBreakdown.low}</div>
+                    <div class="kpi-drill-card-label">Low Risk Products</div>
+                    <div class="kpi-drill-card-sublabel">Risk Score < 4</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+            
+            <!-- Below Target Products Card -->
+            <div class="kpi-drill-card below-target" data-drill-type="below-target" onclick="drillDownToTacticalView('below-target')">
+                <div class="kpi-drill-card-icon">📉</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.productMetrics.filter(p => p.performanceScore > 0 && p.performanceScore < 50).length}</div>
+                    <div class="kpi-drill-card-label">Below Target</div>
+                    <div class="kpi-drill-card-sublabel">Performance < 50%</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+            
+            <!-- Star Performers Card -->
+            <div class="kpi-drill-card star-performers" data-drill-type="star-performers" onclick="drillDownToTacticalView('star-performers')">
+                <div class="kpi-drill-card-icon">🌟</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.starPerformers}</div>
+                    <div class="kpi-drill-card-label">Star Performers</div>
+                    <div class="kpi-drill-card-sublabel">Low Risk + High Performance</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+            
+            <!-- Products at Risk Card -->
+            <div class="kpi-drill-card products-at-risk" data-drill-type="products-at-risk" onclick="drillDownToTacticalView('products-at-risk')">
+                <div class="kpi-drill-card-icon">⛔</div>
+                <div class="kpi-drill-card-content">
+                    <div class="kpi-drill-card-value">${metrics.productsAtRisk}</div>
+                    <div class="kpi-drill-card-label">Critical Products</div>
+                    <div class="kpi-drill-card-sublabel">High Risk + Low Performance</div>
+                </div>
+                <div class="kpi-drill-card-action">
+                    <span class="kpi-drill-card-arrow">→</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="kpi-drill-hint">
+            💡 <strong>Tip:</strong> Click any card above to view filtered products in Portfolio Overview
+        </div>
+    `;
     
     return section;
 }
@@ -2560,6 +2963,175 @@ function renderPlanningCharts(data) {
     
     console.log('✅ Planning charts rendered successfully');
 }
+
+// ==================== DRILL-DOWN FUNCTIONALITY ====================
+
+/**
+ * Drill down from Strategic View to Portfolio Overview with specific filters
+ * This function enables executives to click KPI cards and immediately see relevant products
+ * 
+ * @param {string} drillType - Type of drill-down: 'high-risk', 'medium-risk', 'low-risk', 
+ *                              'below-target', 'star-performers', 'products-at-risk'
+ */
+function drillDownToTacticalView(drillType) {
+    // Get portfolio data and calculate metrics for each product
+    const portfolioData = window.State.getPortfolioData();
+    
+    if (!portfolioData || portfolioData.length === 0) {
+        console.warn('No portfolio data available for drill-down');
+        alert('No portfolio data available. Please load data first.');
+        return;
+    }
+    
+    // Calculate risk score and performance for each product
+    const productMetrics = portfolioData.map(product => ({
+        ...product,
+        riskScore: window.DataManager.calculateRiskScore(product),
+        performanceScore: window.DataManager.calculatePerformanceVsTarget(product)
+    }));
+    
+    // Filter products based on drill-down type
+    let filteredProducts = [];
+    let filterDescription = '';
+    
+    switch (drillType) {
+        case 'high-risk':
+            filteredProducts = productMetrics.filter(p => p.riskScore >= 7);
+            filterDescription = 'High Risk Products (Risk Score ≥ 7)';
+            break;
+            
+        case 'medium-risk':
+            filteredProducts = productMetrics.filter(p => p.riskScore >= 4 && p.riskScore < 7);
+            filterDescription = 'Medium Risk Products (Risk Score 4-6)';
+            break;
+            
+        case 'low-risk':
+            filteredProducts = productMetrics.filter(p => p.riskScore < 4);
+            filterDescription = 'Low Risk Products (Risk Score < 4)';
+            break;
+            
+        case 'below-target':
+            filteredProducts = productMetrics.filter(p => p.performanceScore > 0 && p.performanceScore < 50);
+            filterDescription = 'Below Target Products (Performance < 50%)';
+            break;
+            
+        case 'star-performers':
+            // Star performers: Low risk (< 4) AND high performance (>= 80%)
+            filteredProducts = productMetrics.filter(p => p.riskScore < 4 && p.performanceScore >= 80);
+            filterDescription = 'Star Performers (Low Risk + High Performance)';
+            break;
+            
+        case 'products-at-risk':
+            // Critical products: High risk (>= 7) AND low performance (< 50%)
+            filteredProducts = productMetrics.filter(p => p.riskScore >= 7 && p.performanceScore < 50);
+            filterDescription = 'Critical Products (High Risk + Low Performance)';
+            break;
+            
+        default:
+            console.warn('Unknown drill-down type:', drillType);
+            filteredProducts = portfolioData;
+            filterDescription = 'All Products';
+    }
+    
+    // Store the filtered data in State
+    window.State.setFilteredData(filteredProducts);
+    
+    // Clear any active filters in the UI
+    clearFiltersUI();
+    
+    // Switch to Portfolio Overview tab
+    switchTab('portfolio-overview');
+    
+    // Render the filtered products
+    renderCards();
+    updateStats();
+    
+    // Show a notification to the user
+    showDrillDownNotification(filterDescription, filteredProducts.length);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * Clear filter UI controls (dropdowns and search)
+ */
+function clearFiltersUI() {
+    // Clear search input
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    
+    // Clear filter dropdowns
+    const areaFilter = document.getElementById('filter-area');
+    if (areaFilter) areaFilter.value = '';
+    
+    const maturityFilter = document.getElementById('filter-maturity');
+    if (maturityFilter) maturityFilter.value = '';
+    
+    const ownerFilter = document.getElementById('filter-owner');
+    if (ownerFilter) ownerFilter.value = '';
+    
+    const sortBy = document.getElementById('sort-by');
+    if (sortBy) sortBy.value = '';
+}
+
+/**
+ * Show a notification about the drill-down filter applied
+ */
+function showDrillDownNotification(filterDescription, count) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'drill-down-notification';
+    notification.innerHTML = `
+        <div class="drill-down-notification-content">
+            <span class="drill-down-notification-icon">🎯</span>
+            <div class="drill-down-notification-text">
+                <strong>Viewing:</strong> ${filterDescription}
+                <span class="drill-down-notification-count">(${count} product${count !== 1 ? 's' : ''})</span>
+            </div>
+            <button class="drill-down-notification-close" onclick="closeDrillDownNotification()">×</button>
+        </div>
+    `;
+    
+    // Remove any existing notification
+    const existing = document.querySelector('.drill-down-notification');
+    if (existing) existing.remove();
+    
+    // Add to page
+    const container = document.getElementById('content-left') || document.querySelector('.main-content');
+    if (container) {
+        container.insertBefore(notification, container.firstChild);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 10000);
+    }
+}
+
+/**
+ * Close drill-down notification
+ */
+function closeDrillDownNotification() {
+    const notification = document.querySelector('.drill-down-notification');
+    if (notification) {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }
+    
+    // Reset to show all products
+    const portfolioData = window.State.getPortfolioData();
+    window.DataManager.applyFilters('', '', '', '', '');
+    renderCards();
+    updateStats();
+}
+
+// Expose drill-down functions globally for onclick handlers
+window.drillDownToTacticalView = drillDownToTacticalView;
+window.closeDrillDownNotification = closeDrillDownNotification;
 
 // ==================== UI STATE ====================
 

@@ -657,11 +657,15 @@ function renderExecutiveView() {
     const healthSection = createHealthScoreSection(metrics);
     executiveContent.appendChild(healthSection);
     
-    // ========== 2. RISK & OPPORTUNITY LISTS ==========
+    // ========== 2. RISK & OPPORTUNITY MATRIX ==========
+    const matrixSection = createRiskOpportunityMatrix(metrics);
+    executiveContent.appendChild(matrixSection);
+    
+    // ========== 3. RISK & OPPORTUNITY LISTS ==========
     const listsSection = createRiskOpportunityLists(metrics);
     executiveContent.appendChild(listsSection);
     
-    // ========== 3. STRATEGIC ALIGNMENT CHARTS ==========
+    // ========== 4. STRATEGIC ALIGNMENT CHARTS ==========
     const chartsSection = createStrategicAlignmentCharts(metrics);
     executiveContent.appendChild(chartsSection);
     
@@ -697,6 +701,27 @@ function createHealthScoreSection(metrics) {
         scoreColor = 'red';
     }
     
+    // Build health score breakdown HTML
+    let breakdownHTML = '';
+    if (metrics.healthScoreBreakdown && metrics.healthScoreBreakdown.length > 0) {
+        breakdownHTML = `
+            <div class="health-score-breakdown">
+                <h3 class="health-breakdown-title">Key Factors Affecting Health Score:</h3>
+                <ul class="health-breakdown-list">
+                    ${metrics.healthScoreBreakdown.map((factor, index) => `
+                        <li class="health-breakdown-item" data-type="${factor.type}">
+                            <span class="health-breakdown-icon">${factor.icon}</span>
+                            <div class="health-breakdown-content">
+                                <div class="health-breakdown-message">${escapeHtml(factor.message)}</div>
+                                <div class="health-breakdown-details">${escapeHtml(factor.details)}</div>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
     section.innerHTML = `
         <h2 class="executive-section-title">📊 Portfolio Health Score</h2>
         <p class="executive-section-subtitle">Composite metric based on performance (60%) and risk management (40%)</p>
@@ -723,6 +748,8 @@ function createHealthScoreSection(metrics) {
                     <div class="health-score-meta-label">Avg Risk Score</div>
                 </div>
             </div>
+            
+            ${breakdownHTML}
         </div>
     `;
     
@@ -734,6 +761,311 @@ function createHealthScoreSection(metrics) {
     section.appendChild(narrativeDiv);
     
     return section;
+}
+
+/**
+ * Create Risk & Opportunity Matrix section with scatter plot
+ */
+function createRiskOpportunityMatrix(metrics) {
+    const section = document.createElement('div');
+    section.className = 'executive-section';
+    
+    section.innerHTML = `
+        <h2 class="executive-section-title">📊 Risk & Opportunity Matrix</h2>
+        <p class="executive-section-subtitle">Portfolio positioning based on risk level and performance opportunity</p>
+        
+        <div class="matrix-container">
+            <div class="matrix-chart-wrapper">
+                <canvas id="chart-risk-opportunity-matrix"></canvas>
+            </div>
+            <div class="matrix-legend">
+                <h4 class="matrix-legend-title">Quadrants:</h4>
+                <div class="matrix-legend-items">
+                    <div class="matrix-legend-item">
+                        <span class="matrix-legend-color" style="background-color: rgba(16, 185, 129, 0.7);"></span>
+                        <span class="matrix-legend-label"><strong>Star Performers</strong> - Low Risk, High Performance</span>
+                    </div>
+                    <div class="matrix-legend-item">
+                        <span class="matrix-legend-color" style="background-color: rgba(245, 158, 11, 0.7);"></span>
+                        <span class="matrix-legend-label"><strong>Monitor</strong> - High Risk, High Performance</span>
+                    </div>
+                    <div class="matrix-legend-item">
+                        <span class="matrix-legend-color" style="background-color: rgba(251, 191, 36, 0.7);"></span>
+                        <span class="matrix-legend-label"><strong>Improve</strong> - Low Risk, Low Performance</span>
+                    </div>
+                    <div class="matrix-legend-item">
+                        <span class="matrix-legend-color" style="background-color: rgba(239, 68, 68, 0.7);"></span>
+                        <span class="matrix-legend-label"><strong>Critical</strong> - High Risk, Low Performance</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create chart after DOM insertion
+    setTimeout(() => {
+        createRiskOpportunityScatterChart(metrics);
+    }, 100);
+    
+    // Add narrative
+    const narrative = generateMatrixNarrative(metrics);
+    const narrativeDiv = document.createElement('div');
+    narrativeDiv.className = 'executive-narrative';
+    narrativeDiv.innerHTML = narrative;
+    section.appendChild(narrativeDiv);
+    
+    return section;
+}
+
+/**
+ * Create the scatter plot for Risk & Opportunity Matrix
+ */
+function createRiskOpportunityScatterChart(metrics) {
+    const canvas = document.getElementById('chart-risk-opportunity-matrix');
+    if (!canvas) {
+        console.warn('Matrix canvas not found');
+        return;
+    }
+    
+    // Group products by quadrant for color-coding
+    const dataByQuadrant = {
+        star: [],
+        monitor: [],
+        improve: [],
+        critical: []
+    };
+    
+    metrics.riskOpportunityData.forEach(product => {
+        dataByQuadrant[product.quadrant].push({
+            x: product.riskScore,
+            y: product.performanceScore,
+            productName: product.name,
+            area: product.area,
+            maturity: product.maturity
+        });
+    });
+    
+    const ctx = canvas.getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Star Performers',
+                    data: dataByQuadrant.star,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                },
+                {
+                    label: 'Monitor',
+                    data: dataByQuadrant.monitor,
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                },
+                {
+                    label: 'Improve',
+                    data: dataByQuadrant.improve,
+                    backgroundColor: 'rgba(251, 191, 36, 0.7)',
+                    borderColor: 'rgba(251, 191, 36, 1)',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                },
+                {
+                    label: 'Critical',
+                    data: dataByQuadrant.critical,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Using custom legend
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold',
+                        family: "'Inter', sans-serif"
+                    },
+                    bodyFont: {
+                        size: 12,
+                        family: "'Inter', sans-serif"
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].raw.productName || 'Product';
+                        },
+                        label: function(context) {
+                            return [
+                                `Risk Score: ${context.parsed.x.toFixed(1)}/10`,
+                                `Performance: ${context.parsed.y.toFixed(0)}%`,
+                                `Area: ${context.raw.area || 'N/A'}`,
+                                `Maturity: ${context.raw.maturity || 'N/A'}`
+                            ];
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: {
+                        // Vertical line at risk threshold (5)
+                        line1: {
+                            type: 'line',
+                            xMin: 5,
+                            xMax: 5,
+                            borderColor: 'rgba(156, 163, 175, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                display: false
+                            }
+                        },
+                        // Horizontal line at performance threshold (50%)
+                        line2: {
+                            type: 'line',
+                            yMin: 50,
+                            yMax: 50,
+                            borderColor: 'rgba(156, 163, 175, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Risk Score (Lower is Better) →',
+                        font: {
+                            size: 13,
+                            weight: '600',
+                            family: "'Inter', sans-serif"
+                        },
+                        color: '#1f2937'
+                    },
+                    min: 0,
+                    max: 10,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 11,
+                            family: "'Inter', sans-serif"
+                        },
+                        color: '#6b7280'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: '↑ Performance Score (Higher is Better)',
+                        font: {
+                            size: 13,
+                            weight: '600',
+                            family: "'Inter', sans-serif"
+                        },
+                        color: '#1f2937'
+                    },
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        font: {
+                            size: 11,
+                            family: "'Inter', sans-serif"
+                        },
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Generate narrative text for Risk & Opportunity Matrix
+ */
+function generateMatrixNarrative(metrics) {
+    // Count products in each quadrant
+    const quadrantCounts = {
+        star: 0,
+        monitor: 0,
+        improve: 0,
+        critical: 0
+    };
+    
+    metrics.riskOpportunityData.forEach(product => {
+        quadrantCounts[product.quadrant]++;
+    });
+    
+    const total = metrics.totalProducts;
+    
+    let narrative = '';
+    
+    // Focus on critical quadrant
+    if (quadrantCounts.critical > 0) {
+        const criticalPercent = Math.round((quadrantCounts.critical / total) * 100);
+        narrative += `<strong class="text-danger">${quadrantCounts.critical} products (${criticalPercent}%)</strong> are in the <strong>Critical</strong> quadrant (high risk, low performance) and require immediate attention. `;
+    }
+    
+    // Highlight star performers
+    if (quadrantCounts.star > 0) {
+        const starPercent = Math.round((quadrantCounts.star / total) * 100);
+        narrative += `<strong class="text-success">${quadrantCounts.star} products (${starPercent}%)</strong> are <strong>Star Performers</strong> (low risk, high performance) and can serve as benchmarks. `;
+    }
+    
+    // Mention monitor quadrant
+    if (quadrantCounts.monitor > 0) {
+        const monitorPercent = Math.round((quadrantCounts.monitor / total) * 100);
+        narrative += `${quadrantCounts.monitor} products (${monitorPercent}%) are performing well but carry high risk and should be <strong>monitored closely</strong>. `;
+    }
+    
+    // Mention improve quadrant
+    if (quadrantCounts.improve > 0) {
+        const improvePercent = Math.round((quadrantCounts.improve / total) * 100);
+        narrative += `${quadrantCounts.improve} products (${improvePercent}%) have low risk but underperforming and present <strong>opportunities for improvement</strong>. `;
+    }
+    
+    // Strategic recommendation
+    if (quadrantCounts.critical > quadrantCounts.star) {
+        narrative += '<br><br><strong>Recommendation:</strong> Focus resources on moving critical products either to lower risk or higher performance. Consider resource reallocation from stable products to critical ones.';
+    } else {
+        narrative += '<br><br><strong>Recommendation:</strong> Leverage learnings from star performers to improve products in other quadrants. Maintain current risk management practices.';
+    }
+    
+    return narrative;
 }
 
 /**

@@ -452,6 +452,138 @@ function analyzePortfolioData(data) {
 }
 
 /**
+ * Determine which quadrant a product falls into on the risk-opportunity matrix
+ * @param {number} riskScore - Risk score (0-10)
+ * @param {number} performanceScore - Performance score (0-100)
+ * @returns {string} - Quadrant identifier
+ */
+function getQuadrant(riskScore, performanceScore) {
+    // Define thresholds
+    const riskThreshold = 5; // Risk score >= 5 is "high risk"
+    const performanceThreshold = 50; // Performance >= 50% is "high performance"
+    
+    const isHighRisk = riskScore >= riskThreshold;
+    const isHighPerformance = performanceScore >= performanceThreshold;
+    
+    if (isHighRisk && !isHighPerformance) {
+        return 'critical'; // High risk, low performance - RED (needs immediate attention)
+    } else if (isHighRisk && isHighPerformance) {
+        return 'monitor'; // High risk, high performance - ORANGE (monitor closely)
+    } else if (!isHighRisk && !isHighPerformance) {
+        return 'improve'; // Low risk, low performance - YELLOW (opportunity to improve)
+    } else {
+        return 'star'; // Low risk, high performance - GREEN (star performers)
+    }
+}
+
+/**
+ * Analyze portfolio health factors and identify top negative contributors
+ * Returns array of top 3 factors affecting portfolio health
+ */
+function analyzeHealthFactors(portfolioData, productMetrics) {
+    const factors = [];
+    
+    // Factor 1: Products failing performance targets (< 50%)
+    const failingPerformance = productMetrics.filter(p => 
+        p.performanceScore > 0 && p.performanceScore < 50
+    );
+    if (failingPerformance.length > 0) {
+        factors.push({
+            type: 'performance',
+            severity: failingPerformance.length,
+            icon: '📉',
+            message: `${failingPerformance.length} product${failingPerformance.length > 1 ? 's are' : ' is'} failing performance targets (below 50%)`,
+            details: `${failingPerformance.length} of ${productMetrics.length} products not meeting target KPIs`
+        });
+    }
+    
+    // Factor 2: High-risk products (risk score >= 7)
+    const highRiskProducts = productMetrics.filter(p => p.riskScore >= 7);
+    if (highRiskProducts.length > 0) {
+        factors.push({
+            type: 'risk',
+            severity: highRiskProducts.length,
+            icon: '⚠️',
+            message: `${highRiskProducts.length} product${highRiskProducts.length > 1 ? 's' : ''} classified as high risk`,
+            details: `Risk factors include early maturity stage, missing metrics, or lack of ownership`
+        });
+    }
+    
+    // Factor 3: Products with no performance data
+    const noPerformanceData = productMetrics.filter(p => p.performanceScore === 0);
+    if (noPerformanceData.length > 0) {
+        factors.push({
+            type: 'data',
+            severity: noPerformanceData.length,
+            icon: '📊',
+            message: `${noPerformanceData.length} product${noPerformanceData.length > 1 ? 's have' : ' has'} no performance data tracked`,
+            details: `Missing monthly metrics or target values prevent performance assessment`
+        });
+    }
+    
+    // Factor 4: Missing Business Impact metrics
+    const missingBIMetrics = portfolioData.filter(p => 
+        !p.keyMetricBI || p.keyMetricBI.trim() === ''
+    );
+    if (missingBIMetrics.length > 0) {
+        factors.push({
+            type: 'metrics',
+            severity: missingBIMetrics.length,
+            icon: '💼',
+            message: `${missingBIMetrics.length} product${missingBIMetrics.length > 1 ? 's lack' : ' lacks'} Business Impact metrics`,
+            details: `Business value measurement incomplete for portfolio analysis`
+        });
+    }
+    
+    // Factor 5: Missing UX metrics
+    const missingUXMetrics = portfolioData.filter(p => 
+        !p.keyMetricUX || p.keyMetricUX.trim() === ''
+    );
+    if (missingUXMetrics.length > 0) {
+        factors.push({
+            type: 'metrics',
+            severity: missingUXMetrics.length,
+            icon: '👤',
+            message: `${missingUXMetrics.length} product${missingUXMetrics.length > 1 ? 's lack' : ' lacks'} User Experience metrics`,
+            details: `User impact measurement incomplete for portfolio analysis`
+        });
+    }
+    
+    // Factor 6: Products without owners
+    const missingOwners = portfolioData.filter(p => 
+        !p.owner || p.owner.trim() === ''
+    );
+    if (missingOwners.length > 0) {
+        factors.push({
+            type: 'ownership',
+            severity: missingOwners.length,
+            icon: '👥',
+            message: `${missingOwners.length} product${missingOwners.length > 1 ? 's have' : ' has'} no assigned owner`,
+            details: `Clear ownership critical for accountability and product success`
+        });
+    }
+    
+    // Factor 7: Products missing target values
+    const missingTargets = portfolioData.filter(p => 
+        (!p.targetUX || p.targetUX === '') && (!p.targetBI || p.targetBI === '')
+    );
+    if (missingTargets.length > 0) {
+        factors.push({
+            type: 'targets',
+            severity: missingTargets.length,
+            icon: '🎯',
+            message: `${missingTargets.length} product${missingTargets.length > 1 ? 's have' : ' has'} no defined target values`,
+            details: `Target setting essential for measuring progress and success`
+        });
+    }
+    
+    // Sort by severity (most products affected) and return top 3
+    return factors
+        .sort((a, b) => b.severity - a.severity)
+        .slice(0, 3);
+}
+
+/**
  * Calculate comprehensive portfolio metrics for Executive View
  * Returns a structured object with all high-level, actionable insights
  */
@@ -579,10 +711,28 @@ function calculatePortfolioMetrics() {
         p.riskScore >= 5 && p.riskScore < 7
     ).length;
     
+    // ===== 9. HEALTH SCORE BREAKDOWN =====
+    // Identify top 3 negative factors affecting portfolio health
+    const healthScoreBreakdown = analyzeHealthFactors(portfolioData, productMetrics);
+    
+    // ===== 10. RISK & OPPORTUNITY MATRIX DATA =====
+    // Create array for scatter plot visualization with risk vs performance
+    const riskOpportunityData = productMetrics.map(p => ({
+        id: p.id,
+        name: p.name,
+        area: p.area,
+        maturity: p.maturity,
+        riskScore: p.riskScore,
+        performanceScore: p.performanceScore,
+        // Determine quadrant for color-coding
+        quadrant: getQuadrant(p.riskScore, p.performanceScore)
+    }));
+    
     // ===== CONSTRUCT RETURN OBJECT =====
     const metrics = {
         // Summary metrics
         healthScore: healthScore,
+        healthScoreBreakdown: healthScoreBreakdown, // NEW: Drill-down reasons
         totalProducts: portfolioData.length,
         productsWithData: validPerformanceScores.length,
         
@@ -604,6 +754,9 @@ function calculatePortfolioMetrics() {
         productsAtRisk: productsAtRisk,
         starPerformers: starPerformers,
         needsAttention: needsAttention,
+        
+        // Risk & Opportunity Matrix
+        riskOpportunityData: riskOpportunityData, // NEW: Matrix data for scatter plot
         
         // Raw data (for advanced use)
         productMetrics: productMetrics

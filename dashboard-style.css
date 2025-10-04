@@ -634,6 +634,93 @@ select:focus {
     margin-top: 0.25rem;
 }
 
+/* Health Score Breakdown */
+.health-score-breakdown {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.health-breakdown-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.health-breakdown-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.health-breakdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.03);
+    border-left: 3px solid #ef4444;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.health-breakdown-item:hover {
+    background: rgba(239, 68, 68, 0.06);
+    transform: translateX(4px);
+}
+
+.health-breakdown-item[data-type="performance"] {
+    background: rgba(239, 68, 68, 0.03);
+    border-left-color: #ef4444;
+}
+
+.health-breakdown-item[data-type="risk"] {
+    background: rgba(245, 158, 11, 0.03);
+    border-left-color: #f59e0b;
+}
+
+.health-breakdown-item[data-type="data"],
+.health-breakdown-item[data-type="metrics"] {
+    background: rgba(59, 130, 246, 0.03);
+    border-left-color: #3b82f6;
+}
+
+.health-breakdown-item[data-type="ownership"],
+.health-breakdown-item[data-type="targets"] {
+    background: rgba(139, 92, 246, 0.03);
+    border-left-color: #8b5cf6;
+}
+
+.health-breakdown-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.health-breakdown-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.health-breakdown-message {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.4;
+}
+
+.health-breakdown-details {
+    font-size: 0.8125rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
 /* Narrative Text */
 .executive-narrative {
     background: rgba(255, 255, 255, 0.6);
@@ -668,6 +755,114 @@ select:focus {
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
     gap: 2rem;
     margin: 2rem 0;
+}
+
+/* Risk & Opportunity Matrix */
+.matrix-container {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+        0 10px 40px rgba(99, 102, 241, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin: 2rem 0;
+}
+
+.matrix-chart-wrapper {
+    height: 500px;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.matrix-legend {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.matrix-legend-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.matrix-legend-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.matrix-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.matrix-legend-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(2px);
+}
+
+.matrix-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.matrix-legend-label {
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.4;
+}
+
+.matrix-legend-label strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Narrative text enhancements for matrix */
+.executive-narrative .text-danger {
+    color: #ef4444;
+}
+
+.executive-narrative .text-success {
+    color: #10b981;
+}
+
+.executive-narrative .text-info {
+    color: #3b82f6;
+}
+
+/* Resource & Performance Section */
+.resource-performance-container {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+        0 10px 40px rgba(99, 102, 241, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin: 2rem 0;
+}
+
+.resource-chart-wrapper {
+    height: 400px;
+    position: relative;
 }
 
 .executive-chart-card {

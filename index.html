@@ -44,6 +44,10 @@
                         <option value="area-asc">P&C Area (A-Z)</option>
                         <option value="owner-asc">Owner (A-Z)</option>
                     </select>
+                    <label class="filter-checkbox" title="Show only products where UX or BI metrics are below target">
+                        <input type="checkbox" id="filter-below-target" onchange="applyFilters()">
+                        <span>Below Target Metrics</span>
+                    </label>
                     <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
                 </div>
             </div>

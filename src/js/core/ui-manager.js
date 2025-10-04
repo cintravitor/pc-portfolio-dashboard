@@ -271,8 +271,9 @@ function applyFiltersFromUI() {
     const maturityFilter = document.getElementById('filter-maturity').value;
     const ownerFilter = document.getElementById('filter-owner').value;
     const sortBy = document.getElementById('sort-by').value;
+    const belowTargetOnly = document.getElementById('filter-below-target').checked;
 
-    window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy);
+    window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy, belowTargetOnly);
     
     renderCards();
     updateStats();
@@ -288,6 +289,7 @@ function clearFilters() {
     document.getElementById('filter-maturity').value = '';
     document.getElementById('filter-owner').value = '';
     document.getElementById('sort-by').value = '';
+    document.getElementById('filter-below-target').checked = false;
     applyFiltersFromUI();
 }
 
@@ -312,6 +314,7 @@ function renderFilterPills() {
     const maturityFilter = document.getElementById('filter-maturity')?.value || '';
     const ownerFilter = document.getElementById('filter-owner')?.value || '';
     const sortBy = document.getElementById('sort-by')?.value || '';
+    const belowTargetOnly = document.getElementById('filter-below-target')?.checked || false;
     
     // Build array of active filters
     const activeFilters = [];
@@ -349,6 +352,15 @@ function renderFilterPills() {
             label: 'Owner',
             value: ownerFilter,
             icon: '👤'
+        });
+    }
+    
+    if (belowTargetOnly) {
+        activeFilters.push({
+            type: 'below-target',
+            label: 'Metrics',
+            value: 'Below Target',
+            icon: '📉'
         });
     }
     
@@ -395,7 +407,7 @@ function renderFilterPills() {
 
 /**
  * Remove a specific filter pill
- * @param {string} filterType - Type of filter to remove ('search', 'area', 'maturity', 'owner', 'sort')
+ * @param {string} filterType - Type of filter to remove ('search', 'area', 'maturity', 'owner', 'sort', 'below-target')
  */
 function removeFilterPill(filterType) {
     // Clear the specific filter
@@ -418,6 +430,11 @@ function removeFilterPill(filterType) {
         case 'owner':
             const ownerFilter = document.getElementById('filter-owner');
             if (ownerFilter) ownerFilter.value = '';
+            break;
+            
+        case 'below-target':
+            const belowTargetCheckbox = document.getElementById('filter-below-target');
+            if (belowTargetCheckbox) belowTargetCheckbox.checked = false;
             break;
             
         case 'sort':
@@ -3200,6 +3217,10 @@ function clearFiltersUI() {
     
     const ownerFilter = document.getElementById('filter-owner');
     if (ownerFilter) ownerFilter.value = '';
+    
+    // Clear below-target checkbox
+    const belowTargetCheckbox = document.getElementById('filter-below-target');
+    if (belowTargetCheckbox) belowTargetCheckbox.checked = false;
     
     const sortBy = document.getElementById('sort-by');
     if (sortBy) sortBy.value = '';

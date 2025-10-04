@@ -264,6 +264,43 @@ select:focus {
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+/* Filter Checkbox */
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(var(--blur-light));
+    -webkit-backdrop-filter: blur(var(--blur-light));
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.filter-checkbox:hover {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: var(--mercury-accent);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.filter-checkbox input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    accent-color: var(--mercury-accent);
+}
+
+.filter-checkbox span {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
 /* Tab Content */
 .tab-content {
     display: none;

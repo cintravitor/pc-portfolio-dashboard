@@ -159,7 +159,7 @@ async function fetchSheetData() {
 /**
  * Apply filters to the data
  */
-function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '', sortBy = '') {
+function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '', sortBy = '', belowTargetOnly = false) {
     // Get portfolio data from State
     const portfolioData = window.State.getPortfolioData();
     
@@ -174,8 +174,57 @@ function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', own
         const matchesArea = !areaFilter || product.area === areaFilter;
         const matchesMaturity = !maturityFilter || product.maturity === maturityFilter;
         const matchesOwner = !ownerFilter || product.owner === ownerFilter;
+        
+        // Below-target filter logic
+        let matchesBelowTarget = true;
+        if (belowTargetOnly) {
+            // Helper to check if value is a valid number
+            const isValidNumber = (val) => {
+                if (!val || val === '' || val === 'N/A' || val === '-') return false;
+                const num = parseFloat(val);
+                return !isNaN(num) && num >= 0;
+            };
+            
+            // Helper to get most recent valid value from monthly array
+            const getMostRecentValue = (monthlyArray) => {
+                if (!Array.isArray(monthlyArray) || monthlyArray.length === 0) {
+                    return null;
+                }
+                // Find the last non-empty, non-N/A value
+                for (let i = monthlyArray.length - 1; i >= 0; i--) {
+                    const val = monthlyArray[i];
+                    if (isValidNumber(val)) {
+                        return parseFloat(val);
+                    }
+                }
+                return null;
+            };
+            
+            // Check if UX or BI metrics are below target
+            let uxBelowTarget = false;
+            let biBelowTarget = false;
+            
+            // Check UX metric
+            const mostRecentUX = getMostRecentValue(product.monthlyUX);
+            const targetUX = isValidNumber(product.targetUX) ? parseFloat(product.targetUX) : null;
+            
+            if (mostRecentUX !== null && targetUX !== null) {
+                uxBelowTarget = mostRecentUX < targetUX;
+            }
+            
+            // Check BI metric
+            const mostRecentBI = getMostRecentValue(product.monthlyBI);
+            const targetBI = isValidNumber(product.targetBI) ? parseFloat(product.targetBI) : null;
+            
+            if (mostRecentBI !== null && targetBI !== null) {
+                biBelowTarget = mostRecentBI < targetBI;
+            }
+            
+            // Product must have at least one metric below target
+            matchesBelowTarget = uxBelowTarget || biBelowTarget;
+        }
 
-        return matchesSearch && matchesArea && matchesMaturity && matchesOwner;
+        return matchesSearch && matchesArea && matchesMaturity && matchesOwner && matchesBelowTarget;
     });
 
     // Then, sort the filtered data

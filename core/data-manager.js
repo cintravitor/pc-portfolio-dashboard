@@ -62,7 +62,6 @@ async function fetchSheetData() {
         // Row 2+: Data rows
         
         const headers = rows[1]; // Get the actual column headers from row 1
-        console.log('Headers found:', headers.slice(0, 15)); // Debug: show first 15 headers
         
         // Create dynamic column mapping
         columnMapping = {
@@ -99,9 +98,6 @@ async function fetchSheetData() {
         if (keyMetricBIIdx !== -1) {
             columnMapping.monthsBI = months.map(month => headers.indexOf(month, keyMetricBIIdx));
         }
-        
-        console.log('Column mapping:', columnMapping);
-        console.log('Sample data row:', rows[2].slice(0, 12)); // Debug: show first 12 columns of first data row
         
         // Transform data rows (starting from row 2)
         const dataRows = rows.slice(2);
@@ -156,12 +152,14 @@ async function fetchSheetData() {
 /**
  * Apply filters to the data
  */
-function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '') {
+function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '', sortBy = '') {
+    // First, filter the data
     filteredData = portfolioData.filter(product => {
         const matchesSearch = !searchTerm || 
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.problem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.solution.toLowerCase().includes(searchTerm.toLowerCase());
+            product.solution.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.owner.toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesArea = !areaFilter || product.area === areaFilter;
         const matchesMaturity = !maturityFilter || product.maturity === maturityFilter;
@@ -170,7 +168,59 @@ function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', own
         return matchesSearch && matchesArea && matchesMaturity && matchesOwner;
     });
 
+    // Then, sort the filtered data
+    if (sortBy) {
+        filteredData = sortData(filteredData, sortBy);
+    }
+
     return filteredData;
+}
+
+/**
+ * Sort data based on selected criteria
+ */
+function sortData(data, sortBy) {
+    // Create a copy to avoid mutating the original array
+    const sortedData = [...data];
+    
+    switch (sortBy) {
+        case 'name-asc':
+            return sortedData.sort((a, b) => 
+                a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+            );
+        
+        case 'name-desc':
+            return sortedData.sort((a, b) => 
+                b.name.toLowerCase().localeCompare(a.name.toLowerCase())
+            );
+        
+        case 'maturity-asc':
+            // Sort by maturity stage in logical order: Development → Growth → Mature → Decline
+            const maturityOrder = {
+                '1. development': 1,
+                '2. growth': 2,
+                '3. mature': 3,
+                '4. decline': 4
+            };
+            return sortedData.sort((a, b) => {
+                const aOrder = maturityOrder[a.maturity.toLowerCase()] || 999;
+                const bOrder = maturityOrder[b.maturity.toLowerCase()] || 999;
+                return aOrder - bOrder;
+            });
+        
+        case 'area-asc':
+            return sortedData.sort((a, b) => 
+                a.area.toLowerCase().localeCompare(b.area.toLowerCase())
+            );
+        
+        case 'owner-asc':
+            return sortedData.sort((a, b) => 
+                a.owner.toLowerCase().localeCompare(b.owner.toLowerCase())
+            );
+        
+        default:
+            return sortedData;
+    }
 }
 
 /**
@@ -401,6 +451,175 @@ function analyzePortfolioData(data) {
     return analysis;
 }
 
+/**
+ * Calculate comprehensive portfolio metrics for Executive View
+ * Returns a structured object with all high-level, actionable insights
+ */
+function calculatePortfolioMetrics() {
+    console.log('Calculating portfolio metrics for Executive View...');
+    
+    if (!portfolioData || portfolioData.length === 0) {
+        console.warn('No portfolio data available for metrics calculation');
+        return null;
+    }
+    
+    // Calculate individual product metrics
+    const productMetrics = portfolioData.map(product => ({
+        id: product.id,
+        name: product.name,
+        area: product.area,
+        maturity: product.maturity,
+        owner: product.owner,
+        performanceScore: calculatePerformanceVsTarget(product),
+        riskScore: calculateRiskScore(product)
+    }));
+    
+    // ===== 1. PORTFOLIO HEALTH SCORE =====
+    // Composite score (0-100) based on performance and inverse risk
+    
+    // Get valid performance scores (exclude products with no data)
+    const validPerformanceScores = productMetrics
+        .map(p => p.performanceScore)
+        .filter(score => score > 0);
+    
+    // Calculate average performance (0-100)
+    const avgPerformance = validPerformanceScores.length > 0
+        ? validPerformanceScores.reduce((sum, score) => sum + score, 0) / validPerformanceScores.length
+        : 0;
+    
+    // Calculate average risk score (0-10 scale)
+    const avgRiskScore = productMetrics.reduce((sum, p) => sum + p.riskScore, 0) / productMetrics.length;
+    
+    // Convert risk to inverse health contribution (10 = worst risk = 0% health, 0 = no risk = 100% health)
+    const riskHealthContribution = ((10 - avgRiskScore) / 10) * 100;
+    
+    // Composite health score: 60% performance + 40% inverse risk
+    const healthScore = Math.round((avgPerformance * 0.6) + (riskHealthContribution * 0.4));
+    
+    // ===== 2. RISK BREAKDOWN =====
+    // Categorize products by risk level
+    const riskBreakdown = {
+        high: productMetrics.filter(p => p.riskScore >= 7).length,
+        medium: productMetrics.filter(p => p.riskScore >= 4 && p.riskScore < 7).length,
+        low: productMetrics.filter(p => p.riskScore < 4).length
+    };
+    
+    // ===== 3. TOP RISKS =====
+    // Identify top 3 products with highest risk scores
+    const topRisks = productMetrics
+        .sort((a, b) => b.riskScore - a.riskScore)
+        .slice(0, 3)
+        .map(p => ({
+            id: p.id,
+            name: p.name,
+            riskScore: p.riskScore,
+            area: p.area,
+            maturity: p.maturity
+        }));
+    
+    // ===== 4. TOP OPPORTUNITIES =====
+    // Identify top 3 products with highest performance scores
+    const topOpportunities = productMetrics
+        .filter(p => p.performanceScore > 0) // Only products with actual performance data
+        .sort((a, b) => b.performanceScore - a.performanceScore)
+        .slice(0, 3)
+        .map(p => ({
+            id: p.id,
+            name: p.name,
+            performanceScore: p.performanceScore,
+            area: p.area,
+            maturity: p.maturity
+        }));
+    
+    // ===== 5. STRATEGIC ALIGNMENT BY AREA =====
+    // Count products by P&C area
+    const alignmentByArea = {};
+    productMetrics.forEach(p => {
+        const area = p.area || 'Not specified';
+        alignmentByArea[area] = (alignmentByArea[area] || 0) + 1;
+    });
+    
+    // ===== 6. RESOURCE ALLOCATION BY MATURITY =====
+    // Count products by maturity stage
+    const allocationByMaturity = {};
+    productMetrics.forEach(p => {
+        const maturity = p.maturity || 'Not specified';
+        allocationByMaturity[maturity] = (allocationByMaturity[maturity] || 0) + 1;
+    });
+    
+    // ===== 7. RESOURCE ALLOCATION BY OWNER =====
+    // Count products by owner (for workload analysis)
+    const allocationByOwner = {};
+    productMetrics.forEach(p => {
+        const owner = p.owner || 'Not assigned';
+        allocationByOwner[owner] = (allocationByOwner[owner] || 0) + 1;
+    });
+    
+    // Get top 5 owners by product count
+    const topOwnersByCount = Object.entries(allocationByOwner)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([owner, count]) => ({ owner, count }));
+    
+    // ===== 8. ADDITIONAL INSIGHTS =====
+    // Calculate additional metrics for executive decision-making
+    
+    // Products at risk (high risk + low performance)
+    const productsAtRisk = productMetrics.filter(p => 
+        p.riskScore >= 7 && p.performanceScore < 50
+    ).length;
+    
+    // Star performers (low risk + high performance)
+    const starPerformers = productMetrics.filter(p => 
+        p.riskScore < 4 && p.performanceScore >= 80
+    ).length;
+    
+    // Products needing attention (medium-high risk, any performance)
+    const needsAttention = productMetrics.filter(p => 
+        p.riskScore >= 5 && p.riskScore < 7
+    ).length;
+    
+    // ===== CONSTRUCT RETURN OBJECT =====
+    const metrics = {
+        // Summary metrics
+        healthScore: healthScore,
+        totalProducts: portfolioData.length,
+        productsWithData: validPerformanceScores.length,
+        
+        // Risk analysis
+        riskBreakdown: riskBreakdown,
+        topRisks: topRisks,
+        avgRiskScore: Math.round(avgRiskScore * 10) / 10, // Round to 1 decimal
+        
+        // Performance analysis
+        topOpportunities: topOpportunities,
+        avgPerformanceScore: Math.round(avgPerformance),
+        
+        // Strategic alignment
+        alignmentByArea: alignmentByArea,
+        allocationByMaturity: allocationByMaturity,
+        topOwnersByCount: topOwnersByCount,
+        
+        // Additional insights
+        productsAtRisk: productsAtRisk,
+        starPerformers: starPerformers,
+        needsAttention: needsAttention,
+        
+        // Raw data (for advanced use)
+        productMetrics: productMetrics
+    };
+    
+    console.log('✅ Portfolio metrics calculated:', {
+        healthScore: metrics.healthScore,
+        totalProducts: metrics.totalProducts,
+        riskBreakdown: metrics.riskBreakdown,
+        topRisksCount: metrics.topRisks.length,
+        topOpportunitiesCount: metrics.topOpportunities.length
+    });
+    
+    return metrics;
+}
+
 // ==================== UTILITIES ====================
 
 /**
@@ -463,6 +682,7 @@ window.DataManager = {
     
     // Data filtering
     applyFilters,
+    sortData,
     getFilterOptions,
     
     // Data caching
@@ -476,6 +696,7 @@ window.DataManager = {
     calculatePerformanceVsTarget,
     calculateRiskScore,
     analyzePortfolioData,
+    calculatePortfolioMetrics,
     
     // Utilities
     debounce,

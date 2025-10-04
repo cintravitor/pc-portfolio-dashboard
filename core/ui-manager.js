@@ -61,6 +61,50 @@ function switchTab(tabName) {
 // ==================== FILTER UI ====================
 
 /**
+ * Setup tactical filters and sorting for Portfolio Overview
+ * This function initializes all filter and sort controls for the tactical view
+ */
+function setupTacticalFilters() {
+    console.log('Setting up tactical filters and sorting...');
+    
+    // Populate filter dropdowns with current data
+    populateFilters();
+    
+    // Setup event listeners for all filter controls
+    const searchInput = document.getElementById('search-input');
+    const areaSelect = document.getElementById('filter-area');
+    const maturitySelect = document.getElementById('filter-maturity');
+    const ownerSelect = document.getElementById('filter-owner');
+    const sortBySelect = document.getElementById('sort-by');
+    
+    // Use debounced filtering for search input (improves performance)
+    if (searchInput) {
+        const debouncedFilter = window.DataManager.debounce(applyFiltersFromUI, 300);
+        searchInput.addEventListener('input', debouncedFilter);
+    }
+    
+    // Add change listeners for filter dropdowns
+    if (areaSelect) {
+        areaSelect.addEventListener('change', applyFiltersFromUI);
+    }
+    
+    if (maturitySelect) {
+        maturitySelect.addEventListener('change', applyFiltersFromUI);
+    }
+    
+    if (ownerSelect) {
+        ownerSelect.addEventListener('change', applyFiltersFromUI);
+    }
+    
+    // Add change listener for sort dropdown
+    if (sortBySelect) {
+        sortBySelect.addEventListener('change', applyFiltersFromUI);
+    }
+    
+    console.log('✅ Tactical filters and sorting configured');
+}
+
+/**
  * Populate filter dropdowns with unique values
  */
 function populateFilters() {
@@ -89,8 +133,9 @@ function applyFiltersFromUI() {
     const areaFilter = document.getElementById('filter-area').value;
     const maturityFilter = document.getElementById('filter-maturity').value;
     const ownerFilter = document.getElementById('filter-owner').value;
+    const sortBy = document.getElementById('sort-by').value;
 
-    window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter);
+    window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy);
     
     renderCards();
     updateStats();
@@ -104,6 +149,7 @@ function clearFilters() {
     document.getElementById('filter-area').value = '';
     document.getElementById('filter-maturity').value = '';
     document.getElementById('filter-owner').value = '';
+    document.getElementById('sort-by').value = '';
     applyFiltersFromUI();
 }
 
@@ -571,19 +617,30 @@ function updateLastUpdateDisplay() {
 /**
  * Render Strategic View with real calculated data
  */
-function renderStrategicView() {
-    console.log('Rendering Strategic View with real calculations...');
+/**
+ * Render Executive View with comprehensive portfolio metrics and visualizations
+ * This is the upgraded Strategic View with enhanced executive insights
+ */
+function renderExecutiveView() {
+    console.log('Rendering Executive View...');
     
-    const strategicContent = document.getElementById('strategic-content');
-    const portfolioData = window.DataManager.getPortfolioData();
+    const executiveContent = document.getElementById('executive-content');
+    
+    if (!executiveContent) {
+        console.error('Executive content container not found');
+        return;
+    }
+    
+    // Get metrics from Data Manager
+    const metrics = window.DataManager.calculatePortfolioMetrics();
     
     // Check if we have data to analyze
-    if (!portfolioData || portfolioData.length === 0) {
-        strategicContent.innerHTML = `
-            <div class="analysis-section">
+    if (!metrics) {
+        executiveContent.innerHTML = `
+            <div class="executive-empty-state">
                 <h2>⚠️ No Data Available</h2>
-                <p style="color: #6b7280; margin-bottom: 1rem;">Please load the Portfolio Overview tab first to see strategic metrics.</p>
-                <button class="refresh-btn" onclick="UIManager.switchTab('portfolio-overview')" style="margin-top: 1rem;">
+                <p>Please load the Portfolio Overview tab first to see executive metrics.</p>
+                <button class="refresh-btn" onclick="window.UIManager.switchTab('portfolio-overview')" style="margin-top: 1.5rem;">
                     Go to Portfolio Overview
                 </button>
             </div>
@@ -591,152 +648,434 @@ function renderStrategicView() {
         return;
     }
     
-    console.log(`Analyzing ${portfolioData.length} products for strategic metrics...`);
+    console.log('Executive metrics loaded:', metrics);
     
-    // Calculate metrics for all products
-    const productMetrics = portfolioData.map(product => ({
-        id: product.id,
-        name: product.name,
-        performanceScore: window.DataManager.calculatePerformanceVsTarget(product),
-        riskScore: window.DataManager.calculateRiskScore(product)
-    }));
+    // Clear and start building
+    executiveContent.innerHTML = '';
     
-    // Calculate portfolio-wide metrics
+    // ========== 1. PORTFOLIO HEALTH SCORE ==========
+    const healthSection = createHealthScoreSection(metrics);
+    executiveContent.appendChild(healthSection);
     
-    // 1. Portfolio Health Score (average of all performance scores)
-    const validPerformanceScores = productMetrics
-        .map(p => p.performanceScore)
-        .filter(score => score > 0); // Only count products with actual data
+    // ========== 2. RISK & OPPORTUNITY LISTS ==========
+    const listsSection = createRiskOpportunityLists(metrics);
+    executiveContent.appendChild(listsSection);
     
-    const portfolioHealthScore = validPerformanceScores.length > 0
-        ? Math.round(validPerformanceScores.reduce((sum, score) => sum + score, 0) / validPerformanceScores.length)
-        : 0;
+    // ========== 3. STRATEGIC ALIGNMENT CHARTS ==========
+    const chartsSection = createStrategicAlignmentCharts(metrics);
+    executiveContent.appendChild(chartsSection);
     
-    // 2. Risk Breakdown (categorize products by risk score)
-    // Risk levels: High (7-10), Medium (4-6), Low (0-3)
-    const riskBreakdown = {
-        high: productMetrics.filter(p => p.riskScore >= 7).length,
-        medium: productMetrics.filter(p => p.riskScore >= 4 && p.riskScore < 7).length,
-        low: productMetrics.filter(p => p.riskScore < 4).length
-    };
-    
-    // 3. Target Achievement Rate (overall percentage)
-    const targetAchievement = portfolioHealthScore; // Same as health score for now
-    
-    console.log('Strategic metrics calculated:', {
-        portfolioHealthScore,
-        riskBreakdown,
-        targetAchievement,
-        totalProducts: portfolioData.length,
-        productsWithData: validPerformanceScores.length
-    });
-    
-    // Create the strategic view HTML structure using vanilla JS
-    const cardsGrid = document.createElement('div');
-    cardsGrid.className = 'strategic-cards-grid';
-    
-    // Card 1: Portfolio Health Score (using real calculated data)
-    const healthCard = createStrategicCard(
-        '📊',
-        'Portfolio Health',
-        `${portfolioHealthScore}%`,
-        `Based on ${validPerformanceScores.length} products with data`
-    );
-    
-    // Card 2: Risk Breakdown (using real calculated data)
-    const riskCard = createStrategicCard(
-        '⚠️',
-        'Portfolio Risk Distribution',
-        '', // No single value for this card
-        ''
-    );
-    
-    // Add breakdown items to risk card with real data
-    const breakdown = document.createElement('div');
-    breakdown.className = 'strategic-breakdown';
-    
-    breakdown.innerHTML = `
-        <div class="strategic-breakdown-item">
-            <span class="strategic-breakdown-label">High Risk (7-10)</span>
-            <span class="strategic-breakdown-value risk-high">${riskBreakdown.high}</span>
-        </div>
-        <div class="strategic-breakdown-item">
-            <span class="strategic-breakdown-label">Medium Risk (4-6)</span>
-            <span class="strategic-breakdown-value risk-medium">${riskBreakdown.medium}</span>
-        </div>
-        <div class="strategic-breakdown-item">
-            <span class="strategic-breakdown-label">Low Risk (0-3)</span>
-            <span class="strategic-breakdown-value risk-low">${riskBreakdown.low}</span>
-        </div>
-    `;
-    
-    riskCard.querySelector('.strategic-card-body').appendChild(breakdown);
-    
-    // Card 3: Target Achievement (using real calculated data)
-    const targetCard = createStrategicCard(
-        '🎯',
-        'Performance vs Target',
-        `${targetAchievement}%`,
-        'Average target achievement across all products'
-    );
-    
-    // Append all cards to grid
-    cardsGrid.appendChild(healthCard);
-    cardsGrid.appendChild(riskCard);
-    cardsGrid.appendChild(targetCard);
-    
-    // Clear and update strategic content
-    strategicContent.innerHTML = '';
-    strategicContent.appendChild(cardsGrid);
-    
-    console.log('✅ Strategic View rendered with real calculated metrics');
+    console.log('✅ Executive View rendered successfully');
 }
 
 /**
- * Helper function to create a strategic card element
+ * Create Portfolio Health Score section with narrative
  */
-function createStrategicCard(icon, title, value, label) {
-    const card = document.createElement('div');
-    card.className = 'strategic-card';
+function createHealthScoreSection(metrics) {
+    const section = document.createElement('div');
+    section.className = 'executive-section';
     
-    // Create card header
-    const header = document.createElement('div');
-    header.className = 'strategic-card-header';
+    // Determine health level and color
+    const score = metrics.healthScore;
+    let scoreClass, scoreLabel, scoreColor;
     
-    const iconDiv = document.createElement('div');
-    iconDiv.className = 'strategic-card-icon';
-    iconDiv.textContent = icon;
-    
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'strategic-card-title';
-    titleDiv.textContent = title;
-    
-    header.appendChild(iconDiv);
-    header.appendChild(titleDiv);
-    
-    // Create card body
-    const body = document.createElement('div');
-    body.className = 'strategic-card-body';
-    
-    if (value) {
-        const valueDiv = document.createElement('div');
-        valueDiv.className = 'strategic-metric-value';
-        valueDiv.textContent = value;
-        body.appendChild(valueDiv);
+    if (score >= 80) {
+        scoreClass = 'score-excellent';
+        scoreLabel = 'Excellent';
+        scoreColor = 'green';
+    } else if (score >= 65) {
+        scoreClass = 'score-good';
+        scoreLabel = 'Good';
+        scoreColor = 'blue';
+    } else if (score >= 50) {
+        scoreClass = 'score-fair';
+        scoreLabel = 'Fair';
+        scoreColor = 'orange';
+    } else {
+        scoreClass = 'score-poor';
+        scoreLabel = 'Needs Attention';
+        scoreColor = 'red';
     }
     
-    if (label) {
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'strategic-metric-label';
-        labelDiv.textContent = label;
-        body.appendChild(labelDiv);
+    section.innerHTML = `
+        <h2 class="executive-section-title">📊 Portfolio Health Score</h2>
+        <p class="executive-section-subtitle">Composite metric based on performance (60%) and risk management (40%)</p>
+        
+        <div class="health-score-container">
+            <div class="health-score-label">Overall Portfolio Health</div>
+            <div class="health-score-display ${scoreClass}">${score}</div>
+            
+            <div class="health-score-bar">
+                <div class="health-score-fill ${scoreClass}" style="width: ${score}%"></div>
+            </div>
+            
+            <div class="health-score-metadata">
+                <div class="health-score-meta-item">
+                    <div class="health-score-meta-value">${metrics.totalProducts}</div>
+                    <div class="health-score-meta-label">Total Products</div>
+                </div>
+                <div class="health-score-meta-item">
+                    <div class="health-score-meta-value">${metrics.avgPerformanceScore}%</div>
+                    <div class="health-score-meta-label">Avg Performance</div>
+                </div>
+                <div class="health-score-meta-item">
+                    <div class="health-score-meta-value">${metrics.avgRiskScore}/10</div>
+                    <div class="health-score-meta-label">Avg Risk Score</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add narrative
+    const narrative = generateHealthScoreNarrative(metrics, scoreLabel);
+    const narrativeDiv = document.createElement('div');
+    narrativeDiv.className = 'executive-narrative';
+    narrativeDiv.innerHTML = narrative;
+    section.appendChild(narrativeDiv);
+    
+    return section;
+}
+
+/**
+ * Create Risk & Opportunity Lists section
+ */
+function createRiskOpportunityLists(metrics) {
+    const section = document.createElement('div');
+    section.className = 'executive-section';
+    
+    section.innerHTML = `
+        <h2 class="executive-section-title">🎯 Risk & Opportunity Analysis</h2>
+        <p class="executive-section-subtitle">Top products requiring attention and best performers to leverage</p>
+        
+        <div class="executive-lists-grid">
+            <!-- Top Risks -->
+            <div class="executive-list-card">
+                <h3 class="executive-list-title risks">🚨 Top 3 Risks</h3>
+                <ul class="executive-list" id="top-risks-list"></ul>
+            </div>
+            
+            <!-- Top Opportunities -->
+            <div class="executive-list-card">
+                <h3 class="executive-list-title opportunities">🌟 Top 3 Opportunities</h3>
+                <ul class="executive-list" id="top-opportunities-list"></ul>
+            </div>
+        </div>
+    `;
+    
+    // Populate lists after DOM insertion
+    setTimeout(() => {
+        populateRisksList(metrics.topRisks);
+        populateOpportunitiesList(metrics.topOpportunities);
+    }, 0);
+    
+    // Add narrative
+    const narrative = generateRiskOpportunityNarrative(metrics);
+    const narrativeDiv = document.createElement('div');
+    narrativeDiv.className = 'executive-narrative';
+    narrativeDiv.innerHTML = narrative;
+    section.appendChild(narrativeDiv);
+    
+    return section;
+}
+
+/**
+ * Populate Top Risks list
+ */
+function populateRisksList(topRisks) {
+    const list = document.getElementById('top-risks-list');
+    if (!list) return;
+    
+    if (topRisks.length === 0) {
+        list.innerHTML = '<li style="padding: 1rem; text-align: center; color: #6b7280;">No high-risk products identified</li>';
+        return;
     }
     
-    // Assemble card
-    card.appendChild(header);
-    card.appendChild(body);
+    list.innerHTML = topRisks.map((risk, index) => `
+        <li class="executive-list-item risk">
+            <span class="executive-list-item-rank">${index + 1}</span>
+            <div style="flex: 1;">
+                <div class="executive-list-item-name">${escapeHtml(risk.name)}</div>
+                <div class="executive-list-item-details">
+                    <span class="executive-list-item-score">Risk: ${risk.riskScore.toFixed(1)}/10</span>
+                    <span>${escapeHtml(risk.area)}</span>
+                    <span>${escapeHtml(risk.maturity)}</span>
+                </div>
+            </div>
+        </li>
+    `).join('');
+}
+
+/**
+ * Populate Top Opportunities list
+ */
+function populateOpportunitiesList(topOpportunities) {
+    const list = document.getElementById('top-opportunities-list');
+    if (!list) return;
     
-    return card;
+    if (topOpportunities.length === 0) {
+        list.innerHTML = '<li style="padding: 1rem; text-align: center; color: #6b7280;">No high-performing products identified</li>';
+        return;
+    }
+    
+    list.innerHTML = topOpportunities.map((opp, index) => `
+        <li class="executive-list-item opportunity">
+            <span class="executive-list-item-rank">${index + 1}</span>
+            <div style="flex: 1;">
+                <div class="executive-list-item-name">${escapeHtml(opp.name)}</div>
+                <div class="executive-list-item-details">
+                    <span class="executive-list-item-score">Performance: ${opp.performanceScore}%</span>
+                    <span>${escapeHtml(opp.area)}</span>
+                    <span>${escapeHtml(opp.maturity)}</span>
+                </div>
+            </div>
+        </li>
+    `).join('');
+}
+
+/**
+ * Create Strategic Alignment Charts section
+ */
+function createStrategicAlignmentCharts(metrics) {
+    const section = document.createElement('div');
+    section.className = 'executive-section';
+    
+    section.innerHTML = `
+        <h2 class="executive-section-title">🎯 Strategic Alignment & Resource Allocation</h2>
+        <p class="executive-section-subtitle">Product distribution across areas and maturity stages</p>
+        
+        <div class="executive-charts-grid">
+            <!-- Alignment by Area Chart -->
+            <div class="executive-chart-card">
+                <h3 class="executive-chart-title">📍 Products by P&C Area</h3>
+                <div class="executive-chart-wrapper">
+                    <canvas id="chart-alignment-area"></canvas>
+                </div>
+            </div>
+            
+            <!-- Allocation by Maturity Chart -->
+            <div class="executive-chart-card">
+                <h3 class="executive-chart-title">📈 Products by Maturity Stage</h3>
+                <div class="executive-chart-wrapper">
+                    <canvas id="chart-allocation-maturity"></canvas>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create charts after DOM insertion
+    setTimeout(() => {
+        createAlignmentCharts(metrics);
+    }, 100);
+    
+    // Add narrative
+    const narrative = generateStrategicAlignmentNarrative(metrics);
+    const narrativeDiv = document.createElement('div');
+    narrativeDiv.className = 'executive-narrative';
+    narrativeDiv.innerHTML = narrative;
+    section.appendChild(narrativeDiv);
+    
+    return section;
+}
+
+/**
+ * Create Chart.js charts for strategic alignment
+ */
+function createAlignmentCharts(metrics) {
+    // Chart 1: Products by P&C Area (Pie Chart)
+    const areaCanvas = document.getElementById('chart-alignment-area');
+    if (areaCanvas) {
+        const areaData = Object.entries(metrics.alignmentByArea).sort((a, b) => b[1] - a[1]);
+        
+        new Chart(areaCanvas, {
+            type: 'pie',
+            data: {
+                labels: areaData.map(([area]) => area),
+                datasets: [{
+                    data: areaData.map(([, count]) => count),
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            padding: 15, 
+                            font: { size: 12, weight: '600', family: "'Inter', sans-serif" }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Chart 2: Products by Maturity (Bar Chart)
+    const maturityCanvas = document.getElementById('chart-allocation-maturity');
+    if (maturityCanvas) {
+        const maturityData = Object.entries(metrics.allocationByMaturity).sort((a, b) => {
+            const order = ['1. Development', '2. Growth', '3. Mature', '4. Decline'];
+            return order.indexOf(a[0]) - order.indexOf(b[0]);
+        });
+        
+        new Chart(maturityCanvas, {
+            type: 'bar',
+            data: {
+                labels: maturityData.map(([stage]) => stage),
+                datasets: [{
+                    label: 'Number of Products',
+                    data: maturityData.map(([, count]) => count),
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(251, 146, 60, 0.8)'
+                    ],
+                    borderRadius: 8,
+                    barThickness: 60
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
+                        bodyFont: { size: 13, family: "'Inter', sans-serif" }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            stepSize: 1, 
+                            font: { size: 12, family: "'Inter', sans-serif" } 
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        ticks: { font: { size: 12, weight: '600', family: "'Inter', sans-serif" } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Generate narrative text for Health Score
+ */
+function generateHealthScoreNarrative(metrics, scoreLabel) {
+    const score = metrics.healthScore;
+    let narrative = `The portfolio's health is <span class="highlight">${scoreLabel}</span> with a score of <strong>${score}/100</strong>. `;
+    
+    if (score >= 80) {
+        narrative += `This indicates <strong>strong portfolio performance</strong> with well-managed risks. Continue monitoring top performers and maintain current strategic direction.`;
+    } else if (score >= 65) {
+        narrative += `This indicates <strong>solid portfolio performance</strong> with manageable risks. Focus on elevating medium-performing products and addressing identified risk areas.`;
+    } else if (score >= 50) {
+        narrative += `This indicates <strong>moderate portfolio health</strong> with some concerns. Immediate attention needed for ${metrics.productsAtRisk} high-risk products. Consider reallocating resources to improve performance.`;
+    } else {
+        narrative += `This indicates <strong>portfolio health needs significant improvement</strong>. Urgent action required: ${metrics.productsAtRisk} products are at critical risk. Recommend immediate strategic review and intervention plan.`;
+    }
+    
+    narrative += ` The portfolio includes <strong>${metrics.starPerformers} star performers</strong> and <strong>${metrics.needsAttention} products needing attention</strong>.`;
+    
+    return narrative;
+}
+
+/**
+ * Generate narrative text for Risk & Opportunity Analysis
+ */
+function generateRiskOpportunityNarrative(metrics) {
+    let narrative = '';
+    
+    // Risk narrative
+    if (metrics.topRisks.length > 0) {
+        const topRisk = metrics.topRisks[0];
+        narrative += `The highest risk product is <span class="highlight">${escapeHtml(topRisk.name)}</span> with a risk score of <strong>${topRisk.riskScore.toFixed(1)}/10</strong>. `;
+        
+        if (metrics.riskBreakdown.high > 0) {
+            narrative += `Overall, <strong>${metrics.riskBreakdown.high} products</strong> are classified as high risk and require immediate attention. `;
+        }
+    }
+    
+    // Opportunity narrative
+    if (metrics.topOpportunities.length > 0) {
+        const topOpp = metrics.topOpportunities[0];
+        narrative += `The top performing product is <span class="highlight">${escapeHtml(topOpp.name)}</span> achieving <strong>${topOpp.performanceScore}% target performance</strong>. `;
+        
+        if (metrics.starPerformers > 0) {
+            narrative += `Leverage insights from the <strong>${metrics.starPerformers} star performers</strong> to improve other products in the portfolio.`;
+        }
+    }
+    
+    if (!narrative) {
+        narrative = 'Insufficient data to generate risk and opportunity insights. Continue collecting performance data for more comprehensive analysis.';
+    }
+    
+    return narrative;
+}
+
+/**
+ * Generate narrative text for Strategic Alignment
+ */
+function generateStrategicAlignmentNarrative(metrics) {
+    // Find highest and lowest areas
+    const areaEntries = Object.entries(metrics.alignmentByArea).sort((a, b) => b[1] - a[1]);
+    const highestArea = areaEntries[0];
+    const lowestArea = areaEntries[areaEntries.length - 1];
+    
+    // Find maturity distribution
+    const maturityEntries = Object.entries(metrics.allocationByMaturity);
+    const developmentCount = metrics.allocationByMaturity['1. Development'] || 0;
+    const matureCount = metrics.allocationByMaturity['3. Mature'] || 0;
+    
+    let narrative = `Resources are heavily allocated to the <span class="highlight">${escapeHtml(highestArea[0])}</span> area with <strong>${highestArea[1]} products (${Math.round((highestArea[1]/metrics.totalProducts)*100)}%)</strong>, while the <span class="highlight">${escapeHtml(lowestArea[0])}</span> area has the lowest allocation with <strong>${lowestArea[1]} products</strong>. `;
+    
+    narrative += `The portfolio maturity distribution shows <strong>${developmentCount} products in development</strong> and <strong>${matureCount} mature products</strong>. `;
+    
+    if (developmentCount > matureCount) {
+        narrative += `The high proportion of products in early stages suggests a <strong>growth-focused strategy</strong> with investment in innovation. Monitor development progress closely and ensure adequate resources for scaling.`;
+    } else if (matureCount > developmentCount * 2) {
+        narrative += `The concentration in mature products indicates a <strong>stability-focused portfolio</strong>. Consider increasing investment in innovation and new product development to maintain competitive advantage.`;
+    } else {
+        narrative += `The balanced maturity distribution suggests a <strong>well-diversified portfolio</strong> with both stable revenue sources and growth opportunities.`;
+    }
+    
+    return narrative;
+}
+
+// Keep old strategic view function as alias for backward compatibility
+function renderStrategicView() {
+    renderExecutiveView();
 }
 
 // ==================== DESCRIPTIVE ANALYSIS ====================
@@ -1228,6 +1567,7 @@ function getStatusClass(maturity) {
 // Expose public API
 window.UIManager = {
     switchTab,
+    setupTacticalFilters,
     populateFilters,
     applyFiltersFromUI,
     clearFilters,
@@ -1237,6 +1577,7 @@ window.UIManager = {
     updateStats,
     updateLastUpdateDisplay,
     renderStrategicView,
+    renderExecutiveView,
     loadDescriptiveAnalysis,
     showLoading,
     showError,

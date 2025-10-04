@@ -35,8 +35,8 @@ function initAutoUpdate() {
     } else {
         const portfolioData = window.DataManager.loadCachedData();
         if (portfolioData && portfolioData.length > 0) {
-            window.UIManager.populateFilters();
-            window.DataManager.applyFilters('', '', '', ''); // Initialize filteredData
+            window.UIManager.setupTacticalFilters(); // Setup filters and sorting
+            window.DataManager.applyFilters('', '', '', '', ''); // Initialize filteredData with sorting
             window.UIManager.renderCards();
             window.UIManager.updateStats();
             window.UIManager.updateLastUpdateDisplay();
@@ -67,8 +67,8 @@ async function fetchSheetData() {
         const data = await window.DataManager.fetchSheetData();
         
         // Update UI after successful fetch
-        window.UIManager.populateFilters();
-        window.DataManager.applyFilters('', '', '', ''); // Reset filters
+        window.UIManager.setupTacticalFilters(); // Setup filters and sorting
+        window.DataManager.applyFilters('', '', '', '', ''); // Reset filters and sorting
         window.UIManager.renderCards();
         window.UIManager.updateStats();
         window.UIManager.updateLastUpdateDisplay();
@@ -82,8 +82,8 @@ async function fetchSheetData() {
         // Try to load cached data as fallback
         const cachedData = window.DataManager.loadCachedData();
         if (cachedData && cachedData.length > 0) {
-            window.UIManager.populateFilters();
-            window.DataManager.applyFilters('', '', '', '');
+            window.UIManager.setupTacticalFilters(); // Setup filters and sorting
+            window.DataManager.applyFilters('', '', '', '', ''); // Reset filters and sorting
             window.UIManager.renderCards();
             window.UIManager.updateStats();
             window.UIManager.showError('Showing cached data. Unable to fetch fresh data.');
@@ -109,12 +109,9 @@ function setupEventListeners() {
     });
     console.log('✅ Tab buttons initialized');
     
-    // Setup debounced search (waits 300ms after user stops typing)
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        const debouncedFilter = window.DataManager.debounce(window.UIManager.applyFiltersFromUI, 300);
-        searchInput.addEventListener('input', debouncedFilter);
-    }
+    // Setup tactical filters and sorting for Portfolio Overview
+    // This includes search, filters, and sorting functionality
+    window.UIManager.setupTacticalFilters();
     
     // Event delegation for clicks (better performance and cleaner code)
     document.addEventListener('click', (e) => {

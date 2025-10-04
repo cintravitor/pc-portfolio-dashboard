@@ -35,6 +35,14 @@
                     <select id="filter-area" onchange="applyFilters()"><option value="">All Areas</option></select>
                     <select id="filter-maturity" onchange="applyFilters()"><option value="">All Stages</option></select>
                     <select id="filter-owner" onchange="applyFilters()"><option value="">All Owners</option></select>
+                    <select id="sort-by" onchange="applyFilters()">
+                        <option value="">Sort By...</option>
+                        <option value="name-asc">Product Name (A-Z)</option>
+                        <option value="name-desc">Product Name (Z-A)</option>
+                        <option value="maturity-asc">Maturity Stage</option>
+                        <option value="area-asc">P&C Area (A-Z)</option>
+                        <option value="owner-asc">Owner (A-Z)</option>
+                    </select>
                     <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
                 </div>
             </div>
@@ -91,10 +99,12 @@
                 <div id="analysis-content" class="analysis-content"></div>
             </div>
         </div>
-        <!-- Strategic View Tab Content -->
+        <!-- Strategic View Tab Content (Now Executive View) -->
         <div class="tab-content" id="tab-strategic-view">
-            <div class="strategic-container">
-                <div id="strategic-content" class="strategic-content"></div>
+            <div class="executive-container">
+                <div id="executive-content" class="executive-content">
+                    <!-- Executive View content will be dynamically rendered here -->
+                </div>
             </div>
         </div>
     </main>

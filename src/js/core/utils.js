@@ -305,6 +305,138 @@ function createElement(tag, attributes = {}, children = []) {
     return element;
 }
 
+// ==================== PUBLISH/SUBSCRIBE PATTERN ====================
+
+/**
+ * Event Bus for decoupling modules
+ * Implements a lightweight Pub/Sub pattern for loose coupling between modules
+ * 
+ * Benefits:
+ * - Decouples event producers from consumers
+ * - Makes testing easier (can subscribe to events in tests)
+ * - Allows multiple subscribers to same event
+ * - Central place to see all application events
+ */
+
+/**
+ * Event subscribers storage
+ * Maps event names to arrays of callback functions
+ * @private
+ */
+const eventSubscribers = {};
+
+/**
+ * Publish an event with optional data
+ * Notifies all subscribers of this event type
+ * 
+ * @param {string} event - Event name (e.g., 'data:loaded', 'filter:changed')
+ * @param {*} data - Optional data to pass to subscribers
+ * 
+ * @example
+ * publish('filter:changed', { area: 'Claims', maturity: 'Growth' });
+ */
+function publish(event, data) {
+    if (!event || typeof event !== 'string') {
+        console.error('publish() requires an event name (string)');
+        return;
+    }
+    
+    const subscribers = eventSubscribers[event] || [];
+    
+    if (subscribers.length === 0) {
+        console.warn(`No subscribers for event: ${event}`);
+        return;
+    }
+    
+    console.log(`📡 Publishing event: ${event}`, data ? `(${subscribers.length} subscribers)` : '');
+    
+    subscribers.forEach(callback => {
+        try {
+            callback(data);
+        } catch (error) {
+            console.error(`Error in subscriber for event "${event}":`, error);
+        }
+    });
+}
+
+/**
+ * Subscribe to an event
+ * Callback will be invoked whenever the event is published
+ * 
+ * @param {string} event - Event name to subscribe to
+ * @param {Function} callback - Function to call when event is published
+ * @returns {Function} Unsubscribe function
+ * 
+ * @example
+ * const unsubscribe = subscribe('filter:changed', (data) => {
+ *     console.log('Filter changed:', data);
+ * });
+ * 
+ * // Later, to unsubscribe:
+ * unsubscribe();
+ */
+function subscribe(event, callback) {
+    if (!event || typeof event !== 'string') {
+        console.error('subscribe() requires an event name (string)');
+        return () => {};
+    }
+    
+    if (typeof callback !== 'function') {
+        console.error('subscribe() requires a callback function');
+        return () => {};
+    }
+    
+    if (!eventSubscribers[event]) {
+        eventSubscribers[event] = [];
+    }
+    
+    eventSubscribers[event].push(callback);
+    console.log(`📬 Subscribed to event: ${event} (${eventSubscribers[event].length} subscribers)`);
+    
+    // Return unsubscribe function
+    return function unsubscribe() {
+        const index = eventSubscribers[event].indexOf(callback);
+        if (index > -1) {
+            eventSubscribers[event].splice(index, 1);
+            console.log(`📭 Unsubscribed from event: ${event}`);
+        }
+    };
+}
+
+/**
+ * Unsubscribe all callbacks for a specific event
+ * Useful for cleanup or reset scenarios
+ * 
+ * @param {string} event - Event name to clear subscribers for
+ */
+function unsubscribeAll(event) {
+    if (event) {
+        delete eventSubscribers[event];
+        console.log(`🗑️ Cleared all subscribers for event: ${event}`);
+    } else {
+        // Clear all subscriptions
+        Object.keys(eventSubscribers).forEach(key => delete eventSubscribers[key]);
+        console.log('🗑️ Cleared all event subscribers');
+    }
+}
+
+/**
+ * Get list of all registered events (for debugging)
+ * @returns {Array<string>} Array of event names
+ */
+function getRegisteredEvents() {
+    return Object.keys(eventSubscribers);
+}
+
+/**
+ * Get subscriber count for an event (for debugging)
+ * @param {string} event - Event name
+ * @returns {number} Number of subscribers
+ */
+function getSubscriberCount(event) {
+    return (eventSubscribers[event] || []).length;
+}
+
 // ==================== MODULE EXPORTS ====================
 
 /**
@@ -338,7 +470,14 @@ window.Utils = {
     
     // DOM
     getElement,
-    createElement
+    createElement,
+    
+    // Pub/Sub Event System
+    publish,
+    subscribe,
+    unsubscribeAll,
+    getRegisteredEvents,
+    getSubscriberCount
 };
 
 console.log('✅ Utils module loaded');

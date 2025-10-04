@@ -45,10 +45,17 @@ The dashboard follows a modern, modular architecture:
 
 ## 🎯 Features
 
-- **Executive View**: Portfolio health score, risk & opportunity matrix
-- **Portfolio Overview**: Filterable and sortable product cards
+### Core Dashboards
+- **Strategic View**: Executive KPIs with interactive drill-down
+- **Portfolio Overview**: Filterable cards with at-a-glance metrics
 - **Descriptive Analysis**: Statistical insights and charts
-- **Anomaly Detection**: Automated detection of owner over-allocation and data quality issues
+- **Planning View**: Proactive anomaly detection and planning workspace
+
+### Key Capabilities
+- **Automated Anomaly Detection**: Owner over-allocation and data quality issues
+- **Interactive Drill-Down**: Click KPIs to filter tactical view
+- **Visual Filter Pills**: Easy filter management and removal
+- **Progressive Disclosure**: Optimized detail panels with collapsible sections
 - **Real-time Updates**: Auto-refresh from Google Sheets
 - **Offline Support**: Local caching for offline access
 
@@ -64,11 +71,21 @@ The dashboard follows a modern, modular architecture:
 
 Full documentation is available in the [`docs/`](./docs/) folder:
 
-- [User Guide](./docs/USER_GUIDE_TABS.md)
-- [Architecture Overview](./docs/ARCHITECTURE_REFACTOR_COMPLETE.md)
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
-- [Setup Instructions](./docs/SETUP_COMPLETE.md)
-- [Anomaly Detection](./docs/ANOMALY_DETECTION_IMPLEMENTATION.md) - **NEW**
+### User Documentation
+- **[User Stories](./docs/USER_STORIES.md)** - Complete feature list (34 stories, all ✅ complete)
+- **[User Journeys](./docs/user-journeys.md)** - Real-world use cases and workflows 🆕
+- **[Product Roadmap](./docs/PRODUCT_ROADMAP.md)** - Future enhancements and timeline 🆕
+- [User Guide](./docs/USER_GUIDE_TABS.md) - How to use the dashboard
+
+### Technical Documentation
+- **[Architecture Report](./docs/STRATEGIC_ARCHITECTURE_REPORT.md)** - Strategic architecture review 🆕
+- **[Architecture Plan](./docs/ARCHITECTURE_REFACTOR_PLAN.md)** - Event-driven architecture design 🆕
+- [Architecture Overview](./docs/ARCHITECTURE_REFACTOR_COMPLETE.md) - Current architecture
+- [Anomaly Detection](./docs/ANOMALY_DETECTION_IMPLEMENTATION.md) - Anomaly detection system
+
+### Deployment & Setup
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - How to deploy
+- [Setup Instructions](./docs/SETUP_COMPLETE.md) - Getting started
 
 ## 🚦 Getting Started
 

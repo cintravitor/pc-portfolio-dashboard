@@ -3489,3 +3489,461 @@ select:focus {
     }
 }
 
+/* ==================== SMOKE DETECTORS STYLES ==================== */
+
+/* Smoke Detectors Section */
+.smoke-detectors-section {
+    margin-top: 2rem;
+}
+
+.sd-badge-critical,
+.sd-badge-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.sd-badge-critical {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+.sd-badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fbbf24;
+}
+
+/* Smoke Detectors Table */
+.smoke-detectors-table-container {
+    margin: 1.5rem 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-light));
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+    box-shadow: 0 4px 12px var(--glass-shadow);
+}
+
+.smoke-detectors-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.smoke-detectors-table thead {
+    background: rgba(99, 102, 241, 0.08);
+    backdrop-filter: blur(8px);
+}
+
+.smoke-detectors-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.15);
+}
+
+.smoke-detectors-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    vertical-align: middle;
+}
+
+.smoke-detectors-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.smoke-detectors-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: translateX(4px);
+}
+
+/* SD Badge in Table */
+.sd-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.sd-badge-clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sd-badge-clickable:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sd-badge-critical {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    border: 2px solid #ef4444;
+}
+
+.sd-badge-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 2px solid #fbbf24;
+}
+
+.sd-badge-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.sd-badge-count {
+    font-size: 1.1rem;
+}
+
+/* SD Action Button */
+.sd-action-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--mercury-accent) 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sd-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.sd-action-btn:active {
+    transform: translateY(0);
+}
+
+/* Smoke Detectors Legend */
+.smoke-detectors-legend {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(239, 246, 255, 0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.smoke-detectors-legend h4 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.smoke-detectors-legend ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.smoke-detectors-legend li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    border-left: 3px solid var(--mercury-accent);
+}
+
+/* ==================== SMOKE DETECTOR MODAL ==================== */
+
+.sd-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sd-modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.sd-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+}
+
+.sd-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.sd-modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.sd-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.sd-modal-product-info {
+    padding: 1.5rem 2rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.sd-modal-product-info h3 {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+.sd-modal-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.sd-modal-score {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.125rem;
+    margin-top: 0.75rem;
+}
+
+.sd-critical-label {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #ef4444;
+}
+
+.sd-warning-label {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #fbbf24;
+}
+
+.sd-modal-body {
+    padding: 1.5rem 2rem;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.sd-detectors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sd-detector-item {
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 2px solid;
+    transition: all 0.2s ease;
+}
+
+.sd-detector-item.sd-triggered {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: #ef4444;
+}
+
+.sd-detector-item.sd-ok {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: #10b981;
+}
+
+.sd-detector-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sd-detector-status {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.sd-detector-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.sd-detector-badge {
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sd-detector-desc {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.sd-detector-recommendation {
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid #3b82f6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.sd-detector-recommendation strong {
+    color: #3b82f6;
+}
+
+.sd-modal-footer {
+    padding: 1.5rem 2rem;
+    background: rgba(248, 250, 252, 0.8);
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.sd-btn-secondary,
+.sd-btn-primary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.sd-btn-secondary {
+    background: white;
+    color: var(--text-primary);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.sd-btn-secondary:hover {
+    background: rgba(248, 250, 252, 1);
+    border-color: rgba(148, 163, 184, 0.5);
+}
+
+.sd-btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+}
+
+.sd-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .sd-modal {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .sd-modal-header,
+    .sd-modal-product-info,
+    .sd-modal-body,
+    .sd-modal-footer {
+        padding: 1rem;
+    }
+    
+    .sd-modal-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .smoke-detectors-table-container {
+        overflow-x: auto;
+    }
+    
+    .smoke-detectors-legend ul {
+        grid-template-columns: 1fr;
+    }
+}
+

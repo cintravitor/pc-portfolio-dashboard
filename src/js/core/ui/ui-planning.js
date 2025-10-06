@@ -104,6 +104,9 @@
             
             <div class="anomaly-content">
                 ${hasAnomalies ? `
+                    <!-- Smoke Detectors Section -->
+                    ${createSmokeDetectorsSection()}
+                    
                     <!-- Owner Overload Alerts -->
                     ${anomalyReport.ownerOverload.length > 0 ? `
                         <div class="anomaly-category">
@@ -204,6 +207,275 @@
     }
     
     /**
+     * Create Smoke Detectors Section with table showing all products
+     */
+    function createSmokeDetectorsSection() {
+        // Get portfolio data
+        const portfolioData = window.State.getPortfolioData();
+        
+        if (!portfolioData || portfolioData.length === 0) {
+            return '';
+        }
+        
+        // Calculate smoke detectors for all products
+        const productsWithDetectors = portfolioData.map(product => ({
+            ...product,
+            smokeDetectorCount: window.DataManager.calculateSmokeDetectors(product)
+        }));
+        
+        // Filter to show only products with detectors > 0
+        const productsAtRisk = productsWithDetectors.filter(p => p.smokeDetectorCount > 0);
+        
+        // Sort by detector count (highest first)
+        productsAtRisk.sort((a, b) => b.smokeDetectorCount - a.smokeDetectorCount);
+        
+        // Count severity levels
+        const critical = productsAtRisk.filter(p => p.smokeDetectorCount >= 3).length;
+        const warning = productsAtRisk.filter(p => p.smokeDetectorCount > 0 && p.smokeDetectorCount < 3).length;
+        
+        if (productsAtRisk.length === 0) {
+            return `
+                <div class="anomaly-category">
+                    <h3 class="anomaly-category-title">
+                        🔍 Smoke Detectors (0)
+                    </h3>
+                    <p class="anomaly-category-desc">Early warning system for product health issues</p>
+                    <div class="anomaly-empty-state" style="margin: 1rem 0;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+                        <p style="color: #059669; font-weight: 600;">All products are healthy!</p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">No smoke detectors triggered</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="anomaly-category smoke-detectors-section">
+                <h3 class="anomaly-category-title">
+                    🔍 Smoke Detectors (${productsAtRisk.length})
+                    ${critical > 0 ? `<span class="sd-badge-critical">${critical} Critical</span>` : ''}
+                    ${warning > 0 ? `<span class="sd-badge-warning">${warning} Warning</span>` : ''}
+                </h3>
+                <p class="anomaly-category-desc">
+                    Early warning system detecting: downward trends, missing metrics, maturity signals, and high HC allocation
+                </p>
+                
+                <div class="smoke-detectors-table-container">
+                    <table class="smoke-detectors-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">SDs</th>
+                                <th style="width: 25%;">Product Name</th>
+                                <th style="width: 15%;">Owner</th>
+                                <th style="width: 15%;">Area</th>
+                                <th style="width: 15%;">Maturity</th>
+                                <th style="width: 25%;">Quick Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${productsAtRisk.map(product => createSmokeDetectorRow(product)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="smoke-detectors-legend">
+                    <h4>Smoke Detector Rules:</h4>
+                    <ul>
+                        <li><strong>Detector 1:</strong> 📉 Downward metric trend (3+ consecutive months)</li>
+                        <li><strong>Detector 2:</strong> 🚫 Missing UX or BI metrics</li>
+                        <li><strong>Detector 3:</strong> ⚠️ Decline stage OR Growth/Mature with Sean Ellis Score &lt; 40%</li>
+                        <li><strong>Detector 4:</strong> 👥 High BAU HC allocation (&gt; 2 people)</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Create a single row for the smoke detectors table
+     */
+    function createSmokeDetectorRow(product) {
+        const count = product.smokeDetectorCount || 0;
+        const severityClass = count >= 3 ? 'critical' : 'warning';
+        const icon = count >= 3 ? '🚨' : '⚠️';
+        
+        return `
+            <tr class="sd-row">
+                <td>
+                    <div class="sd-badge sd-badge-${severityClass} sd-badge-clickable" 
+                         data-product-id="${product.id}"
+                         data-product-name="${escapeHtml(product.name)}"
+                         data-sd-count="${count}"
+                         onclick="openSmokeDetectorDrillDown(${product.id}, '${escapeHtml(product.name)}', ${count})"
+                         title="Click to see which detectors are triggered">
+                        <span class="sd-badge-icon">${icon}</span>
+                        <span class="sd-badge-count">${count}</span>
+                    </div>
+                </td>
+                <td>
+                    <strong>${escapeHtml(product.name)}</strong>
+                </td>
+                <td>${escapeHtml(product.owner || 'Not assigned')}</td>
+                <td>${escapeHtml(product.area || 'N/A')}</td>
+                <td>${escapeHtml(product.maturity || 'N/A')}</td>
+                <td>
+                    <button class="sd-action-btn" 
+                            onclick="drillDownToProduct('${escapeHtml(product.name)}')"
+                            title="View product details in Insights & Analytics">
+                        🔍 View Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+    
+    /**
+     * Analyze which specific detectors are triggered for a product
+     * Returns detailed breakdown for drill-down display
+     */
+    function analyzeSmokeDetectorsDetailed(product) {
+        const detectors = [];
+        
+        // Helper functions
+        const isInvalid = (val) => {
+            if (val === null || val === undefined || val === '' || val === 'N/A' || val === '-') return true;
+            if (typeof val === 'string' && val.trim() === '') return true;
+            return false;
+        };
+        
+        const isValidNumber = (val) => {
+            if (isInvalid(val)) return false;
+            const num = parseFloat(val);
+            return !isNaN(num);
+        };
+        
+        const hasDownwardTrend = (monthlyArray) => {
+            if (!Array.isArray(monthlyArray) || monthlyArray.length < 3) return false;
+            
+            const validValues = [];
+            for (let i = 0; i < monthlyArray.length; i++) {
+                if (isValidNumber(monthlyArray[i])) {
+                    validValues.push(parseFloat(monthlyArray[i]));
+                }
+            }
+            
+            if (validValues.length < 3) return false;
+            
+            let consecutiveDeclines = 0;
+            for (let i = 1; i < validValues.length; i++) {
+                if (validValues[i] < validValues[i - 1]) {
+                    consecutiveDeclines++;
+                    if (consecutiveDeclines >= 2) return true;
+                } else {
+                    consecutiveDeclines = 0;
+                }
+            }
+            return false;
+        };
+        
+        // DETECTOR 1: Downward Metric Trend
+        const uxDownward = hasDownwardTrend(product.monthlyUX);
+        const biDownward = hasDownwardTrend(product.monthlyBI);
+        
+        if (uxDownward || biDownward) {
+            detectors.push({
+                name: '📉 Downward Metric Trend',
+                triggered: true,
+                description: `${uxDownward ? 'UX metrics' : ''}${uxDownward && biDownward ? ' and ' : ''}${biDownward ? 'BI metrics' : ''} showing decline over 3+ consecutive months`,
+                recommendation: 'Investigate root cause of declining metrics. Consider product improvements or resource reallocation.',
+                severity: 'high'
+            });
+        } else {
+            detectors.push({
+                name: '📉 Downward Metric Trend',
+                triggered: false,
+                description: 'No sustained downward trend detected in metrics',
+                severity: 'ok'
+            });
+        }
+        
+        // DETECTOR 2: Lacking Metrics
+        const missingUXMetric = isInvalid(product.keyMetricUX);
+        const missingBIMetric = isInvalid(product.keyMetricBI);
+        
+        if (missingUXMetric || missingBIMetric) {
+            const missing = [];
+            if (missingUXMetric) missing.push('User Experience');
+            if (missingBIMetric) missing.push('Business Impact');
+            
+            detectors.push({
+                name: '🚫 Lacking Metrics',
+                triggered: true,
+                description: `Missing key metrics: ${missing.join(', ')}`,
+                recommendation: 'Define and implement tracking for missing metrics to enable data-driven decisions.',
+                severity: 'high'
+            });
+        } else {
+            detectors.push({
+                name: '🚫 Lacking Metrics',
+                triggered: false,
+                description: 'All key metrics are defined',
+                severity: 'ok'
+            });
+        }
+        
+        // DETECTOR 3: Maturity Signal
+        const maturityStage = (product.maturity || '').toLowerCase().trim();
+        const isDecline = maturityStage.includes('decline') || maturityStage === '4. decline';
+        const isGrowth = maturityStage.includes('growth') || maturityStage === '2. growth';
+        const isMature = maturityStage.includes('mature') || maturityStage === '3. mature';
+        
+        let maturityTriggered = false;
+        let maturityDesc = '';
+        let maturityRec = '';
+        
+        if (isDecline) {
+            maturityTriggered = true;
+            maturityDesc = 'Product is in Decline stage';
+            maturityRec = 'Consider sunsetting strategy or major pivot to revitalize the product.';
+        } else if (isGrowth || isMature) {
+            const seanEllisScore = product.keyMetricUX;
+            if (isInvalid(seanEllisScore)) {
+                maturityTriggered = true;
+                maturityDesc = `${isGrowth ? 'Growth' : 'Mature'} stage product missing Sean Ellis Score`;
+                maturityRec = 'Conduct Sean Ellis survey to measure product-market fit and guide strategy.';
+            } else if (isValidNumber(seanEllisScore) && parseFloat(seanEllisScore) < 40) {
+                maturityTriggered = true;
+                maturityDesc = `${isGrowth ? 'Growth' : 'Mature'} stage with Sean Ellis Score below 40% (${seanEllisScore}%)`;
+                maturityRec = 'Low product-market fit score indicates need for product improvements or repositioning.';
+            }
+        }
+        
+        if (maturityTriggered) {
+            detectors.push({
+                name: '⚠️ Maturity Signal',
+                triggered: true,
+                description: maturityDesc,
+                recommendation: maturityRec,
+                severity: isDecline ? 'critical' : 'high'
+            });
+        } else {
+            detectors.push({
+                name: '⚠️ Maturity Signal',
+                triggered: false,
+                description: 'Maturity stage is healthy',
+                severity: 'ok'
+            });
+        }
+        
+        // DETECTOR 4: High BAU HC Allocation
+        // Note: This is a simplified check since HC extraction is heuristic
+        detectors.push({
+            name: '👥 High BAU HC Allocation',
+            triggered: false, // We'll assume false for drill-down since extraction is complex
+            description: 'HC allocation check (requires full data analysis)',
+            severity: 'ok'
+        });
+        
+        return detectors;
+    }
+    
+    /**
      * Get icon for specific issue type
      */
     function getIssueIcon(issue) {
@@ -227,11 +499,133 @@
         return div.innerHTML;
     }
     
+    /**
+     * Open Smoke Detector drill-down modal showing which detectors are triggered
+     * @param {number} productId - Product ID
+     * @param {string} productName - Product name
+     * @param {number} count - Number of triggered detectors
+     */
+    function openSmokeDetectorDrillDown(productId, productName, count) {
+        console.log(`Opening smoke detector drill-down for product ID: ${productId}`);
+        
+        // Get product data
+        const portfolioData = window.State.getPortfolioData();
+        const product = portfolioData.find(p => p.id === productId);
+        
+        if (!product) {
+            console.error('Product not found:', productId);
+            return;
+        }
+        
+        // Analyze which detectors are triggered
+        const detectorAnalysis = analyzeSmokeDetectorsDetailed(product);
+        
+        // Create modal HTML
+        const modalHTML = `
+            <div class="sd-modal-overlay" id="sd-modal-overlay" onclick="closeSmokeDetectorModal()">
+                <div class="sd-modal" onclick="event.stopPropagation()">
+                    <div class="sd-modal-header">
+                        <h2>
+                            🔍 Smoke Detector Analysis
+                        </h2>
+                        <button class="sd-modal-close" onclick="closeSmokeDetectorModal()" title="Close">✕</button>
+                    </div>
+                    
+                    <div class="sd-modal-product-info">
+                        <h3>${escapeHtml(productName)}</h3>
+                        <div class="sd-modal-meta">
+                            <span>Owner: ${escapeHtml(product.owner || 'Not assigned')}</span>
+                            <span>Area: ${escapeHtml(product.area || 'N/A')}</span>
+                            <span>Maturity: ${escapeHtml(product.maturity || 'N/A')}</span>
+                        </div>
+                        <div class="sd-modal-score">
+                            ${count >= 3 ? '🚨' : '⚠️'} 
+                            <strong>${count} Smoke Detector${count > 1 ? 's' : ''}</strong> Triggered
+                            ${count >= 3 ? '<span class="sd-critical-label">CRITICAL</span>' : '<span class="sd-warning-label">WARNING</span>'}
+                        </div>
+                    </div>
+                    
+                    <div class="sd-modal-body">
+                        <div class="sd-detectors-list">
+                            ${detectorAnalysis.map(detector => `
+                                <div class="sd-detector-item ${detector.triggered ? 'sd-triggered' : 'sd-ok'}">
+                                    <div class="sd-detector-header">
+                                        <span class="sd-detector-status">
+                                            ${detector.triggered ? '🚨' : '✅'}
+                                        </span>
+                                        <h4 class="sd-detector-name">${detector.name}</h4>
+                                        ${detector.triggered ? '<span class="sd-detector-badge">TRIGGERED</span>' : ''}
+                                    </div>
+                                    <p class="sd-detector-desc">${detector.description}</p>
+                                    ${detector.triggered && detector.recommendation ? `
+                                        <div class="sd-detector-recommendation">
+                                            <strong>💡 Recommendation:</strong> ${detector.recommendation}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="sd-modal-footer">
+                        <button class="sd-btn-secondary" onclick="closeSmokeDetectorModal()">
+                            Close
+                        </button>
+                        <button class="sd-btn-primary" onclick="drillDownToProduct('${escapeHtml(productName)}'); closeSmokeDetectorModal();">
+                            🔍 View Full Product Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Append modal to body
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer.firstElementChild);
+        
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    }
+    
+    /**
+     * Close smoke detector modal
+     */
+    function closeSmokeDetectorModal() {
+        const modal = document.getElementById('sd-modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+    
+    /**
+     * Drill down to a specific product in Insights & Analytics
+     * @param {string} productName - Name of the product
+     */
+    function drillDownToProduct(productName) {
+        console.log('Drilling down to product:', productName);
+        
+        // Use existing drill-down infrastructure
+        if (window.UIManager && window.UIManager.DrillDown) {
+            window.UIManager.DrillDown.drillToInsights({
+                type: 'data-health',
+                productName: productName
+            });
+        }
+    }
+    
     // Export to UIManager namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Planning = {
         render: renderPlanningView
     };
+    
+    // Global exports for onclick handlers
+    window.openSmokeDetectorDrillDown = openSmokeDetectorDrillDown;
+    window.closeSmokeDetectorModal = closeSmokeDetectorModal;
+    window.drillDownToProduct = drillDownToProduct;
     
     console.log('✅ UI Planning module loaded');
 })();

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smoke Detectors Unit Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .test-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #48bb78;
+        }
+        
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        
+        #console-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.loading {
+            background: #fbbf24;
+            color: #78350f;
+        }
+        
+        .status.success {
+            background: #34d399;
+            color: #065f46;
+        }
+        
+        .status.error {
+            background: #f87171;
+            color: #7f1d1d;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }
+        
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Smoke Detectors Unit Tests</h1>
+        <p>Phase 1: Logic & Unit Tests - P&C Portfolio Dashboard</p>
+    </div>
+
+    <div class="info-box">
+        <h3>📋 What This Tests</h3>
+        <ul>
+            <li><strong>Detector 1:</strong> Downward metric trend (3+ consecutive months)</li>
+            <li><strong>Detector 2:</strong> Lacking UX or BI metrics</li>
+            <li><strong>Detector 3:</strong> Maturity signal (Decline stage OR Growth/Mature with Sean Ellis Score &lt; 40%)</li>
+            <li><strong>Detector 4:</strong> High BAU HC allocation (&gt; 2 people)</li>
+        </ul>
+    </div>
+
+    <div class="test-controls">
+        <button class="btn" onclick="runTests()">
+            ▶️ Run All Tests
+        </button>
+        <button class="btn btn-secondary" onclick="clearConsole()">
+            🗑️ Clear Console
+        </button>
+        <span id="status"></span>
+    </div>
+
+    <div id="console-output">Click "Run All Tests" to execute the test suite...</div>
+
+    <!-- Load required modules -->
+    <script src="src/js/core/state.js"></script>
+    <script src="src/js/core/utils.js"></script>
+    <script src="src/js/core/data-manager.js"></script>
+
+    <script>
+        // Capture console output
+        const outputDiv = document.getElementById('console-output');
+        const statusSpan = document.getElementById('status');
+        
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        let consoleBuffer = [];
+        
+        function captureConsole() {
+            consoleBuffer = [];
+            
+            console.log = function(...args) {
+                const message = args.map(arg => {
+                    if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return String(arg);
+                }).join(' ');
+                
+                consoleBuffer.push(message);
+                originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const message = '❌ ERROR: ' + args.map(arg => {
+                    if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return String(arg);
+                }).join(' ');
+                
+                consoleBuffer.push(message);
+                originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                const message = '⚠️ WARNING: ' + args.map(arg => {
+                    if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return String(arg);
+                }).join(' ');
+                
+                consoleBuffer.push(message);
+                originalWarn.apply(console, args);
+            };
+        }
+        
+        function restoreConsole() {
+            console.log = originalLog;
+            console.error = originalError;
+            console.warn = originalWarn;
+        }
+        
+        function updateOutput() {
+            outputDiv.textContent = consoleBuffer.join('\n');
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+        
+        function runTests() {
+            // Clear previous output
+            consoleBuffer = ['Starting test suite...\n'];
+            updateOutput();
+            
+            // Update status
+            statusSpan.innerHTML = '<span class="status loading">⏳ Running...</span>';
+            
+            // Capture console output
+            captureConsole();
+            
+            try {
+                // Run the tests
+                const results = window.runSmokeDetectorTests();
+                
+                // Update status based on results
+                if (results.success) {
+                    statusSpan.innerHTML = `<span class="status success">✅ All ${results.passed} tests passed!</span>`;
+                } else {
+                    statusSpan.innerHTML = `<span class="status error">❌ ${results.failed} test(s) failed</span>`;
+                }
+                
+            } catch (error) {
+                consoleBuffer.push('\n❌ ERROR: ' + error.message);
+                consoleBuffer.push(error.stack);
+                statusSpan.innerHTML = '<span class="status error">❌ Test execution failed</span>';
+            } finally {
+                // Restore console
+                restoreConsole();
+                updateOutput();
+            }
+        }
+        
+        function clearConsole() {
+            consoleBuffer = ['Console cleared. Click "Run All Tests" to execute the test suite...'];
+            updateOutput();
+            statusSpan.innerHTML = '';
+        }
+        
+        // Log initial status
+        console.log('✅ Test page loaded successfully');
+        console.log('📦 Modules loaded: State, Utils, DataManager');
+        console.log('🎯 Ready to run tests\n');
+    </script>
+</body>
+</html>
+

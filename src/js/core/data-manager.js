@@ -1202,6 +1202,174 @@ function countMissingMetrics() {
     };
 }
 
+// ==================== SMOKE DETECTORS ====================
+
+/**
+ * Calculate Smoke Detectors for a single product
+ * Returns a count of triggered detectors (0-4) based on four critical warning signals
+ * 
+ * @param {Object} productData - Product object with all relevant fields
+ * @returns {number} Count of triggered smoke detectors (0-4)
+ */
+function calculateSmokeDetectors(productData) {
+    let detectorCount = 0;
+    
+    // Helper to check if value is invalid (missing, empty, N/A, or dash)
+    const isInvalid = (val) => {
+        if (val === null || val === undefined || val === '' || val === 'N/A' || val === '-') {
+            return true;
+        }
+        // Check if it's a string that's just whitespace
+        if (typeof val === 'string' && val.trim() === '') {
+            return true;
+        }
+        return false;
+    };
+    
+    // Helper to check if a value is a valid numeric value
+    const isValidNumber = (val) => {
+        if (isInvalid(val)) return false;
+        const num = parseFloat(val);
+        return !isNaN(num);
+    };
+    
+    // Helper to get Total HC Allocation from rawRow
+    const getTotalHCAllocation = (product) => {
+        // If we have column mapping, use it to find the Total HC Allocation column
+        const columnMapping = window.State ? window.State.getColumnMapping() : null;
+        
+        if (!product.rawRow || !Array.isArray(product.rawRow)) {
+            return null;
+        }
+        
+        // Search for "Total\nHeadcount Allocation (BAU) in # HC" column
+        // This is typically around column index 62 based on the CSV structure
+        // But we need to dynamically find it if column mapping exists
+        
+        // For now, we'll look for the value in the rawRow around the expected position
+        // A more robust approach would be to enhance the column mapping during data fetch
+        
+        // The rawRow contains all columns, we need to find the right index
+        // Based on CSV structure, Total HC Allocation is near the end
+        // Looking at the CSV headers, it appears after all the secondary metrics
+        
+        // Strategy: Search backwards from the end for a valid number in the expected range
+        // HC allocation is typically 0-10 people
+        for (let i = product.rawRow.length - 10; i >= 0 && i < product.rawRow.length; i--) {
+            const val = product.rawRow[i];
+            if (isValidNumber(val)) {
+                const num = parseFloat(val);
+                // HC allocation should be reasonable (0-100)
+                if (num >= 0 && num <= 100) {
+                    // This could be our HC allocation
+                    // We'll use the first valid number we find in this range
+                    // In production, this should use proper column mapping
+                    return num;
+                }
+            }
+        }
+        
+        return null;
+    };
+    
+    // DETECTOR 1: Downward Metric Trend
+    // Check for downward trend in monthlyUX or monthlyBI for 3+ consecutive months
+    const hasDownwardTrend = (monthlyArray) => {
+        if (!Array.isArray(monthlyArray) || monthlyArray.length < 3) {
+            return false;
+        }
+        
+        // Extract valid numeric values with their indices
+        const validValues = [];
+        for (let i = 0; i < monthlyArray.length; i++) {
+            if (isValidNumber(monthlyArray[i])) {
+                validValues.push({
+                    index: i,
+                    value: parseFloat(monthlyArray[i])
+                });
+            }
+        }
+        
+        // Need at least 3 valid values to check for trend
+        if (validValues.length < 3) {
+            return false;
+        }
+        
+        // Check for 3+ consecutive declining values
+        let consecutiveDeclines = 0;
+        for (let i = 1; i < validValues.length; i++) {
+            if (validValues[i].value < validValues[i - 1].value) {
+                consecutiveDeclines++;
+                if (consecutiveDeclines >= 2) {
+                    // 2 declines means 3 consecutive values (first, second, third)
+                    return true;
+                }
+            } else {
+                // Reset counter if trend breaks
+                consecutiveDeclines = 0;
+            }
+        }
+        
+        return false;
+    };
+    
+    const uxDownward = hasDownwardTrend(productData.monthlyUX);
+    const biDownward = hasDownwardTrend(productData.monthlyBI);
+    
+    if (uxDownward || biDownward) {
+        detectorCount++;
+    }
+    
+    // DETECTOR 2: Lacking Metrics
+    // Check if Key Metric UX or Key Metric BI is missing
+    const missingUXMetric = isInvalid(productData.keyMetricUX);
+    const missingBIMetric = isInvalid(productData.keyMetricBI);
+    
+    if (missingUXMetric || missingBIMetric) {
+        detectorCount++;
+    }
+    
+    // DETECTOR 3: Maturity Signal
+    // Check if Maturity Stage is "Decline", OR
+    // if it's "Growth" or "Mature" but Sean Ellis Score is missing or below 40%
+    const maturityStage = (productData.maturity || '').toLowerCase().trim();
+    
+    // Check for Decline stage
+    const isDecline = maturityStage.includes('decline') || maturityStage === '4. decline';
+    
+    // Check for Growth or Mature stage
+    const isGrowth = maturityStage.includes('growth') || maturityStage === '2. growth';
+    const isMature = maturityStage.includes('mature') || maturityStage === '3. mature';
+    
+    if (isDecline) {
+        detectorCount++;
+    } else if (isGrowth || isMature) {
+        // For Growth/Mature, check Sean Ellis Score
+        // Sean Ellis Score is in the keyMetricUX column
+        const seanEllisScore = productData.keyMetricUX;
+        
+        // Check if score is missing or below 40%
+        if (isInvalid(seanEllisScore)) {
+            detectorCount++;
+        } else if (isValidNumber(seanEllisScore)) {
+            const score = parseFloat(seanEllisScore);
+            if (score < 40) {
+                detectorCount++;
+            }
+        }
+    }
+    
+    // DETECTOR 4: High BAU HC Allocation
+    // Check if Total Headcount Allocation (BAU) in # HC is greater than 2
+    const totalHC = getTotalHCAllocation(productData);
+    
+    if (totalHC !== null && totalHC > 2) {
+        detectorCount++;
+    }
+    
+    return detectorCount;
+}
+
 // ==================== EXPORTS ====================
 
 /**
@@ -1235,6 +1403,7 @@ window.DataManager = {
     calculatePortfolioMetrics,
     checkAnomalies,
     getCardSummaryMetrics,
+    calculateSmokeDetectors,
     
     // Getters (proxy to State)
     getPortfolioData,
@@ -1248,4 +1417,513 @@ window.DataManager = {
 };
 
 console.log('✅ Data Manager module loaded (Refactored)');
+
+// ==================== UNIT TESTS: SMOKE DETECTORS ====================
+// Comprehensive test suite for calculateSmokeDetectors function
+// Run these tests in development/testing environment to validate logic
+
+/**
+ * Unit Test Suite for calculateSmokeDetectors
+ * Tests all four smoke detector rules with edge cases
+ */
+function runSmokeDetectorTests() {
+    console.log('🧪 Running Smoke Detector Unit Tests...');
+    
+    let passedTests = 0;
+    let failedTests = 0;
+    
+    // Helper function to run a single test
+    const test = (testName, productData, expectedCount, description) => {
+        const result = calculateSmokeDetectors(productData);
+        const passed = result === expectedCount;
+        
+        if (passed) {
+            console.log(`✅ PASS: ${testName}`);
+            console.log(`   Expected: ${expectedCount}, Got: ${result}`);
+            if (description) console.log(`   ${description}`);
+            passedTests++;
+        } else {
+            console.error(`❌ FAIL: ${testName}`);
+            console.error(`   Expected: ${expectedCount}, Got: ${result}`);
+            if (description) console.error(`   ${description}`);
+            failedTests++;
+        }
+        console.log(''); // Empty line for readability
+    };
+    
+    // ==================== TEST 1: Zero Detectors ====================
+    console.log('--- Test Suite 1: Zero Detectors ---');
+    
+    test(
+        'Product with perfect health (no detectors)',
+        {
+            keyMetricUX: '75', // Has UX metric
+            keyMetricBI: '150', // Has BI metric
+            maturity: '1. Development', // Development stage (not decline, growth, or mature)
+            monthlyUX: [100, 105, 110, 115], // Upward trend
+            monthlyBI: [200, 210, 220, 230], // Upward trend
+            rawRow: new Array(65).fill(0).concat([1.5]) // HC allocation = 1.5 (≤ 2)
+        },
+        0,
+        'Product with all metrics present, upward trends, Development stage, low HC'
+    );
+    
+    test(
+        'Mature product with good Sean Ellis Score (no detectors)',
+        {
+            keyMetricUX: '55', // Sean Ellis Score above 40%
+            keyMetricBI: '200',
+            maturity: '3. Mature',
+            monthlyUX: [100, 102, 101], // Stable trend
+            monthlyBI: [200, 205, 203],
+            rawRow: new Array(65).fill(0).concat([2]) // HC allocation = 2 (not > 2)
+        },
+        0,
+        'Mature product with Sean Ellis Score above 40%, no downward trend, HC = 2'
+    );
+    
+    // ==================== TEST 2: Detector 1 - Downward Trend ====================
+    console.log('--- Test Suite 2: Detector 1 - Downward Metric Trend ---');
+    
+    test(
+        'Downward UX trend for exactly 3 months',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 90, 80], // 3 consecutive declining values
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Exactly 3 declining UX values triggers detector'
+    );
+    
+    test(
+        'Downward BI trend for 4+ months',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 190, 180, 170], // 4 consecutive declining values
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        '4+ declining BI values triggers detector'
+    );
+    
+    test(
+        'Only 2 consecutive months declining (no trigger)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 90], // Only 2 values declining
+            monthlyBI: [200, 210],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Only 2 declining values should NOT trigger detector'
+    );
+    
+    test(
+        'Downward trend with N/A values interspersed',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 'N/A', 90, 'N/A', 80], // Valid values show decline
+            monthlyBI: [200],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Downward trend detected even with N/A values in between'
+    );
+    
+    test(
+        'Trend breaks and resets (no trigger)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 90, 95, 85], // Decline breaks at 95
+            monthlyBI: [200, 210],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Trend breaks when value increases, no 3+ consecutive declines'
+    );
+    
+    // ==================== TEST 3: Detector 2 - Lacking Metrics ====================
+    console.log('--- Test Suite 3: Detector 2 - Lacking Metrics ---');
+    
+    test(
+        'Missing UX metric only',
+        {
+            keyMetricUX: '', // Missing
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Missing UX metric triggers detector'
+    );
+    
+    test(
+        'Missing BI metric only',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: 'N/A', // Missing
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Missing BI metric triggers detector'
+    );
+    
+    test(
+        'Both metrics missing',
+        {
+            keyMetricUX: '-', // Missing
+            keyMetricBI: '', // Missing
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Both metrics missing triggers detector once (not twice)'
+    );
+    
+    test(
+        'Null and undefined metrics',
+        {
+            keyMetricUX: null,
+            keyMetricBI: undefined,
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Null or undefined metrics trigger detector'
+    );
+    
+    // ==================== TEST 4: Detector 3 - Maturity Signal ====================
+    console.log('--- Test Suite 4: Detector 3 - Maturity Signal ---');
+    
+    test(
+        'Decline stage triggers detector',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '4. Decline',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Decline maturity stage triggers detector'
+    );
+    
+    test(
+        'Growth stage with missing Sean Ellis Score',
+        {
+            keyMetricUX: '', // Missing Sean Ellis Score
+            keyMetricBI: '150',
+            maturity: '2. Growth',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        2,
+        'Growth with missing Sean Ellis triggers both detector 2 (lacking metrics) and 3 (maturity signal)'
+    );
+    
+    test(
+        'Growth stage with Sean Ellis Score below 40%',
+        {
+            keyMetricUX: '35', // Below 40%
+            keyMetricBI: '150',
+            maturity: '2. Growth',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Growth with Sean Ellis Score below 40% triggers detector'
+    );
+    
+    test(
+        'Growth stage with Sean Ellis Score exactly 40% (no trigger)',
+        {
+            keyMetricUX: '40', // Exactly 40%
+            keyMetricBI: '150',
+            maturity: '2. Growth',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Growth with Sean Ellis Score exactly 40% does NOT trigger detector'
+    );
+    
+    test(
+        'Mature stage with Sean Ellis Score below 40%',
+        {
+            keyMetricUX: '30',
+            keyMetricBI: '150',
+            maturity: '3. Mature',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Mature with Sean Ellis Score below 40% triggers detector'
+    );
+    
+    test(
+        'Mature stage with Sean Ellis Score above 40% (no trigger)',
+        {
+            keyMetricUX: '55',
+            keyMetricBI: '150',
+            maturity: '3. Mature',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Mature with Sean Ellis Score above 40% does NOT trigger detector'
+    );
+    
+    test(
+        'Development stage (no maturity signal trigger)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Development stage does NOT trigger maturity signal detector'
+    );
+    
+    // ==================== TEST 5: Detector 4 - High BAU HC Allocation ====================
+    console.log('--- Test Suite 5: Detector 4 - High BAU HC Allocation ---');
+    
+    test(
+        'HC allocation exactly 2 (no trigger)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([2]) // Exactly 2
+        },
+        0,
+        'HC allocation exactly 2 does NOT trigger detector'
+    );
+    
+    test(
+        'HC allocation greater than 2 (triggers)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([2.1]) // > 2
+        },
+        1,
+        'HC allocation > 2 triggers detector'
+    );
+    
+    test(
+        'HC allocation much higher than 2',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([10]) // Much higher
+        },
+        1,
+        'HC allocation = 10 triggers detector'
+    );
+    
+    test(
+        'Missing rawRow data (no trigger)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: null // No raw data
+        },
+        0,
+        'Missing rawRow does NOT trigger detector (cannot determine HC)'
+    );
+    
+    // ==================== TEST 6: Multiple Detectors ====================
+    console.log('--- Test Suite 6: Multiple Detectors Triggered ---');
+    
+    test(
+        'All four detectors triggered',
+        {
+            keyMetricUX: '', // Missing metric (Detector 2)
+            keyMetricBI: '',
+            maturity: '4. Decline', // Decline stage (Detector 3)
+            monthlyUX: [100, 90, 80], // Downward trend (Detector 1)
+            monthlyBI: [200, 190, 180],
+            rawRow: new Array(65).fill(0).concat([5]) // HC > 2 (Detector 4)
+        },
+        4,
+        'All four detectors triggered'
+    );
+    
+    test(
+        'Three detectors: downward trend, lacking metrics, high HC',
+        {
+            keyMetricUX: 'N/A', // Missing metric (Detector 2)
+            keyMetricBI: '150',
+            maturity: '1. Development', // Development (no Detector 3)
+            monthlyUX: [100, 90, 80], // Downward trend (Detector 1)
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([3]) // HC > 2 (Detector 4)
+        },
+        3,
+        'Three detectors: downward trend, lacking metrics, high HC'
+    );
+    
+    test(
+        'Two detectors: decline stage and downward trend',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '4. Decline', // Detector 3
+            monthlyUX: [100, 90, 80, 70], // Downward trend (Detector 1)
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        2,
+        'Two detectors: decline stage and downward trend'
+    );
+    
+    // ==================== TEST 7: Edge Cases ====================
+    console.log('--- Test Suite 7: Edge Cases ---');
+    
+    test(
+        'Empty monthly arrays',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [], // Empty array
+            monthlyBI: [],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'Empty monthly arrays should not trigger downward trend detector'
+    );
+    
+    test(
+        'All N/A monthly values',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: ['N/A', 'N/A', 'N/A'],
+            monthlyBI: ['N/A', 'N/A', 'N/A'],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        0,
+        'All N/A monthly values should not trigger downward trend'
+    );
+    
+    test(
+        'Mixed valid and invalid maturity format',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: 'Growth', // Without number prefix
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Growth stage without Sean Ellis Score triggers detector (keyMetricUX used for score)'
+    );
+    
+    test(
+        'Whitespace-only metric values',
+        {
+            keyMetricUX: '   ', // Whitespace only
+            keyMetricBI: '\t\n',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([1])
+        },
+        1,
+        'Whitespace-only metric values trigger lacking metrics detector'
+    );
+    
+    test(
+        'Negative HC allocation (edge case)',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([-1]) // Negative value
+        },
+        0,
+        'Negative HC allocation should not trigger (invalid data)'
+    );
+    
+    test(
+        'Zero HC allocation',
+        {
+            keyMetricUX: '75',
+            keyMetricBI: '150',
+            maturity: '1. Development',
+            monthlyUX: [100, 105, 110],
+            monthlyBI: [200, 210, 220],
+            rawRow: new Array(65).fill(0).concat([0])
+        },
+        0,
+        'Zero HC allocation does not trigger detector'
+    );
+    
+    // ==================== TEST SUMMARY ====================
+    console.log('==================== TEST SUMMARY ====================');
+    console.log(`Total Tests: ${passedTests + failedTests}`);
+    console.log(`✅ Passed: ${passedTests}`);
+    console.log(`❌ Failed: ${failedTests}`);
+    console.log('======================================================');
+    
+    return {
+        total: passedTests + failedTests,
+        passed: passedTests,
+        failed: failedTests,
+        success: failedTests === 0
+    };
+}
+
+// Expose test function globally for manual execution
+window.runSmokeDetectorTests = runSmokeDetectorTests;
+
+// Uncomment the line below to run tests automatically when module loads
+// runSmokeDetectorTests();
 

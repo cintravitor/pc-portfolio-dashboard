@@ -48,6 +48,22 @@
         const headerSection = createPlanningHeaderSection();
         planningContent.appendChild(headerSection);
         
+        // ========== NEW: PORTFOLIO MANAGER VISUALIZATIONS ==========
+        const resourceSection = createResourceAllocationSection();
+        planningContent.appendChild(resourceSection);
+        
+        // ========== NEW: SOLUTIONS BY OWNER ==========
+        const ownerSection = createSolutionsByOwnerSection();
+        planningContent.appendChild(ownerSection);
+        
+        // ========== NEW: PEOPLE TECH TEAM SECTION ==========
+        const peopleTechSection = createPeopleTechSection();
+        planningContent.appendChild(peopleTechSection);
+        
+        // ========== NEW: REGULATORY FILTER SECTION ==========
+        const regulatorySection = createRegulatoryFilterSection();
+        planningContent.appendChild(regulatorySection);
+        
         // ========== ANOMALY ALERTS SECTION (with drill-down capability) ==========
         const anomalySection = createAnomalyAlertsSection();
         planningContent.appendChild(anomalySection);
@@ -61,6 +77,597 @@
         
         console.log('✅ Planning & Action Workspace rendered successfully');
     }
+    
+    /**
+     * Create Resource Allocation Section
+     * Shows Distribution by P&C Area and Maturity of P&C Solutions
+     */
+    function createResourceAllocationSection() {
+        const section = document.createElement('div');
+        section.className = 'planning-section resource-allocation-section';
+        
+        section.innerHTML = `
+            <div class="planning-section-header">
+                <h2 class="planning-section-title">
+                    <span class="section-icon">📊</span>
+                    Resource Allocation & Portfolio Maturity
+                </h2>
+                <p class="planning-section-subtitle">Visualize resource distribution and solution maturity across the portfolio</p>
+            </div>
+            
+            <div class="planning-charts-grid">
+                <div class="planning-chart-card">
+                    <h3 class="planning-chart-title">🏢 Distribution by P&C Area</h3>
+                    <div class="planning-chart-wrapper">
+                        <canvas id="chart-planning-area-distribution"></canvas>
+                    </div>
+                </div>
+                
+                <div class="planning-chart-card">
+                    <h3 class="planning-chart-title">📈 Maturity of P&C Solutions</h3>
+                    <div class="planning-chart-wrapper">
+                        <canvas id="chart-planning-maturity-distribution"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Create charts after DOM insertion
+        setTimeout(() => createResourceAllocationCharts(), 100);
+        
+        return section;
+    }
+    
+    /**
+     * Create resource allocation charts
+     */
+    function createResourceAllocationCharts() {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded - cannot create resource allocation charts');
+            return;
+        }
+        
+        const portfolioData = window.State.getPortfolioData();
+        
+        if (!portfolioData || portfolioData.length === 0) {
+            return;
+        }
+        
+        // Count by P&C Area
+        const areaCount = {};
+        portfolioData.forEach(product => {
+            const area = product.area || 'Unspecified';
+            areaCount[area] = (areaCount[area] || 0) + 1;
+        });
+        
+        // Count by Maturity
+        const maturityCount = {};
+        portfolioData.forEach(product => {
+            const maturity = product.maturity || 'Unspecified';
+            maturityCount[maturity] = (maturityCount[maturity] || 0) + 1;
+        });
+        
+        // Sort by count
+        const sortedAreas = Object.entries(areaCount).sort((a, b) => b[1] - a[1]);
+        const sortedMaturities = Object.entries(maturityCount).sort((a, b) => {
+            const order = ['1. Development', '2. Growth', '3. Mature', '4. Decline'];
+            const aIndex = order.indexOf(a[0]);
+            const bIndex = order.indexOf(b[0]);
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return a[0].localeCompare(b[0]);
+        });
+        
+        const areaColors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+            'rgba(20, 184, 166, 0.8)',
+            'rgba(251, 146, 60, 0.8)'
+        ];
+        
+        const maturityColors = {
+            '1. Development': 'rgba(59, 130, 246, 0.85)',
+            '2. Growth': 'rgba(16, 185, 129, 0.85)',
+            '3. Mature': 'rgba(168, 85, 247, 0.85)',
+            '4. Decline': 'rgba(251, 146, 60, 0.85)'
+        };
+        
+        // Create P&C Area chart
+        const areaCanvas = document.getElementById('chart-planning-area-distribution');
+        if (areaCanvas && window.Chart) {
+            new Chart(areaCanvas, {
+                type: 'pie',
+                data: {
+                    labels: sortedAreas.map(([area]) => area),
+                    datasets: [{
+                        data: sortedAreas.map(([, count]) => count),
+                        backgroundColor: areaColors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, font: { size: 12, weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} solutions (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Maturity chart
+        const maturityCanvas = document.getElementById('chart-planning-maturity-distribution');
+        if (maturityCanvas && window.Chart) {
+            new Chart(maturityCanvas, {
+                type: 'bar',
+                data: {
+                    labels: sortedMaturities.map(([maturity]) => maturity),
+                    datasets: [{
+                        label: 'Number of Solutions',
+                        data: sortedMaturities.map(([, count]) => count),
+                        backgroundColor: sortedMaturities.map(([maturity]) => 
+                            maturityColors[maturity] || 'rgba(156, 163, 175, 0.8)'
+                        ),
+                        borderRadius: 8,
+                        barThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${value} solutions (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 12 } },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            ticks: { font: { size: 12, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        console.log('✅ Resource allocation charts created');
+    }
+    
+    /**
+     * Create Solutions by Owner Section
+     */
+    function createSolutionsByOwnerSection() {
+        const section = document.createElement('div');
+        section.className = 'planning-section solutions-by-owner-section';
+        
+        const portfolioData = window.State.getPortfolioData();
+        
+        // Group solutions by owner and calculate metrics
+        const ownerStats = {};
+        portfolioData.forEach(product => {
+            const owner = product.owner && product.owner.trim() !== '' ? 
+                         product.owner.trim() : 'Unassigned';
+            
+            if (!ownerStats[owner]) {
+                ownerStats[owner] = {
+                    count: 0,
+                    withUXMetric: 0,
+                    withBIMetric: 0,
+                    products: []
+                };
+            }
+            
+            ownerStats[owner].count++;
+            ownerStats[owner].products.push(product.name);
+            
+            // Check if metrics are defined
+            if (product.keyMetricUX && product.keyMetricUX !== 'N/A' && product.keyMetricUX !== '-') {
+                ownerStats[owner].withUXMetric++;
+            }
+            if (product.keyMetricBI && product.keyMetricBI !== 'N/A' && product.keyMetricBI !== '-') {
+                ownerStats[owner].withBIMetric++;
+            }
+        });
+        
+        // Sort owners by product count
+        const sortedOwners = Object.entries(ownerStats).sort((a, b) => b[1].count - a[1].count);
+        
+        // Show top 15 owners
+        const topOwners = sortedOwners.slice(0, 15);
+        
+        section.innerHTML = `
+            <div class="planning-section-header">
+                <h2 class="planning-section-title">
+                    <span class="section-icon">👥</span>
+                    Solutions by Owner
+                </h2>
+                <p class="planning-section-subtitle">Product ownership distribution and metric coverage (Top 15 owners)</p>
+            </div>
+            
+            <div class="owner-stats-container">
+                <table class="owner-stats-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 25%;">Owner</th>
+                            <th style="width: 10%;">Solutions</th>
+                            <th style="width: 15%;">UX Metrics</th>
+                            <th style="width: 15%;">BI Metrics</th>
+                            <th style="width: 30%;">Products</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${topOwners.map(([owner, stats], index) => {
+                            const uxPercent = Math.round((stats.withUXMetric / stats.count) * 100);
+                            const biPercent = Math.round((stats.withBIMetric / stats.count) * 100);
+                            
+                            return `
+                                <tr class="owner-stat-row">
+                                    <td><strong>${index + 1}</strong></td>
+                                    <td><strong>${escapeHtml(owner)}</strong></td>
+                                    <td>
+                                        <span class="owner-badge">${stats.count}</span>
+                                    </td>
+                                    <td>
+                                        <div class="metric-progress-bar">
+                                            <div class="metric-progress-fill" style="width: ${uxPercent}%; background-color: rgba(59, 130, 246, 0.7);"></div>
+                                            <span class="metric-progress-label">${stats.withUXMetric}/${stats.count} (${uxPercent}%)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="metric-progress-bar">
+                                            <div class="metric-progress-fill" style="width: ${biPercent}%; background-color: rgba(16, 185, 129, 0.7);"></div>
+                                            <span class="metric-progress-label">${stats.withBIMetric}/${stats.count} (${biPercent}%)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="owner-products-list" title="${stats.products.map(p => escapeHtml(p)).join(', ')}">
+                                            ${stats.products.slice(0, 2).map(p => escapeHtml(p)).join(', ')}${stats.products.length > 2 ? ` +${stats.products.length - 2} more` : ''}
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ${sortedOwners.length > 15 ? `
+                    <p style="text-align: center; color: #6b7280; margin-top: 1rem; font-size: 0.875rem;">
+                        Showing top 15 of ${sortedOwners.length} owners
+                    </p>
+                ` : ''}
+            </div>
+        `;
+        
+        return section;
+    }
+    
+    /**
+     * Create People Tech Team Section
+     */
+    function createPeopleTechSection() {
+        const section = document.createElement('div');
+        section.className = 'planning-section people-tech-section';
+        
+        const portfolioData = window.State.getPortfolioData();
+        
+        // Identify People Tech team members (case-insensitive match)
+        // Common variations: "PTech", "People Tech", "PeopleTech", names with "PTech" affiliation
+        const peopleTechSolutions = portfolioData.filter(product => {
+            const owner = (product.owner || '').toLowerCase();
+            const area = (product.area || '').toLowerCase();
+            return owner.includes('ptech') || 
+                   owner.includes('peopletech') || 
+                   owner.includes('people tech') ||
+                   area.includes('ptech') ||
+                   area.includes('peopletech');
+        });
+        
+        // Count by area
+        const areaCount = {};
+        peopleTechSolutions.forEach(product => {
+            const area = product.area || 'Unspecified';
+            areaCount[area] = (areaCount[area] || 0) + 1;
+        });
+        
+        const sortedAreas = Object.entries(areaCount).sort((a, b) => b[1] - a[1]);
+        
+        section.innerHTML = `
+            <div class="planning-section-header">
+                <h2 class="planning-section-title">
+                    <span class="section-icon">🚀</span>
+                    People Tech Team Solutions
+                </h2>
+                <p class="planning-section-subtitle">Solutions owned or supported by the People Tech team</p>
+            </div>
+            
+            <div class="people-tech-content">
+                <div class="people-tech-summary">
+                    <div class="people-tech-stat-card">
+                        <div class="stat-card-value">${peopleTechSolutions.length}</div>
+                        <div class="stat-card-label">Total Solutions</div>
+                    </div>
+                    <div class="people-tech-stat-card">
+                        <div class="stat-card-value">${sortedAreas.length}</div>
+                        <div class="stat-card-label">P&C Areas</div>
+                    </div>
+                </div>
+                
+                ${peopleTechSolutions.length > 0 ? `
+                    <div class="people-tech-breakdown">
+                        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #1e293b;">Breakdown by P&C Area</h3>
+                        <table class="people-tech-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">P&C Area</th>
+                                    <th style="width: 20%;">Solutions</th>
+                                    <th style="width: 40%;">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sortedAreas.map(([area, count]) => {
+                                    const percentage = Math.round((count / peopleTechSolutions.length) * 100);
+                                    return `
+                                        <tr>
+                                            <td><strong>${escapeHtml(area)}</strong></td>
+                                            <td>${count}</td>
+                                            <td>
+                                                <div class="percentage-bar">
+                                                    <div class="percentage-fill" style="width: ${percentage}%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                                                    <span class="percentage-label">${percentage}%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="people-tech-products">
+                        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #1e293b;">Product List</h3>
+                        <div class="products-grid">
+                            ${peopleTechSolutions.map(product => `
+                                <div class="product-chip">
+                                    <div class="product-chip-name">${escapeHtml(product.name)}</div>
+                                    <div class="product-chip-area">${escapeHtml(product.area)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : `
+                    <div class="people-tech-empty">
+                        <p style="color: #6b7280; text-align: center; padding: 2rem;">
+                            No solutions found for People Tech team. Solutions are identified by owner or area containing "PTech", "PeopleTech", or "People Tech".
+                        </p>
+                    </div>
+                `}
+            </div>
+        `;
+        
+        return section;
+    }
+    
+    /**
+     * Create Regulatory Filter Section
+     */
+    function createRegulatoryFilterSection() {
+        const section = document.createElement('div');
+        section.className = 'planning-section regulatory-filter-section';
+        
+        const portfolioData = window.State.getPortfolioData();
+        
+        // Count regulatory vs non-regulatory
+        const regulatoryCount = portfolioData.filter(p => 
+            p.regulatory && 
+            typeof p.regulatory === 'string' && 
+            p.regulatory.toLowerCase().includes('yes')
+        ).length;
+        const nonRegulatoryCount = portfolioData.length - regulatoryCount;
+        
+        // Group by regulatory status and area
+        const regulatoryByArea = {};
+        const nonRegulatoryByArea = {};
+        
+        portfolioData.forEach(product => {
+            const area = product.area || 'Unspecified';
+            const isRegulatory = product.regulatory && product.regulatory.toLowerCase().includes('yes');
+            
+            if (isRegulatory) {
+                regulatoryByArea[area] = (regulatoryByArea[area] || 0) + 1;
+            } else {
+                nonRegulatoryByArea[area] = (nonRegulatoryByArea[area] || 0) + 1;
+            }
+        });
+        
+        section.innerHTML = `
+            <div class="planning-section-header">
+                <h2 class="planning-section-title">
+                    <span class="section-icon">⚖️</span>
+                    Regulatory Status Analysis
+                </h2>
+                <p class="planning-section-subtitle">Filter and analyze solutions by regulatory demand</p>
+            </div>
+            
+            <div class="regulatory-content">
+                <div class="regulatory-summary">
+                    <div class="regulatory-stat-card regulatory-yes">
+                        <div class="stat-card-icon">⚖️</div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-value">${regulatoryCount}</div>
+                            <div class="stat-card-label">Regulatory Demand</div>
+                            <div class="stat-card-sublabel">${Math.round((regulatoryCount / portfolioData.length) * 100)}% of portfolio</div>
+                        </div>
+                        <button class="filter-btn" onclick="filterByRegulatory('yes')" title="Filter to show only regulatory solutions">
+                            🔍 View Solutions
+                        </button>
+                    </div>
+                    
+                    <div class="regulatory-stat-card regulatory-no">
+                        <div class="stat-card-icon">📋</div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-value">${nonRegulatoryCount}</div>
+                            <div class="stat-card-label">Non-Regulatory</div>
+                            <div class="stat-card-sublabel">${Math.round((nonRegulatoryCount / portfolioData.length) * 100)}% of portfolio</div>
+                        </div>
+                        <button class="filter-btn" onclick="filterByRegulatory('no')" title="Filter to show only non-regulatory solutions">
+                            🔍 View Solutions
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="regulatory-breakdown">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #1e293b;">Regulatory vs Non-Regulatory by Area</h3>
+                    <div class="regulatory-chart-wrapper">
+                        <canvas id="chart-planning-regulatory-by-area"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Create stacked bar chart
+        setTimeout(() => createRegulatoryByAreaChart(regulatoryByArea, nonRegulatoryByArea), 100);
+        
+        return section;
+    }
+    
+    /**
+     * Create regulatory by area stacked chart
+     */
+    function createRegulatoryByAreaChart(regulatoryByArea, nonRegulatoryByArea) {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded - cannot create regulatory chart');
+            return;
+        }
+        
+        const canvas = document.getElementById('chart-planning-regulatory-by-area');
+        if (!canvas) return;
+        
+        // Get all areas
+        const allAreas = new Set([
+            ...Object.keys(regulatoryByArea),
+            ...Object.keys(nonRegulatoryByArea)
+        ]);
+        const areas = Array.from(allAreas).sort();
+        
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: areas,
+                datasets: [
+                    {
+                        label: 'Regulatory Demand',
+                        data: areas.map(area => regulatoryByArea[area] || 0),
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Non-Regulatory',
+                        data: areas.map(area => nonRegulatoryByArea[area] || 0),
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 12, weight: '600' }, padding: 15 }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${value} solutions`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: { font: { size: 11 } },
+                        grid: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 12 } },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    }
+                }
+            }
+        });
+        
+        console.log('✅ Regulatory by area chart created');
+    }
+    
+    /**
+     * Global function to filter by regulatory status
+     * Switches to Explore tab and applies filter
+     */
+    window.filterByRegulatory = function(status) {
+        console.log('Filtering by regulatory status:', status);
+        
+        // Switch to Explore tab
+        if (window.UIManager && window.UIManager.Tabs && window.UIManager.Tabs.switchTab) {
+            window.UIManager.Tabs.switchTab('portfolio-overview');
+        }
+        
+        // Apply filter after tab switch
+        setTimeout(() => {
+            // This would integrate with the existing filter system
+            // For now, we'll log the action
+            console.log('Filter applied:', status === 'yes' ? 'Regulatory Demand' : 'Non-Regulatory');
+            
+            // Show alert to user
+            alert(`Filtering to show ${status === 'yes' ? 'Regulatory Demand' : 'Non-Regulatory'} solutions. (Note: This feature would integrate with the Explore tab filters)`);
+        }, 200);
+    };
     
     /**
      * Create Planning & Action header section

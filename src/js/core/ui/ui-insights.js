@@ -324,6 +324,371 @@
     // ==================== EXECUTIVE VIEW (STRATEGIC VIEW) ====================
     
     /**
+     * Calculate Executive Portfolio Health Metrics
+     * Calculates key metrics for executive dashboard:
+     * - % with Business Impact Metric
+     * - % with User Experience Metric
+     * - % Reached Target (BI)
+     * - % Reached Target (UX)
+     */
+    function calculateExecutiveHealthMetrics() {
+        const portfolioData = window.State.getPortfolioData();
+        
+        if (!portfolioData || portfolioData.length === 0) {
+            return null;
+        }
+        
+        const total = portfolioData.length;
+        
+        // Helper to check if value is valid (not empty, not N/A, not null)
+        const isValid = (val) => {
+            if (val === null || val === undefined || val === '' || val === 'N/A' || val === '-') return false;
+            if (typeof val === 'string' && val.trim() === '') return false;
+            return true;
+        };
+        
+        // Helper to check if number value is valid
+        const isValidNumber = (val) => {
+            if (!isValid(val)) return false;
+            const num = parseFloat(val);
+            return !isNaN(num);
+        };
+        
+        // Helper to get most recent valid value from monthly array
+        const getMostRecentValue = (monthlyArray) => {
+            if (!Array.isArray(monthlyArray) || monthlyArray.length === 0) {
+                return null;
+            }
+            for (let i = monthlyArray.length - 1; i >= 0; i--) {
+                const val = monthlyArray[i];
+                if (isValidNumber(val)) {
+                    return parseFloat(val);
+                }
+            }
+            return null;
+        };
+        
+        // Calculate metrics
+        let withBIMetric = 0;
+        let withUXMetric = 0;
+        let reachedTargetBI = 0;
+        let reachedTargetUX = 0;
+        let totalWithBITarget = 0;
+        let totalWithUXTarget = 0;
+        
+        portfolioData.forEach(product => {
+            // Count products with BI metric
+            if (isValid(product.keyMetricBI)) {
+                withBIMetric++;
+            }
+            
+            // Count products with UX metric
+            if (isValid(product.keyMetricUX)) {
+                withUXMetric++;
+            }
+            
+            // Check if BI target is reached
+            const mostRecentBI = getMostRecentValue(product.monthlyBI);
+            const targetBI = isValidNumber(product.targetBI) ? parseFloat(product.targetBI) : null;
+            
+            if (mostRecentBI !== null && targetBI !== null) {
+                totalWithBITarget++;
+                if (mostRecentBI >= targetBI) {
+                    reachedTargetBI++;
+                }
+            }
+            
+            // Check if UX target is reached
+            const mostRecentUX = getMostRecentValue(product.monthlyUX);
+            const targetUX = isValidNumber(product.targetUX) ? parseFloat(product.targetUX) : null;
+            
+            if (mostRecentUX !== null && targetUX !== null) {
+                totalWithUXTarget++;
+                if (mostRecentUX >= targetUX) {
+                    reachedTargetUX++;
+                }
+            }
+        });
+        
+        // Calculate percentages
+        const percentWithBI = total > 0 ? Math.round((withBIMetric / total) * 100) : 0;
+        const percentWithUX = total > 0 ? Math.round((withUXMetric / total) * 100) : 0;
+        const percentReachedBI = totalWithBITarget > 0 ? Math.round((reachedTargetBI / totalWithBITarget) * 100) : 0;
+        const percentReachedUX = totalWithUXTarget > 0 ? Math.round((reachedTargetUX / totalWithUXTarget) * 100) : 0;
+        
+        return {
+            total,
+            withBIMetric,
+            withUXMetric,
+            reachedTargetBI,
+            reachedTargetUX,
+            totalWithBITarget,
+            totalWithUXTarget,
+            percentWithBI,
+            percentWithUX,
+            percentReachedBI,
+            percentReachedUX
+        };
+    }
+    
+    /**
+     * Create Executive Health Metrics Section
+     * Displays the four key executive metrics
+     */
+    function createExecutiveHealthMetricsSection() {
+        const section = document.createElement('div');
+        section.className = 'executive-section executive-health-metrics-section';
+        
+        const healthMetrics = calculateExecutiveHealthMetrics();
+        
+        if (!healthMetrics) {
+            section.innerHTML = '<p>No data available for health metrics</p>';
+            return section;
+        }
+        
+        section.innerHTML = `
+            <h2 class="executive-section-title">🎯 Portfolio Health Metrics</h2>
+            <p class="executive-section-subtitle">Key metrics for executive decision making</p>
+            
+            <div class="executive-health-metrics-grid">
+                <div class="executive-health-metric-card">
+                    <div class="metric-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">💼</div>
+                    <div class="metric-card-content">
+                        <div class="metric-card-value">${healthMetrics.percentWithBI}%</div>
+                        <div class="metric-card-label">With Business Impact Metric</div>
+                        <div class="metric-card-sublabel">${healthMetrics.withBIMetric} of ${healthMetrics.total} products</div>
+                    </div>
+                </div>
+                
+                <div class="executive-health-metric-card">
+                    <div class="metric-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">👥</div>
+                    <div class="metric-card-content">
+                        <div class="metric-card-value">${healthMetrics.percentWithUX}%</div>
+                        <div class="metric-card-label">With User Experience Metric</div>
+                        <div class="metric-card-sublabel">${healthMetrics.withUXMetric} of ${healthMetrics.total} products</div>
+                    </div>
+                </div>
+                
+                <div class="executive-health-metric-card ${healthMetrics.percentReachedBI >= 70 ? 'success' : healthMetrics.percentReachedBI >= 50 ? 'warning' : 'danger'}">
+                    <div class="metric-card-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🎯</div>
+                    <div class="metric-card-content">
+                        <div class="metric-card-value">${healthMetrics.percentReachedBI}%</div>
+                        <div class="metric-card-label">Reached Target (BI)</div>
+                        <div class="metric-card-sublabel">${healthMetrics.reachedTargetBI} of ${healthMetrics.totalWithBITarget} products with targets</div>
+                    </div>
+                </div>
+                
+                <div class="executive-health-metric-card ${healthMetrics.percentReachedUX >= 70 ? 'success' : healthMetrics.percentReachedUX >= 50 ? 'warning' : 'danger'}">
+                    <div class="metric-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">⭐</div>
+                    <div class="metric-card-content">
+                        <div class="metric-card-value">${healthMetrics.percentReachedUX}%</div>
+                        <div class="metric-card-label">Reached Target (UX)</div>
+                        <div class="metric-card-sublabel">${healthMetrics.reachedTargetUX} of ${healthMetrics.totalWithUXTarget} products with targets</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="executive-narrative" style="margin-top: 1.5rem;">
+                ${generateHealthMetricsNarrative(healthMetrics)}
+            </div>
+        `;
+        
+        return section;
+    }
+    
+    /**
+     * Generate narrative for health metrics
+     */
+    function generateHealthMetricsNarrative(metrics) {
+        let narrative = '';
+        
+        // Metric coverage assessment
+        const avgMetricCoverage = (metrics.percentWithBI + metrics.percentWithUX) / 2;
+        if (avgMetricCoverage >= 80) {
+            narrative += `<strong>Excellent metric coverage</strong> with ${Math.round(avgMetricCoverage)}% of products having defined metrics. `;
+        } else if (avgMetricCoverage >= 60) {
+            narrative += `<strong>Good metric coverage</strong> with ${Math.round(avgMetricCoverage)}% of products having defined metrics. `;
+        } else {
+            narrative += `<strong>Metric coverage needs improvement</strong> - only ${Math.round(avgMetricCoverage)}% of products have defined metrics. `;
+        }
+        
+        // Target achievement assessment
+        const avgTargetAchievement = (metrics.percentReachedBI + metrics.percentReachedUX) / 2;
+        if (avgTargetAchievement >= 70) {
+            narrative += `Portfolio is <strong>performing well</strong> with ${Math.round(avgTargetAchievement)}% average target achievement.`;
+        } else if (avgTargetAchievement >= 50) {
+            narrative += `Portfolio performance is <strong>moderate</strong> with ${Math.round(avgTargetAchievement)}% average target achievement.`;
+        } else {
+            narrative += `Portfolio performance <strong>requires attention</strong> - only ${Math.round(avgTargetAchievement)}% average target achievement.`;
+        }
+        
+        return narrative;
+    }
+    
+    /**
+     * Create Distribution Visualizations Section
+     * Shows distribution by P&C Area and Journey Stage
+     */
+    function createDistributionVisualizationsSection() {
+        const section = document.createElement('div');
+        section.className = 'executive-section distribution-visualizations-section';
+        
+        section.innerHTML = `
+            <h2 class="executive-section-title">📊 Portfolio Distribution Analysis</h2>
+            <p class="executive-section-subtitle">Solution distribution across P&C areas and customer journey stages</p>
+            
+            <div class="executive-charts-grid">
+                <div class="executive-chart-card">
+                    <h3 class="executive-chart-title">🏢 Distribution by P&C Area</h3>
+                    <div class="executive-chart-wrapper">
+                        <canvas id="chart-executive-area-distribution"></canvas>
+                    </div>
+                </div>
+                
+                <div class="executive-chart-card">
+                    <h3 class="executive-chart-title">🗺️ Distribution by Main Journey Stage</h3>
+                    <div class="executive-chart-wrapper">
+                        <canvas id="chart-executive-journey-distribution"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Create charts after DOM insertion
+        setTimeout(() => createDistributionCharts(), 100);
+        
+        return section;
+    }
+    
+    /**
+     * Create distribution charts for P&C Area and Journey Stage
+     */
+    function createDistributionCharts() {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded - cannot create distribution charts');
+            return;
+        }
+        
+        const portfolioData = window.State.getPortfolioData();
+        
+        if (!portfolioData || portfolioData.length === 0) {
+            return;
+        }
+        
+        // Count by P&C Area
+        const areaCount = {};
+        portfolioData.forEach(product => {
+            const area = product.area || 'Unspecified';
+            areaCount[area] = (areaCount[area] || 0) + 1;
+        });
+        
+        // Count by Journey Stage
+        const journeyCount = {};
+        portfolioData.forEach(product => {
+            const journey = product.journeyMain || 'Unspecified';
+            journeyCount[journey] = (journeyCount[journey] || 0) + 1;
+        });
+        
+        // Sort by count
+        const sortedAreas = Object.entries(areaCount).sort((a, b) => b[1] - a[1]);
+        const sortedJourneys = Object.entries(journeyCount).sort((a, b) => b[1] - a[1]);
+        
+        const defaultColors = [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+            'rgba(20, 184, 166, 0.8)',
+            'rgba(251, 146, 60, 0.8)'
+        ];
+        
+        // Create P&C Area chart
+        const areaCanvas = document.getElementById('chart-executive-area-distribution');
+        if (areaCanvas && window.Chart) {
+            new Chart(areaCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedAreas.map(([area]) => area),
+                    datasets: [{
+                        data: sortedAreas.map(([, count]) => count),
+                        backgroundColor: defaultColors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 15, font: { size: 12, weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Journey Stage chart
+        const journeyCanvas = document.getElementById('chart-executive-journey-distribution');
+        if (journeyCanvas && window.Chart) {
+            new Chart(journeyCanvas, {
+                type: 'bar',
+                data: {
+                    labels: sortedJourneys.map(([journey]) => journey),
+                    datasets: [{
+                        label: 'Number of Solutions',
+                        data: sortedJourneys.map(([, count]) => count),
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 12 } },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y: {
+                            ticks: { font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        console.log('✅ Executive distribution charts created');
+    }
+    
+    /**
      * Render Executive View with comprehensive portfolio metrics and visualizations
      * This is the upgraded Strategic View with enhanced executive insights
      */
@@ -358,6 +723,14 @@
         
         // Clear and start building
         executiveContent.innerHTML = '';
+        
+        // ========== NEW: EXECUTIVE HEALTH METRICS ==========
+        const healthMetricsSection = createExecutiveHealthMetricsSection();
+        executiveContent.appendChild(healthMetricsSection);
+        
+        // ========== NEW: DISTRIBUTION VISUALIZATIONS ==========
+        const distributionSection = createDistributionVisualizationsSection();
+        executiveContent.appendChild(distributionSection);
         
         // ========== 1. PORTFOLIO HEALTH SCORE ==========
         const healthSection = createHealthScoreSection(metrics);

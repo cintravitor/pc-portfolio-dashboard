@@ -10,6 +10,188 @@
     'use strict';
     
     /**
+     * Generate Metric Automation Section HTML
+     * Determines if metrics are automated or manual based on data presence and patterns
+     */
+    function generateMetricAutomationSection(product) {
+        // Helper function to determine if a metric has data extraction
+        const determineDataExtraction = (monthlyData, metricName) => {
+            if (!Array.isArray(monthlyData) || monthlyData.length === 0) {
+                return { status: 'No Data', class: 'status-empty', icon: '❌' };
+            }
+            
+            // Count valid data points
+            let validDataPoints = 0;
+            for (let i = 0; i < monthlyData.length; i++) {
+                const val = monthlyData[i];
+                if (val && val !== '' && val !== 'N/A' && val !== '-') {
+                    validDataPoints++;
+                }
+            }
+            
+            // Determine automation level based on data consistency
+            // Assume automated if more than 6 months of data present
+            if (validDataPoints >= 6) {
+                return { 
+                    status: 'Automated', 
+                    class: 'status-automated', 
+                    icon: '✅',
+                    detail: `${validDataPoints} months of data collected`
+                };
+            } else if (validDataPoints >= 3) {
+                return { 
+                    status: 'Semi-Automated', 
+                    class: 'status-semi-automated', 
+                    icon: '⚙️',
+                    detail: `${validDataPoints} months of data collected`
+                };
+            } else if (validDataPoints > 0) {
+                return { 
+                    status: 'Manual', 
+                    class: 'status-manual', 
+                    icon: '✏️',
+                    detail: `${validDataPoints} months of data collected`
+                };
+            } else {
+                return { 
+                    status: 'No Data', 
+                    class: 'status-empty', 
+                    icon: '❌',
+                    detail: 'No data collected'
+                };
+            }
+        };
+        
+        const uxAutomation = determineDataExtraction(product.monthlyUX, product.keyMetricUX);
+        const biAutomation = determineDataExtraction(product.monthlyBI, product.keyMetricBI);
+        
+        // Overall automation score
+        let overallStatus = 'Not Automated';
+        let overallClass = 'status-empty';
+        let overallIcon = '❌';
+        
+        if (uxAutomation.status === 'Automated' && biAutomation.status === 'Automated') {
+            overallStatus = 'Fully Automated';
+            overallClass = 'status-automated';
+            overallIcon = '✅';
+        } else if (uxAutomation.status === 'Automated' || biAutomation.status === 'Automated' || 
+                   uxAutomation.status === 'Semi-Automated' || biAutomation.status === 'Semi-Automated') {
+            overallStatus = 'Partially Automated';
+            overallClass = 'status-semi-automated';
+            overallIcon = '⚙️';
+        } else if (uxAutomation.status === 'Manual' || biAutomation.status === 'Manual') {
+            overallStatus = 'Manual Collection';
+            overallClass = 'status-manual';
+            overallIcon = '✏️';
+        }
+        
+        return `
+            <div class="detail-section">
+                <div class="detail-section-title">Data Extraction Status</div>
+                
+                <!-- Overall Automation Status -->
+                <div class="automation-overall-status ${overallClass}">
+                    <div class="automation-status-icon">${overallIcon}</div>
+                    <div class="automation-status-content">
+                        <div class="automation-status-label">Overall Automation</div>
+                        <div class="automation-status-value">${overallStatus}</div>
+                    </div>
+                </div>
+                
+                <!-- UX Metric Automation -->
+                <div class="detail-field">
+                    <div class="detail-field-label">
+                        User Experience Metric
+                        ${product.keyMetricUX ? `<span class="metric-name">(${window.Utils.escapeHtml(product.keyMetricUX)})</span>` : ''}
+                    </div>
+                    <div class="automation-status-row">
+                        <div class="automation-badge ${uxAutomation.class}">
+                            <span class="automation-icon">${uxAutomation.icon}</span>
+                            <span class="automation-text">${uxAutomation.status}</span>
+                        </div>
+                        <div class="automation-detail">${uxAutomation.detail}</div>
+                    </div>
+                </div>
+                
+                <!-- BI Metric Automation -->
+                <div class="detail-field">
+                    <div class="detail-field-label">
+                        Business Impact Metric
+                        ${product.keyMetricBI ? `<span class="metric-name">(${window.Utils.escapeHtml(product.keyMetricBI)})</span>` : ''}
+                    </div>
+                    <div class="automation-status-row">
+                        <div class="automation-badge ${biAutomation.class}">
+                            <span class="automation-icon">${biAutomation.icon}</span>
+                            <span class="automation-text">${biAutomation.status}</span>
+                        </div>
+                        <div class="automation-detail">${biAutomation.detail}</div>
+                    </div>
+                </div>
+                
+                <!-- Automation Recommendations -->
+                <div class="automation-recommendations">
+                    <div class="detail-section-title" style="margin-top: 1.5rem; margin-bottom: 0.75rem;">💡 Recommendations</div>
+                    ${generateAutomationRecommendations(uxAutomation, biAutomation, overallStatus)}
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Generate automation recommendations based on current status
+     */
+    function generateAutomationRecommendations(uxAutomation, biAutomation, overallStatus) {
+        const recommendations = [];
+        
+        if (overallStatus === 'Fully Automated') {
+            recommendations.push({
+                icon: '✅',
+                text: 'Excellent! Both metrics are fully automated. Continue monitoring data quality.',
+                type: 'success'
+            });
+        } else {
+            if (uxAutomation.status === 'No Data' || uxAutomation.status === 'Manual') {
+                recommendations.push({
+                    icon: '🎯',
+                    text: 'Consider automating UX metric collection to improve data consistency and reduce manual effort.',
+                    type: 'warning'
+                });
+            }
+            
+            if (biAutomation.status === 'No Data' || biAutomation.status === 'Manual') {
+                recommendations.push({
+                    icon: '📊',
+                    text: 'Consider automating Business Impact metric collection for more reliable tracking.',
+                    type: 'warning'
+                });
+            }
+            
+            if (uxAutomation.status === 'No Data' && biAutomation.status === 'No Data') {
+                recommendations.push({
+                    icon: '⚠️',
+                    text: 'No metrics are being collected. Establish baseline measurements and set up data collection pipelines.',
+                    type: 'error'
+                });
+            }
+        }
+        
+        if (recommendations.length === 0) {
+            recommendations.push({
+                icon: '👍',
+                text: 'Metrics are being collected regularly. Monitor for any gaps in data collection.',
+                type: 'info'
+            });
+        }
+        
+        return recommendations.map(rec => `
+            <div class="automation-recommendation ${rec.type}">
+                <div class="recommendation-icon">${rec.icon}</div>
+                <div class="recommendation-text">${rec.text}</div>
+            </div>
+        `).join('');
+    }
+    
+    /**
      * Show detail panel for a product
      */
     function showDetailPanel(productId) {
@@ -158,6 +340,60 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: Solution Platforms (New Section) -->
+                <div class="detail-collapsible-section">
+                    <div class="detail-collapsible-header collapsed" data-section="platforms">
+                        <div class="collapsible-header-content">
+                            <span class="collapsible-icon">💻</span>
+                            <h3 class="collapsible-title">Solution Platforms</h3>
+                            <span class="collapsible-subtitle">Technical platform and infrastructure details</span>
+                        </div>
+                        <span class="collapsible-toggle">+</span>
+                    </div>
+                    <div class="detail-collapsible-content collapsed" id="section-platforms">
+                        <div class="detail-section">
+                            <div class="detail-section-title">Platform Details</div>
+                            <div class="detail-field">
+                                <div class="detail-field-label">Primary Platform</div>
+                                <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
+                                    ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
+                                </div>
+                            </div>
+                            ${product.platform ? `
+                            <div class="detail-field-note">
+                                <div class="field-note-icon">💡</div>
+                                <div class="field-note-text">
+                                    This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
+                                    Understanding the platform helps in resource allocation and technical decision-making.
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="detail-field-note warning">
+                                <div class="field-note-icon">⚠️</div>
+                                <div class="field-note-text">
+                                    Platform information is not specified. Consider documenting the technical platform for better resource planning.
+                                </div>
+                            </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: Metric Automation (New Section) -->
+                <div class="detail-collapsible-section">
+                    <div class="detail-collapsible-header collapsed" data-section="automation">
+                        <div class="collapsible-header-content">
+                            <span class="collapsible-icon">🤖</span>
+                            <h3 class="collapsible-title">Metric Automation</h3>
+                            <span class="collapsible-subtitle">Data extraction and automation status</span>
+                        </div>
+                        <span class="collapsible-toggle">+</span>
+                    </div>
+                    <div class="detail-collapsible-content collapsed" id="section-automation">
+                        ${generateMetricAutomationSection(product)}
                     </div>
                 </div>
             </div>

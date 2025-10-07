@@ -3238,146 +3238,6 @@ select:focus {
 
 /* ==================== DRILL-DOWN KPI CARDS ==================== */
 
-.kpi-drill-down-section {
-    margin-top: 2rem;
-}
-
-.kpi-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.kpi-drill-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    position: relative;
-    overflow: hidden;
-}
-
-.kpi-drill-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.kpi-drill-card:hover::before {
-    opacity: 1;
-}
-
-.kpi-drill-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-.kpi-drill-card:active {
-    transform: translateY(-2px);
-}
-
-/* Specific card colors */
-.kpi-drill-card.high-risk {
-    border-left: 4px solid #ef4444;
-}
-
-.kpi-drill-card.medium-risk {
-    border-left: 4px solid #f59e0b;
-}
-
-.kpi-drill-card.low-risk {
-    border-left: 4px solid #10b981;
-}
-
-.kpi-drill-card.below-target {
-    border-left: 4px solid #dc2626;
-}
-
-.kpi-drill-card.star-performers {
-    border-left: 4px solid #8b5cf6;
-}
-
-.kpi-drill-card.products-at-risk {
-    border-left: 4px solid #dc2626;
-}
-
-.kpi-drill-card-icon {
-    font-size: 2.5rem;
-    line-height: 1;
-    flex-shrink: 0;
-    z-index: 1;
-}
-
-.kpi-drill-card-content {
-    flex: 1;
-    z-index: 1;
-}
-
-.kpi-drill-card-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.kpi-drill-card-label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.25rem;
-}
-
-.kpi-drill-card-sublabel {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.kpi-drill-card-action {
-    font-size: 1.5rem;
-    color: #667eea;
-    z-index: 1;
-    transition: transform 0.3s ease;
-}
-
-.kpi-drill-card:hover .kpi-drill-card-action {
-    transform: translateX(4px);
-}
-
-.kpi-drill-card-arrow {
-    display: inline-block;
-}
-
-.kpi-drill-hint {
-    text-align: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #e0e7ff 0%, #f5f3ff 100%);
-    border-radius: 12px;
-    font-size: 0.95rem;
-    color: #4b5563;
-}
-
-.kpi-drill-hint strong {
-    color: #667eea;
-}
-
 /* Drill-Down Notification */
 .drill-down-notification {
     position: sticky;
@@ -3458,18 +3318,6 @@ select:focus {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .kpi-cards-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .kpi-drill-card {
-        padding: 1.25rem;
-    }
-    
-    .kpi-drill-card-value {
-        font-size: 2rem;
-    }
-    
     .drill-down-notification-content {
         padding: 1rem;
     }
@@ -4011,10 +3859,6 @@ select:focus {
 /* Section-specific colors */
 .detail-collapsible-header[data-section="metrics"] .collapsible-icon {
     filter: hue-rotate(20deg);
-}
-
-.detail-collapsible-header[data-section="narrative"] .collapsible-icon {
-    filter: hue-rotate(60deg);
 }
 
 /* Responsive Collapsible Sections */

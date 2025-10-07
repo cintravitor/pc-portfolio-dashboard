@@ -141,10 +141,6 @@
         const healthCard = createHealthScoreSection(metrics);
         content.appendChild(healthCard);
         
-        // KPI Cards for Drill-Down
-        const kpiCards = createDrillDownKPICards(metrics);
-        content.appendChild(kpiCards);
-        
         // Risk & Opportunity Matrix
         const riskMatrix = createRiskOpportunityMatrix(metrics);
         content.appendChild(riskMatrix);
@@ -736,10 +732,6 @@
         const healthSection = createHealthScoreSection(metrics);
         executiveContent.appendChild(healthSection);
         
-        // ========== 1.5. CLICKABLE KPI CARDS FOR DRILL-DOWN ==========
-        const kpiCardsSection = createDrillDownKPICards(metrics);
-        executiveContent.appendChild(kpiCardsSection);
-        
         // ========== 2. RISK & OPPORTUNITY MATRIX ==========
         const matrixSection = createRiskOpportunityMatrix(metrics);
         executiveContent.appendChild(matrixSection);
@@ -1099,99 +1091,6 @@
         narrativeDiv.className = 'executive-narrative';
         narrativeDiv.innerHTML = narrative;
         section.appendChild(narrativeDiv);
-        
-        return section;
-    }
-    
-    /**
-     * Create Drill-Down KPI Cards
-     */
-    function createDrillDownKPICards(metrics) {
-        const section = document.createElement('div');
-        section.className = 'executive-section kpi-drill-down-section';
-        
-        section.innerHTML = `
-            <h2 class="executive-section-title">🎯 Portfolio Command Center</h2>
-            <p class="executive-section-subtitle">Click any card to drill down into specific product segments</p>
-            
-            <div class="kpi-cards-grid">
-                <div class="kpi-drill-card high-risk" onclick="drillDownToTacticalView('high-risk')">
-                    <div class="kpi-drill-card-icon">🚨</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.riskBreakdown.high}</div>
-                        <div class="kpi-drill-card-label">High Risk Products</div>
-                        <div class="kpi-drill-card-sublabel">Risk Score ≥ 7</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-                
-                <div class="kpi-drill-card medium-risk" onclick="drillDownToTacticalView('medium-risk')">
-                    <div class="kpi-drill-card-icon">⚠️</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.riskBreakdown.medium}</div>
-                        <div class="kpi-drill-card-label">Medium Risk Products</div>
-                        <div class="kpi-drill-card-sublabel">Risk Score 4-6</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-                
-                <div class="kpi-drill-card low-risk" onclick="drillDownToTacticalView('low-risk')">
-                    <div class="kpi-drill-card-icon">✅</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.riskBreakdown.low}</div>
-                        <div class="kpi-drill-card-label">Low Risk Products</div>
-                        <div class="kpi-drill-card-sublabel">Risk Score < 4</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-                
-                <div class="kpi-drill-card below-target" onclick="drillDownToTacticalView('below-target')">
-                    <div class="kpi-drill-card-icon">📉</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.productMetrics.filter(p => p.performanceScore > 0 && p.performanceScore < 50).length}</div>
-                        <div class="kpi-drill-card-label">Below Target</div>
-                        <div class="kpi-drill-card-sublabel">Performance < 50%</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-                
-                <div class="kpi-drill-card star-performers" onclick="drillDownToTacticalView('star-performers')">
-                    <div class="kpi-drill-card-icon">🌟</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.starPerformers}</div>
-                        <div class="kpi-drill-card-label">Star Performers</div>
-                        <div class="kpi-drill-card-sublabel">Low Risk + High Performance</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-                
-                <div class="kpi-drill-card products-at-risk" onclick="drillDownToTacticalView('products-at-risk')">
-                    <div class="kpi-drill-card-icon">⛔</div>
-                    <div class="kpi-drill-card-content">
-                        <div class="kpi-drill-card-value">${metrics.productsAtRisk}</div>
-                        <div class="kpi-drill-card-label">Critical Products</div>
-                        <div class="kpi-drill-card-sublabel">High Risk + Low Performance</div>
-                    </div>
-                    <div class="kpi-drill-card-action">
-                        <span class="kpi-drill-card-arrow">→</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="kpi-drill-hint">
-                💡 <strong>Tip:</strong> Click any card above to view filtered products in Portfolio Overview
-            </div>
-        `;
         
         return section;
     }

@@ -307,43 +307,7 @@
                     </div>
                 </div>
 
-                <!-- SECTION 3: Project Narrative (Collapsible, Collapsed by Default) -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header collapsed" data-section="narrative">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">📝</span>
-                            <h3 class="collapsible-title">Project Narrative</h3>
-                            <span class="collapsible-subtitle">Journey stages and platform details</span>
-                        </div>
-                        <span class="collapsible-toggle">+</span>
-                    </div>
-                    <div class="detail-collapsible-content collapsed" id="section-narrative">
-                        <!-- Journey & Platform -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Journey & Platform</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">Main Journey Stage</div>
-                                <div class="detail-field-value ${!product.journeyMain ? 'empty' : ''}">
-                                    ${window.Utils.escapeHtml(product.journeyMain) || 'Not specified'}
-                                </div>
-                            </div>
-                            ${product.journeyCollateral ? `
-                            <div class="detail-field">
-                                <div class="detail-field-label">Collateral Journey Stage</div>
-                                <div class="detail-field-value">${window.Utils.escapeHtml(product.journeyCollateral)}</div>
-                            </div>
-                            ` : ''}
-                            <div class="detail-field">
-                                <div class="detail-field-label">User Interface Platform</div>
-                                <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
-                                    ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 4: Solution Platforms (New Section) -->
+                <!-- SECTION 3: Solution Platforms -->
                 <div class="detail-collapsible-section">
                     <div class="detail-collapsible-header collapsed" data-section="platforms">
                         <div class="collapsible-header-content">
@@ -382,7 +346,7 @@
                     </div>
                 </div>
 
-                <!-- SECTION 5: Metric Automation (New Section) -->
+                <!-- SECTION 4: Metric Automation -->
                 <div class="detail-collapsible-section">
                     <div class="detail-collapsible-header collapsed" data-section="automation">
                         <div class="collapsible-header-content">

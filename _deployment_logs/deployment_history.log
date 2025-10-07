@@ -1,1 +1,12 @@
 | TAG: v5.0.0-deploy-2025-10-04 | COMMIT: ab58addba2852950e87bf59eb70dab676dbdbb8c | STATUS: DEPLOYED
+
+=========================================================================================
+DEPLOYMENT: 2025-10-07 18:54:00 -03
+VERSION: v6.0.0
+COMMIT: 178ab92
+FEATURES: Executive dashboards, Portfolio manager visualizations, Product owner enhancements
+FILES: 4 modified (+1,763 lines)
+STATUS: ✅ SUCCESS
+DEPLOYED BY: DevOps Team
+ROLLBACK TAG: pre-deployment-backup-2025-10-07
+=========================================================================================

@@ -1,7 +1,7 @@
 # P&C Portfolio Dashboard - User Journeys
 
-**Version:** 4.0  
-**Last Updated:** October 4, 2025  
+**Version:** 4.1  
+**Last Updated:** October 7, 2025  
 **Status:** Production Ready
 
 ---
@@ -51,10 +51,10 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
   - Performance vs Target (e.g., 73%)
 
 **Step 2: Identify Action Areas (2 minutes)**
-- Clicks on "High Risk" KPI card
-- Automatically navigates to Portfolio Overview
-- Filters automatically applied to show high-risk products
-- Reviews filtered product list
+- Reviews Risk & Opportunity Matrix
+- Identifies high-risk product quadrants
+- Notes specific risk categories
+- Reviews risk & opportunity lists below matrix
 - Identifies specific solutions needing attention
 
 **Step 3: Review Portfolio Distribution (3 minutes)**
@@ -95,10 +95,10 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 |------------|----------|
 | Manual report requests | Self-service dashboard |
 | Outdated data | Real-time Google Sheets integration |
-| No visual metrics | Strategic View with KPI cards |
-| Hard to identify risks | Risk distribution + drill-down |
+| No visual metrics | Strategic View with health metrics & charts |
+| Hard to identify risks | Risk & Opportunity Matrix visualization |
 | No anomaly detection | Automated alerts in Planning View |
-| Can't drill into details | Click-through to filtered views |
+| Can't drill into details | Detail panels + filtering capabilities |
 
 ---
 
@@ -154,10 +154,10 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 - Hovers over data points for exact values
 
 **Step 5: Review Context (2 minutes)**
-- Expands "Project Narrative" section
-- Reviews regulatory status
-- Checks indirect impact users
-- Notes collateral journey stages
+- Expands "Solution Platforms" section
+- Reviews platform details and deployment info
+- Expands "Metric Automation" section
+- Checks automation status and recommendations
 
 **Step 6: Action Planning (2 minutes)**
 - Notes months below target
@@ -254,9 +254,10 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
   - Performance vs Target
 
 **Step 7: Drill Into High-Risk Products**
-- Clicks "High Risk" KPI card
-- Automatically switches to Portfolio Overview
-- High-risk products automatically filtered
+- Reviews Risk & Opportunity Matrix in Strategic View
+- Identifies products in critical quadrants
+- Switches to Portfolio Overview ("Explore" tab)
+- Uses filters to focus on high-risk areas
 - Reviews each high-risk solution:
   - Maturity stage
   - Metric status
@@ -269,7 +270,8 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 - Reviews detail panels:
   - Core Details
   - Metrics & Performance (charts)
-  - Project Narrative
+  - Solution Platforms
+  - Metric Automation
 - Uses progressive disclosure to focus on relevant info
 - Charts load lazily for performance
 
@@ -320,11 +322,11 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 |------------|----------|
 | Multiple spreadsheets | Consolidated Planning View |
 | Manual anomaly detection | Automated alerts (owner overload, data health) |
-| No resource visibility | Top 10 owners + over-allocation warnings |
-| Manual risk assessment | Strategic View risk distribution + drill-down |
+| No resource visibility | Solutions by Owner analysis + over-allocation warnings |
+| Manual risk assessment | Strategic View risk distribution + matrix |
 | Data quality blind spots | Metrics coverage analysis + health checks |
 | Hard to find patterns | Interactive charts with dynamic filtering |
-| No drill-down capability | Click KPI cards → auto-filtered tactical view |
+| No drill-down capability | Anomaly cards → filtered Insights view |
 | Time-consuming analysis | Automated calculations + visual insights |
 | No prioritization | Risk scores + anomaly alerts |
 | Can't focus on specific areas | Filter pills + dynamic filtering |
@@ -338,7 +340,7 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 | **Frequency** | Monthly | Weekly | Bi-weekly/Monthly |
 | **Duration** | 10-15 min | 5-10 min | 30-45 min |
 | **Primary Tab** | Strategic View | Portfolio Overview | Planning View |
-| **Key Features** | KPI cards, drill-down | Search, detail panel, charts | Anomalies, filters, drill-down |
+| **Key Features** | Health metrics, risk matrix | Search, detail panel, charts | Anomalies, owner analysis, charts |
 | **Main Goal** | Strategic oversight | Track own performance | Portfolio planning |
 | **Time Saved** | 4-6 hrs/month | 1-2 hrs/week | 6-10 hrs/month |
 | **Pain Points Solved** | Manual reports, delayed data | Spreadsheet diving | Multiple tools, manual analysis |
@@ -359,11 +361,11 @@ This document outlines the key user journeys for the P&C Portfolio Dashboard. Ea
 ### Most Valued Features
 
 1. **Planning View Anomaly Alerts** (Portfolio Managers)
-2. **Strategic View Drill-Down** (Executives)
+2. **Executive Health Metrics** (Executives)
 3. **Detail Panel with Charts** (Product Owners)
-4. **Filter Pills** (All users)
-5. **Compact Cards with Status** (All users)
-6. **Progressive Disclosure** (All users)
+4. **Solutions by Owner Analysis** (Portfolio Managers)
+5. **Risk & Opportunity Matrix** (Executives)
+6. **Filter Pills & Search** (All users)
 
 ### Impact Metrics
 

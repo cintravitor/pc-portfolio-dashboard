@@ -267,6 +267,9 @@
             // Persist to localStorage
             safeLocalStorageSet(STORAGE_KEYS.EVENTS, eventBuffer);
             
+            // Send to backend
+            sendToBackend(event);
+            
             // Publish event for real-time listeners
             if (window.Utils && typeof window.Utils.publish === 'function') {
                 window.Utils.publish('analytics-event-tracked', event);
@@ -279,6 +282,62 @@
             
         } catch (error) {
             console.error('Analytics: Error tracking event:', error);
+        }
+    }
+    
+    // ==================== BACKEND COMMUNICATION ====================
+    
+    /**
+     * Send event data to Google Apps Script backend
+     * @param {Object} event - The event object to send
+     */
+    function sendToBackend(event) {
+        // Backend Web App URL
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzzjsHr9XUxfbTHFdH3MzaacNAqgOu2GeoD6pu5qvfFSLuqIrrWIRIdKfJBLI2LFPDg/exec';
+        
+        // Skip if analytics disabled
+        if (!isEnabled) return;
+        
+        try {
+            // Send asynchronously (fire and forget)
+            // Using navigator.sendBeacon for reliable delivery even on page unload
+            const payload = JSON.stringify({
+                timestamp: event.timestamp,
+                sessionId: event.sessionId,
+                tabId: event.tabId,
+                eventType: event.eventType,
+                eventDetails: event.eventDetails,
+                sessionAge: event.sessionAge,
+                path: event.path,
+                userAgent: navigator.userAgent.substring(0, 200) // Truncate for privacy
+            });
+            
+            // Try sendBeacon first (more reliable for page unload events)
+            if (navigator.sendBeacon) {
+                const blob = new Blob([payload], { type: 'application/json' });
+                navigator.sendBeacon(BACKEND_URL, blob);
+            } else {
+                // Fallback to fetch with no-cors mode
+                fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: payload,
+                    mode: 'no-cors', // Required for cross-origin requests
+                    keepalive: true // Keep request alive even if page closes
+                }).catch(err => {
+                    // Silently fail - don't break user experience
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        console.warn('Analytics backend sync failed:', err);
+                    }
+                });
+            }
+        } catch (error) {
+            // Silently fail - analytics should never break the app
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn('Analytics backend error:', error);
+            }
         }
     }
     

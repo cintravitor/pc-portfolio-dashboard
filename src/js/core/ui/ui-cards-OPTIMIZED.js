@@ -368,7 +368,6 @@
         
         document.getElementById('stat-total').textContent = stats.total;
         document.getElementById('stat-showing').textContent = stats.showing;
-        document.getElementById('stat-live').textContent = stats.live;
         document.getElementById('stat-dev').textContent = stats.dev;
         
         // Update data quality cards

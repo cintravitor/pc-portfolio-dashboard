@@ -269,6 +269,33 @@
                             </div>
                             ` : ''}
                         </div>
+                        
+                        <!-- Platform Information -->
+                        <div class="detail-section">
+                            <div class="detail-section-title">Platform Details</div>
+                            <div class="detail-field">
+                                <div class="detail-field-label">Primary Platform</div>
+                                <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
+                                    ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
+                                </div>
+                            </div>
+                            ${product.platform ? `
+                            <div class="detail-field-note">
+                                <div class="field-note-icon">💡</div>
+                                <div class="field-note-text">
+                                    This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
+                                    Understanding the platform helps in resource allocation and technical decision-making.
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="detail-field-note warning">
+                                <div class="field-note-icon">⚠️</div>
+                                <div class="field-note-text">
+                                    Platform information is not specified. Consider documenting the technical platform for better resource planning.
+                                </div>
+                            </div>
+                            `}
+                        </div>
                     </div>
                 </div>
 
@@ -304,59 +331,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 3: Solution Platforms -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header collapsed" data-section="platforms">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">💻</span>
-                            <h3 class="collapsible-title">Solution Platforms</h3>
-                            <span class="collapsible-subtitle">Technical platform and infrastructure details</span>
-                        </div>
-                        <span class="collapsible-toggle">+</span>
-                    </div>
-                    <div class="detail-collapsible-content collapsed" id="section-platforms">
-                        <div class="detail-section">
-                            <div class="detail-section-title">Platform Details</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">Primary Platform</div>
-                                <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
-                                    ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
-                                </div>
-                            </div>
-                            ${product.platform ? `
-                            <div class="detail-field-note">
-                                <div class="field-note-icon">💡</div>
-                                <div class="field-note-text">
-                                    This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
-                                    Understanding the platform helps in resource allocation and technical decision-making.
-                                </div>
-                            </div>
-                            ` : `
-                            <div class="detail-field-note warning">
-                                <div class="field-note-icon">⚠️</div>
-                                <div class="field-note-text">
-                                    Platform information is not specified. Consider documenting the technical platform for better resource planning.
-                                </div>
-                            </div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 4: Metric Automation -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header collapsed" data-section="automation">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">🤖</span>
-                            <h3 class="collapsible-title">Metric Automation</h3>
-                            <span class="collapsible-subtitle">Data extraction and automation status</span>
-                        </div>
-                        <span class="collapsible-toggle">+</span>
-                    </div>
-                    <div class="detail-collapsible-content collapsed" id="section-automation">
+                        
+                        <!-- Metric Automation Information -->
                         ${generateMetricAutomationSection(product)}
                     </div>
                 </div>

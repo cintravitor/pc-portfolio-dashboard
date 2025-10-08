@@ -237,31 +237,66 @@
     
     /**
      * Get automation status information
+     * FIXED: Now requires 12 months of valid data for "Automated" status
+     * 
+     * Classification logic:
+     * - Automated: Both UX and BI have 12 months of valid data
+     * - Partial: At least one metric has some data, but not 12 months on both
+     * - Manual: No data or insufficient data on both metrics
      */
     function getAutomationInfo(product) {
-        // Check if metrics are automated or manual
-        const hasUXData = product.monthlyUX && product.monthlyUX.some(val => val && val !== '' && val !== '0' && parseFloat(val) !== 0);
-        const hasBIData = product.monthlyBI && product.monthlyBI.some(val => val && val !== '' && val !== '0' && parseFloat(val) !== 0);
+        /**
+         * Helper: Count valid data points in monthly array
+         * Valid = non-empty, non-zero, numeric value
+         */
+        const countValidMonths = (monthlyArray) => {
+            if (!monthlyArray || !Array.isArray(monthlyArray)) {
+                return 0;
+            }
+            return monthlyArray.filter(val => {
+                // Must be non-empty and non-zero
+                if (!val || val === '' || val === '0' || val === 'N/A' || val === '-') {
+                    return false;
+                }
+                // Must be a valid number
+                const num = parseFloat(val);
+                return !isNaN(num) && num !== 0;
+            }).length;
+        };
         
-        if (hasUXData && hasBIData) {
+        const uxValidMonths = countValidMonths(product.monthlyUX);
+        const biValidMonths = countValidMonths(product.monthlyBI);
+        
+        // AUTOMATED: Both metrics have 12 months of valid data
+        const isUXAutomated = uxValidMonths === 12;
+        const isBIAutomated = biValidMonths === 12;
+        
+        if (isUXAutomated && isBIAutomated) {
             return {
                 icon: '✓',
                 text: 'Automated',
                 class: 'automation-automated'
             };
-        } else if (hasUXData || hasBIData) {
+        }
+        
+        // PARTIAL: At least one metric has some data (but not 12 months on both)
+        const hasAnyUXData = uxValidMonths > 0;
+        const hasAnyBIData = biValidMonths > 0;
+        
+        if (hasAnyUXData || hasAnyBIData) {
             return {
-                icon: '⚠',
+                icon: '⚙',
                 text: 'Partial',
                 class: 'automation-partial'
             };
-        } else {
-            return {
-                icon: '○',
-                text: 'Manual',
-                class: 'automation-manual'
-            };
         }
+        
+        // MANUAL: No data on either metric
+        return {
+            icon: '○',
+            text: 'Manual',
+            class: 'automation-manual'
+        };
     }
     
     /**
@@ -368,7 +403,6 @@
         
         document.getElementById('stat-total').textContent = stats.total;
         document.getElementById('stat-showing').textContent = stats.showing;
-        document.getElementById('stat-live').textContent = stats.live;
         document.getElementById('stat-dev').textContent = stats.dev;
         
         // Update data quality cards

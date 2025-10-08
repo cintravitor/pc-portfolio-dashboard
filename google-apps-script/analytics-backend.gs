@@ -336,7 +336,10 @@ function appendEventData(sheet, payload) {
  * @param {boolean} success - Success status
  * @param {string} message - Response message
  * @param {Object} data - Optional additional data
- * @return {ContentService.TextOutput} JSON response with CORS headers
+ * @return {ContentService.TextOutput} JSON response
+ * 
+ * Note: CORS headers are automatically handled by Google Apps Script
+ * when deployed as Web App with "Anyone" access
  */
 function createResponse(success, message, data = {}) {
   const response = {
@@ -348,25 +351,20 @@ function createResponse(success, message, data = {}) {
   
   return ContentService
     .createTextOutput(JSON.stringify(response))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
  * Handle OPTIONS requests for CORS preflight
  * 
- * @return {ContentService.TextOutput} Empty response with CORS headers
+ * @return {ContentService.TextOutput} Empty response
+ * 
+ * Note: CORS is automatically handled by Google Apps Script
  */
 function doOptions() {
   return ContentService
     .createTextOutput('')
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    .setHeader('Access-Control-Max-Age', '86400');
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ==================== UTILITY FUNCTIONS ====================

@@ -209,6 +209,24 @@
 
         window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy, belowTargetOnly);
         
+        // Get filtered data to determine which areas to expand
+        const filteredData = window.DataManager.getFilteredData();
+        
+        // Check if any filters are active
+        const hasActiveFilters = searchTerm || areaFilter || maturityFilter || ownerFilter || belowTargetOnly;
+        
+        if (hasActiveFilters && filteredData.length > 0) {
+            // Get unique areas from filtered data
+            const areasToExpand = [...new Set(filteredData.map(product => product.area || 'Uncategorized'))];
+            
+            // Expand only the areas with filtered results
+            window.UIManager.Cards.collapseAllAreas(); // First collapse all
+            window.UIManager.Cards.expandAreas(areasToExpand); // Then expand relevant ones
+        } else if (!hasActiveFilters) {
+            // If no filters, collapse all areas (default state)
+            window.UIManager.Cards.collapseAllAreas();
+        }
+        
         window.UIManager.Cards.render();
         window.UIManager.Cards.updateStats();
         renderFilterPills();

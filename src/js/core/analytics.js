@@ -437,6 +437,118 @@
         });
     }
     
+    // ==================== BACKEND BULK EXPORT ====================
+    
+    /**
+     * Send all localStorage data to backend (bulk export)
+     * This is different from sendToBackend() which sends individual events in real-time
+     * Use this for manual backup/export or to sync failed events
+     * 
+     * @param {boolean} clearAfterSuccess - Clear localStorage after successful send
+     * @returns {Promise<Object>} Result object with success status
+     */
+    async function sendDataToBackend(clearAfterSuccess = false) {
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzzjsHr9XUxfbTHFdH3MzaacNAqgOu2GeoD6pu5qvfFSLuqIrrWIRIdKfJBLI2LFPDg/exec';
+        
+        if (!isEnabled) {
+            return {
+                success: false,
+                message: 'Analytics is disabled'
+            };
+        }
+        
+        try {
+            // Get all events from localStorage
+            const events = safeLocalStorageGet(STORAGE_KEYS.EVENTS, []);
+            
+            if (events.length === 0) {
+                return {
+                    success: false,
+                    message: 'No events to export'
+                };
+            }
+            
+            console.log(`📤 Sending ${events.length} events to backend...`);
+            
+            // Send events in batches to avoid payload size limits
+            const BATCH_SIZE = 50;
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (let i = 0; i < events.length; i += BATCH_SIZE) {
+                const batch = events.slice(i, i + BATCH_SIZE);
+                
+                try {
+                    // Prepare batch payload
+                    const payload = {
+                        batchExport: true,
+                        batchSize: batch.length,
+                        batchIndex: Math.floor(i / BATCH_SIZE) + 1,
+                        totalBatches: Math.ceil(events.length / BATCH_SIZE),
+                        events: batch.map(event => ({
+                            timestamp: event.timestamp,
+                            sessionId: event.sessionId,
+                            tabId: event.tabId,
+                            eventType: event.eventType,
+                            eventDetails: event.eventDetails,
+                            sessionAge: event.sessionAge,
+                            path: event.path
+                        }))
+                    };
+                    
+                    // Send batch
+                    const response = await fetch(BACKEND_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload),
+                        mode: 'no-cors' // Opaque response, but data is sent
+                    });
+                    
+                    successCount += batch.length;
+                    console.log(`✅ Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(events.length / BATCH_SIZE)} sent (${batch.length} events)`);
+                    
+                    // Small delay between batches to avoid rate limiting
+                    if (i + BATCH_SIZE < events.length) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                } catch (batchError) {
+                    failCount += batch.length;
+                    console.error(`❌ Batch ${Math.floor(i / BATCH_SIZE) + 1} failed:`, batchError.message);
+                }
+            }
+            
+            // Clear localStorage if requested and all batches succeeded
+            if (clearAfterSuccess && failCount === 0) {
+                clearEvents();
+                console.log('🗑️ Local events cleared after successful export');
+            }
+            
+            const result = {
+                success: successCount > 0,
+                message: `Exported ${successCount} of ${events.length} events`,
+                successCount: successCount,
+                failCount: failCount,
+                totalEvents: events.length,
+                cleared: clearAfterSuccess && failCount === 0
+            };
+            
+            console.log('📤 Bulk export complete:', result.message);
+            
+            return result;
+            
+        } catch (error) {
+            console.error('❌ Bulk export failed:', error);
+            return {
+                success: false,
+                message: `Export failed: ${error.message}`,
+                error: error.message
+            };
+        }
+    }
+    
     // ==================== DATA EXPORT ====================
     
     /**
@@ -738,6 +850,9 @@
         exportCSV: exportDataAsCSV,
         download: downloadData,
         
+        // Backend communication
+        sendDataToBackend: sendDataToBackend,
+        
         // Privacy & control
         enable: enable,
         disable: disable,
@@ -746,7 +861,8 @@
         
         // Status
         isEnabled: () => isEnabled,
-        getSessionId: () => currentSessionId
+        getSessionId: () => currentSessionId,
+        getTabId: () => currentTabId
     };
     
     console.log('Analytics: Module loaded. Call Analytics.init() to start tracking.');

@@ -54,6 +54,15 @@
             window.UIManager.Planning.render();
         }
         
+        if (tabName === 'analytics-dashboard') {
+            // Render analytics dashboard
+            if (window.UIAnalytics && typeof window.UIAnalytics.renderAnalyticsDashboard === 'function') {
+                window.UIAnalytics.renderAnalyticsDashboard();
+            } else {
+                console.error('UIAnalytics module not available');
+            }
+        }
+        
         // LEGACY SUPPORT: Keep old tab names for backward compatibility
         if (tabName === 'descriptive-analysis' && !window.State.isAnalysisDataLoaded()) {
             window.UIManager.Insights.loadLegacyAnalysis();

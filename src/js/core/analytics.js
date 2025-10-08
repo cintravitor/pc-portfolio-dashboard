@@ -299,9 +299,8 @@
         if (!isEnabled) return;
         
         try {
-            // Send asynchronously (fire and forget)
-            // Using navigator.sendBeacon for reliable delivery even on page unload
-            const payload = JSON.stringify({
+            // Prepare payload
+            const payload = {
                 timestamp: event.timestamp,
                 sessionId: event.sessionId,
                 tabId: event.tabId,
@@ -309,34 +308,30 @@
                 eventDetails: event.eventDetails,
                 sessionAge: event.sessionAge,
                 path: event.path,
-                userAgent: navigator.userAgent.substring(0, 200) // Truncate for privacy
-            });
+                userAgent: navigator.userAgent.substring(0, 200)
+            };
             
-            // Try sendBeacon first (more reliable for page unload events)
-            if (navigator.sendBeacon) {
-                const blob = new Blob([payload], { type: 'application/json' });
-                navigator.sendBeacon(BACKEND_URL, blob);
-            } else {
-                // Fallback to fetch with no-cors mode
-                fetch(BACKEND_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: payload,
-                    mode: 'no-cors', // Required for cross-origin requests
-                    keepalive: true // Keep request alive even if page closes
-                }).catch(err => {
-                    // Silently fail - don't break user experience
-                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                        console.warn('Analytics backend sync failed:', err);
-                    }
-                });
-            }
+            // Use fetch with no-cors mode
+            // Note: With no-cors, we can't read the response, but data is still sent
+            fetch(BACKEND_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                mode: 'no-cors' // Opaque response, but request goes through
+            }).then(() => {
+                // Success (though we can't actually read the response)
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.log('Analytics: Event sent to backend');
+                }
+            }).catch(err => {
+                // Silently fail - don't break user experience
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.warn('Analytics: Backend sync failed (this is OK if data reaches sheet):', err.message);
+                }
+            });
         } catch (error) {
             // Silently fail - analytics should never break the app
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.warn('Analytics backend error:', error);
+                console.warn('Analytics: Backend error:', error.message);
             }
         }
     }

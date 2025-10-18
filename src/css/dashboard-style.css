@@ -2265,7 +2265,7 @@ select:focus {
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: visible; /* Changed from hidden to visible to ensure header shows */
+    overflow: hidden; /* Clip content to border radius */
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2285,14 +2285,14 @@ select:focus {
 
 .detail-header {
     padding: 2rem;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
     position: relative;
-    z-index: 51;
+    z-index: 1;
     flex-shrink: 0; /* Prevent header from shrinking */
-    border-radius: 1.5rem 1.5rem 0 0; /* Match panel border radius */
     min-height: 120px; /* Ensure header has visible height */
-    display: block; /* Explicit display */
+    width: 100%;
+    /* Debug: Make sure content is visible */
 }
 
 .detail-close {
@@ -2320,25 +2320,26 @@ select:focus {
 }
 
 .detail-title {
-    font-size: 1.625rem;
-    font-weight: 800;
+    font-size: 1.625rem !important;
+    font-weight: 800 !important;
     letter-spacing: -0.02em;
     line-height: 1.3;
     margin-bottom: 0.5rem;
     padding-right: 3rem;
-    color: white; /* Explicit white color */
-    position: relative;
-    z-index: 52;
+    color: #ffffff !important; /* Force white color */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .detail-subtitle {
-    font-size: 0.9375rem;
-    font-weight: 500;
-    opacity: 0.95;
+    font-size: 0.9375rem !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
     line-height: 1.5;
-    color: white; /* Explicit white color */
-    position: relative;
-    z-index: 52;
+    color: #ffffff !important; /* Force white color */
+    display: block !important;
+    visibility: visible !important;
 }
 
 .detail-body {

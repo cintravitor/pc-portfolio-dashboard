@@ -393,19 +393,29 @@
     
     /**
      * Update statistics display
+     * Defensive: checks if elements exist before updating (handles cached old HTML)
      */
     function updateStats() {
         const statsBar = document.getElementById('stats-bar');
+        if (!statsBar) {
+            console.warn('Stats bar not found');
+            return;
+        }
         statsBar.style.display = 'flex';
 
         const stats = window.DataManager.getProductStats();
         const missingMetrics = window.DataManager.countMissingMetrics();
         
-        document.getElementById('stat-total').textContent = stats.total;
+        // Safely update stats if elements exist
+        const statTotal = document.getElementById('stat-total');
+        if (statTotal) statTotal.textContent = stats.total;
         
         // Update data quality cards
-        document.getElementById('stat-missing-ux').textContent = missingMetrics.missingUX;
-        document.getElementById('stat-missing-bi').textContent = missingMetrics.missingBI;
+        const statMissingUX = document.getElementById('stat-missing-ux');
+        const statMissingBI = document.getElementById('stat-missing-bi');
+        
+        if (statMissingUX) statMissingUX.textContent = missingMetrics.missingUX;
+        if (statMissingBI) statMissingBI.textContent = missingMetrics.missingBI;
     }
     
     /**

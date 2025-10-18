@@ -2252,10 +2252,10 @@ select:focus {
 .detail-panel {
     /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 250px; /* Stick below header (140px) + filters (~110px) when scrolling main page */
+    top: 260px; /* Stick below filters - increased to prevent overlap */
     flex: 0 0 45%;
     align-self: flex-start; 
-    max-height: calc(100vh - 270px);
+    max-height: calc(100vh - 280px);
     background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);
@@ -2266,7 +2266,7 @@ select:focus {
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 101; /* ABOVE filters (99) and main header (100) to prevent header from going behind */
+    z-index: 85; /* BELOW filters (99) so panel never goes above header/filters */
 }
 
 @keyframes slideIn {

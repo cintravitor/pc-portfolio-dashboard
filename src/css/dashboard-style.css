@@ -631,15 +631,15 @@ body::before {
 }
 
 .header {
-    background: rgba(255, 255, 255, 0.98);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    /* Light purple/blue gradient matching page background for cohesive UX */
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #f5f7fb 100%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
     box-shadow: 
-        0 8px 32px rgba(99, 102, 241, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        0 8px 32px rgba(99, 102, 241, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     position: sticky;
     top: 0;
     z-index: 100;
-    /* Removed backdrop-filter to fix stacking context issue */
 }
 
 .header-content {

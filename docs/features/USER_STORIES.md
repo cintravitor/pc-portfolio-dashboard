@@ -25,10 +25,11 @@
 - ✅ **Phase 4: Progressive Disclosure** - Optimized detail panels
 - ✅ **Phase 5: Planning View** - Proactive anomaly detection
 - ✅ **Phase 6: Architecture Foundation** - Event-driven infrastructure
+- 🚧 **Phase 7: UI Cleanup** - Remove non-value-adding header stats (v6.2.1)
 
 ### Total Progress
-**31 User Stories:** ✅ 31 Complete (100%)  
-**237 Story Points:** ✅ 237 Complete (100%)  
+**32 User Stories:** ✅ 31 Complete, 🚧 1 In Progress (96.9%)  
+**239 Story Points:** ✅ 237 Complete, 🚧 2 In Progress (99.2%)  
 **Product Status:** 🚀 Production Ready
 
 ---
@@ -43,6 +44,7 @@
 - [Tab 4: Planning View (NEW)](#tab-4-planning-view-new)
 - [Cross-Tab Features](#cross-tab-features)
 - [Technical Stories](#technical-stories)
+- [UI Improvement Stories](#ui-improvement-stories)
 - [User Journey Map](#user-journey-map)
 - [Future Enhancements](#future-enhancements)
 
@@ -1272,6 +1274,59 @@
 
 ---
 
+## UI Improvement Stories
+
+### Epic: UI Cleanup & Optimization
+
+#### Story 6.1: Remove Non-Value-Adding Header Statistics
+**As a** User  
+**I want** the "Showing" and "In Development" headers to be removed from the stats bar  
+**So that** the visualization is cleaner, removing unnecessary clutter and focusing attention on the solution cards
+
+**Acceptance Criteria:**
+- 🚧 "Showing" stat card removed from Portfolio Overview stats bar
+- 🚧 "In Development" stat card removed from stats bar
+- 🚧 Remaining stats ("Total Solutions", data quality warnings) remain visible
+- 🚧 Stats bar layout is clean and well-organized
+- 🚧 No JavaScript errors from removed elements
+- 🚧 Filter functionality remains unchanged
+- 🚧 Stats update correctly when filters are applied
+
+**Data Used in Business Rule:**
+- `stats.total` - Total solutions count (kept)
+- `stats.showing` - Filtered solutions count (removed - redundant)
+- `stats.dev` - Development stage count (removed - low value)
+- `missingMetrics.missingUX` - Data quality indicator (kept)
+- `missingMetrics.missingBI` - Data quality indicator (kept)
+
+**Data Tracked from User Interaction:**
+- User feedback on cleaner UI
+- Time to find relevant information (expected to decrease)
+- User satisfaction with header area
+- Reduced visual clutter metrics
+
+**Technical Changes:**
+- Modified: `index.html` (removed 2 stat card elements, -8 lines)
+- Modified: `src/js/core/ui/ui-cards.js` (removed update calls, -2 lines)
+- No CSS changes required (reusing generic `.stat-card` class)
+
+**Testing Completed:**
+- [ ] Local testing completed (manual checklist)
+- [ ] Cross-browser testing completed
+- [ ] Responsive design verified
+- [ ] No console errors
+- [ ] Documentation updated
+
+**Priority:** Low (UI cleanup)  
+**Story Points:** 2  
+**Version:** v6.2.1 (Patch Release)  
+**Status:** 🚧 In Progress  
+**Branch:** `feature/remove-headers`  
+**Commit:** `7f7b07e`  
+**Date:** 2025-10-18
+
+---
+
 ## 📝 Notes for Stakeholders
 
 ### What Makes This Product Valuable
@@ -1333,5 +1388,6 @@ See the [Product Roadmap](./PRODUCT_ROADMAP.md) for complete details, timelines,
 
 **Document Maintained By:** Product Team  
 **Review Cycle:** Quarterly  
+**Last Updated:** October 18, 2025 (Story 6.1 added)  
 **Next Review:** January 2026
 

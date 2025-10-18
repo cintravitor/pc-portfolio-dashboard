@@ -2287,8 +2287,10 @@ select:focus {
     padding: 2rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1;
     flex-shrink: 0;
-    /* No sticky needed - entire panel is fixed, header stays at top naturally */
 }
 
 .detail-close {

@@ -2264,11 +2264,11 @@ select:focus {
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: auto; /* Changed from hidden to allow internal scrolling */
+    overflow: hidden; /* Back to hidden - creates scroll context for detail-body */
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 85;
+    z-index: 90; /* Below filters (99) but above content */
 }
 
 @keyframes slideIn {
@@ -2287,9 +2287,9 @@ select:focus {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
     position: sticky;
-    top: 0;
-    z-index: 86; /* Higher than panel (85) to prevent going behind filters */
+    top: 0; /* Sticky within panel for internal scrolling */
     flex-shrink: 0;
+    z-index: 1;
 }
 
 .detail-close {

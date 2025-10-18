@@ -2287,7 +2287,7 @@ select:focus {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
     position: sticky;
-    top: 250px; /* Same as panel - sticks below filters when scrolling main page */
+    top: 0; /* Sticks to top of the panel (panel is already sticky at 250px) */
     z-index: 10;
     flex-shrink: 0;
 }

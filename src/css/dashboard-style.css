@@ -2252,11 +2252,12 @@ select:focus {
 .detail-panel {
     /* Fixed positioning - stays in place when scrolling main page */
     position: fixed;
-    top: 240px; /* Below header (140px) + filters (~100px) */
+    top: 250px; /* Below sticky filters section */
     right: 2rem;
     width: 45%;
-    max-height: calc(100vh - 260px);
-    background: rgba(255, 255, 255, 0.5);
+    max-width: 900px;
+    height: calc(100vh - 270px);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     border-radius: 1.5rem;
@@ -2264,7 +2265,7 @@ select:focus {
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to visible to ensure header shows */
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2287,9 +2288,9 @@ select:focus {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
     position: relative;
-    z-index: 50;
-    /* Header is part of fixed panel - no sticky needed since entire panel is fixed */
+    z-index: 51;
     flex-shrink: 0; /* Prevent header from shrinking */
+    border-radius: 1.5rem 1.5rem 0 0; /* Match panel border radius */
 }
 
 .detail-close {
@@ -2334,7 +2335,9 @@ select:focus {
 .detail-body {
     padding: 2rem;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    border-radius: 0 0 1.5rem 1.5rem; /* Match panel border radius */
 }
 
 .detail-section {

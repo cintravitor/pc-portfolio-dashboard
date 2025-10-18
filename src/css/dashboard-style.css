@@ -631,8 +631,8 @@ body::before {
 }
 
 .header {
-    /* Subtle glass effect with same background as page body */
-    background: rgba(250, 249, 253, 0.8);
+    /* Subtle glass effect with purple-tinted background matching page body */
+    background: rgba(245, 243, 251, 0.85);
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
     border-bottom: none;

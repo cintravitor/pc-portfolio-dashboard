@@ -37,3 +37,18 @@ DEPLOYED BY: Vitor Cintra
 ROLLBACK TAG: pre-deployment-backup-2025-10-18-1716
 GITHUB PAGES: Auto-deploying from main branch
 =========================================================================================
+
+=========================================================================================
+HOTFIX DEPLOYMENT: 2025-10-18 17:30:00 -03
+VERSION: v6.2.2
+TYPE: CRITICAL HOTFIX
+ISSUE: Production error "Cannot set properties of null (setting textContent)"
+ROOT CAUSE: Browser caching old JavaScript with references to deleted DOM elements
+SOLUTION: Defensive null checks + cache-busting query parameters
+FILES: 2 modified (index.html, ui-cards.js)
+IMPACT: Fixes production error, improves code robustness
+TESTING: Immediate deployment (critical fix)
+STATUS: ✅ DEPLOYED
+DEPLOYED BY: Vitor Cintra (automated hotfix)
+RELATED: Story 6.1 (v6.2.1 follow-up fix)
+=========================================================================================

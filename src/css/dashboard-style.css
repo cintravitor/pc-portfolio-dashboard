@@ -768,10 +768,7 @@ body::before {
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    position: sticky;
-    top: 140px;
-    z-index: 95;
-    /* Stick below main header when scrolling */
+    /* Removed sticky - testing if this fixes overlap issue */
 }
 
 .filters-container {
@@ -1892,7 +1889,7 @@ select:focus {
     gap: 1rem;
     margin-bottom: 2rem;
     position: sticky;
-    top: 250px;
+    top: 140px;
     z-index: 98;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -1903,7 +1900,7 @@ select:focus {
     padding-left: 2rem;
     padding-right: 2rem;
     margin-top: -1rem;
-    /* Higher z-index than filters (95) to appear on top when scrolling causes overlap */
+    /* Stick right below header (filters not sticky, will scroll away) */
 }
 
 .stat-card {
@@ -2264,9 +2261,9 @@ select:focus {
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: sticky;
-    top: 250px;
+    top: 140px;
     flex: 0 0 45%;
-    max-height: calc(100vh - 270px);
+    max-height: calc(100vh - 160px);
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2280,7 +2277,7 @@ select:focus {
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 98;
-    /* Higher z-index than filters (95) to appear on top when scrolling causes overlap */
+    /* Stick right below header, same as stats bar */
 }
 
 @keyframes slideIn {

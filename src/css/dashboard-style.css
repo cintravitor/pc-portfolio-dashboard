@@ -2252,10 +2252,10 @@ select:focus {
 .detail-panel {
     /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 280px; /* Stick well below filters to prevent any overlap */
+    top: 310px; /* Stick well below filters - increased to ensure clearance */
     flex: 0 0 45%;
     align-self: flex-start; 
-    max-height: calc(100vh - 300px);
+    max-height: calc(100vh - 330px);
     background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);

@@ -631,9 +631,9 @@ body::before {
 }
 
 .header {
-    /* Very subtle light background matching page theme for cohesive UX */
-    background: linear-gradient(135deg, #fafbfd 0%, #f5f7fb 100%);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+    /* Subtle purple-tinted gradient matching page background for cohesive UX */
+    background: linear-gradient(135deg, #faf9fd 0%, #f6f5fb 100%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
     box-shadow: 
         0 8px 32px rgba(99, 102, 241, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);

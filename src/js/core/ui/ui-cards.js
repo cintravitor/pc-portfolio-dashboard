@@ -402,8 +402,6 @@
         const missingMetrics = window.DataManager.countMissingMetrics();
         
         document.getElementById('stat-total').textContent = stats.total;
-        document.getElementById('stat-showing').textContent = stats.showing;
-        document.getElementById('stat-dev').textContent = stats.dev;
         
         // Update data quality cards
         document.getElementById('stat-missing-ux').textContent = missingMetrics.missingUX;

@@ -2252,11 +2252,11 @@ select:focus {
 .detail-panel {
     /* Fixed positioning - stays in place when scrolling main page */
     position: fixed;
-    top: 250px; /* Below sticky filters section */
+    top: 260px; /* Below sticky filters section */
     right: 2rem;
+    bottom: 2rem;
     width: 45%;
     max-width: 900px;
-    height: calc(100vh - 270px);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2265,11 +2265,11 @@ select:focus {
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden; /* Clip content to border radius */
+    overflow: auto; /* Allow scrolling */
     display: flex;
     flex-direction: column;
-    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 90; /* Above content, below header (100) and filters (99) */
+    /* Removed animation temporarily for debugging */
 }
 
 @keyframes slideIn {
@@ -2286,13 +2286,10 @@ select:focus {
 .detail-header {
     padding: 2rem;
     background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: white !important;
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0; /* Prevent header from shrinking */
-    min-height: 120px; /* Ensure header has visible height */
+    color: #ffffff !important;
+    flex-shrink: 0;
     width: 100%;
-    /* Debug: Make sure content is visible */
+    min-height: 100px;
 }
 
 .detail-close {

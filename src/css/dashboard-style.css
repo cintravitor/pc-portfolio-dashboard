@@ -1891,19 +1891,7 @@ select:focus {
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
-    position: sticky;
-    top: 240px;
-    z-index: 90;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 1rem 0;
-    margin-left: -2rem;
-    margin-right: -2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    margin-top: -1rem;
-    /* Stick below filters section (header at 140px + filters ~100px) */
+    /* Removed sticky temporarily - will re-add after filters work correctly */
 }
 
 .stat-card {
@@ -2264,9 +2252,9 @@ select:focus {
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: sticky;
-    top: 240px;
+    top: 140px;
     flex: 0 0 45%;
-    max-height: calc(100vh - 260px);
+    max-height: calc(100vh - 160px);
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2280,7 +2268,7 @@ select:focus {
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 80;
-    /* Stay below header, filters, and stats bar */
+    /* Position below header, keep z-index below filters (95) */
 }
 
 @keyframes slideIn {

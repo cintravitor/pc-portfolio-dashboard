@@ -1890,7 +1890,7 @@ select:focus {
     margin-bottom: 2rem;
     position: sticky;
     top: 140px;
-    z-index: 98;
+    z-index: 101;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1900,7 +1900,7 @@ select:focus {
     padding-left: 2rem;
     padding-right: 2rem;
     margin-top: -1rem;
-    /* Stick right below header (filters not sticky, will scroll away) */
+    /* z-index HIGHER than header (100) to appear on top when overlapping */
 }
 
 .stat-card {
@@ -2276,8 +2276,8 @@ select:focus {
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 98;
-    /* Stick right below header, same as stats bar */
+    z-index: 101;
+    /* z-index HIGHER than header (100) to appear on top when overlapping */
 }
 
 @keyframes slideIn {

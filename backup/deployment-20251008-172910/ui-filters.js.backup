@@ -79,55 +79,33 @@
     
     /**
      * Filter products by missing metrics (UX or BI)
-     * 
-     * Business Rule: A product is counted as "missing metrics" if:
-     * 1. The key metric field itself is "N/A" or empty (no metric defined), OR
-     * 2. The CURRENT MONTH metric value is missing, N/A, empty, or zero
-     * 
      * @param {string} metricType - Either 'UX' or 'BI'
      */
     function filterByMissingMetric(metricType) {
         const portfolioData = window.DataManager.getPortfolioData();
         
-        // Get current month index (0-based: Jan=0, Feb=1, ..., Oct=9, Nov=10, Dec=11)
-        const currentMonth = new Date().getMonth();
-        
-        // Filter products with missing metrics (definition OR current month value)
+        // Filter products with missing metrics
         const filtered = portfolioData.filter(product => {
             if (metricType === 'UX') {
-                // Rule 1: Check if key metric field is missing or N/A (no metric defined)
-                if (!product.keyMetricUX || 
-                    product.keyMetricUX.trim() === '' || 
-                    product.keyMetricUX === 'N/A') {
-                    return true;
-                }
-                
-                // Rule 2: Check if UX metric value is missing for current month
+                // Check if UX metric is missing
                 if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
-                    const currentValue = product.monthlyUX[currentMonth];
-                    return !currentValue || 
-                           currentValue === 'N/A' || 
-                           currentValue === '' || 
-                           currentValue === '0' ||
-                           parseFloat(currentValue) === 0;
+                    const lastValue = product.monthlyUX[product.monthlyUX.length - 1];
+                    return !lastValue || 
+                           lastValue === 'N/A' || 
+                           lastValue === '' || 
+                           lastValue === '0' ||
+                           parseFloat(lastValue) === 0;
                 }
                 return true; // No monthlyUX array
             } else {
-                // Rule 1: Check if key metric field is missing or N/A (no metric defined)
-                if (!product.keyMetricBI || 
-                    product.keyMetricBI.trim() === '' || 
-                    product.keyMetricBI === 'N/A') {
-                    return true;
-                }
-                
-                // Rule 2: Check if BI metric value is missing for current month
+                // Check if BI metric is missing
                 if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
-                    const currentValue = product.monthlyBI[currentMonth];
-                    return !currentValue || 
-                           currentValue === 'N/A' || 
-                           currentValue === '' || 
-                           currentValue === '0' ||
-                           parseFloat(currentValue) === 0;
+                    const lastValue = product.monthlyBI[product.monthlyBI.length - 1];
+                    return !lastValue || 
+                           lastValue === 'N/A' || 
+                           lastValue === '' || 
+                           lastValue === '0' ||
+                           parseFloat(lastValue) === 0;
                 }
                 return true; // No monthlyBI array
             }

@@ -1139,11 +1139,14 @@ function getProductStats() {
 
 /**
  * Count products with missing metric updates
- * Identifies products where the most recent monthly metric value is missing, N/A, empty, or zero
+ * 
+ * Business Rule: A product is counted as "missing metrics" if:
+ * 1. The key metric field itself is "N/A" or empty (no metric defined), OR
+ * 2. The CURRENT MONTH metric value is missing, N/A, empty, or zero
  * 
  * @returns {Object} Object containing counts of products with missing UX and BI metrics
- * @returns {number} return.missingUX - Count of products with missing UX metric updates
- * @returns {number} return.missingBI - Count of products with missing BI metric updates
+ * @returns {number} return.missingUX - Count of products with missing UX metric definition or current month value
+ * @returns {number} return.missingBI - Count of products with missing BI metric definition or current month value
  */
 function countMissingMetrics() {
     const portfolioData = window.State.getPortfolioData();
@@ -1155,21 +1158,31 @@ function countMissingMetrics() {
         };
     }
     
+    // Get current month index (0-based: Jan=0, Feb=1, ..., Oct=9, Nov=10, Dec=11)
+    const currentMonth = new Date().getMonth();
+    
     let missingUX = 0;
     let missingBI = 0;
     
     portfolioData.forEach(product => {
-        // Check UX metric - get last value from monthlyUX array
-        if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
-            // Get the last (most recent) value
-            const lastUXValue = product.monthlyUX[product.monthlyUX.length - 1];
+        // Check UX metric
+        // Rule 1: Check if key metric field is missing or N/A (no metric defined)
+        if (!product.keyMetricUX || 
+            product.keyMetricUX.trim() === '' || 
+            product.keyMetricUX === 'N/A') {
+            missingUX++;
+        } 
+        // Rule 2: Check if current month value is missing
+        else if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
+            // Get the current month value (e.g., October = index 9)
+            const currentUXValue = product.monthlyUX[currentMonth];
             
             // Check if it's missing, N/A, empty, or zero
-            if (!lastUXValue || 
-                lastUXValue === 'N/A' || 
-                lastUXValue === '' || 
-                lastUXValue === '0' ||
-                parseFloat(lastUXValue) === 0) {
+            if (!currentUXValue || 
+                currentUXValue === 'N/A' || 
+                currentUXValue === '' || 
+                currentUXValue === '0' ||
+                parseFloat(currentUXValue) === 0) {
                 missingUX++;
             }
         } else {
@@ -1177,17 +1190,24 @@ function countMissingMetrics() {
             missingUX++;
         }
         
-        // Check BI metric - get last value from monthlyBI array
-        if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
-            // Get the last (most recent) value
-            const lastBIValue = product.monthlyBI[product.monthlyBI.length - 1];
+        // Check BI metric
+        // Rule 1: Check if key metric field is missing or N/A (no metric defined)
+        if (!product.keyMetricBI || 
+            product.keyMetricBI.trim() === '' || 
+            product.keyMetricBI === 'N/A') {
+            missingBI++;
+        }
+        // Rule 2: Check if current month value is missing
+        else if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
+            // Get the current month value (e.g., October = index 9)
+            const currentBIValue = product.monthlyBI[currentMonth];
             
             // Check if it's missing, N/A, empty, or zero
-            if (!lastBIValue || 
-                lastBIValue === 'N/A' || 
-                lastBIValue === '' || 
-                lastBIValue === '0' ||
-                parseFloat(lastBIValue) === 0) {
+            if (!currentBIValue || 
+                currentBIValue === 'N/A' || 
+                currentBIValue === '' || 
+                currentBIValue === '0' ||
+                parseFloat(currentBIValue) === 0) {
                 missingBI++;
             }
         } else {

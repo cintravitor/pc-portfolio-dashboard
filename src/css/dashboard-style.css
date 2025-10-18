@@ -2250,8 +2250,12 @@ select:focus {
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
+    /* Use STICKY positioning - stays in place when scrolling, preserves flex layout */
+    position: sticky;
+    top: 250px; /* Stick below header and filters when scrolling */
     flex: 0 0 45%;
-    max-height: calc(100vh - 200px);
+    align-self: flex-start; /* Prevents panel from stretching */
+    max-height: calc(100vh - 270px);
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2264,6 +2268,7 @@ select:focus {
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 85;
 }
 
 @keyframes slideIn {

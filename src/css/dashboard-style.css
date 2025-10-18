@@ -2250,13 +2250,8 @@ select:focus {
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
-    /* FIXED positioning - panel stays in place when scrolling main page */
-    position: fixed;
-    top: 250px; /* Below header and filters */
-    right: 2rem;
-    bottom: 2rem;
-    width: 45%;
-    max-width: 900px;
+    flex: 0 0 45%;
+    max-height: calc(100vh - 200px);
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2269,7 +2264,6 @@ select:focus {
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 85; /* Below filters but above content */
 }
 
 @keyframes slideIn {
@@ -2289,7 +2283,7 @@ select:focus {
     color: white;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 10;
     flex-shrink: 0;
 }
 

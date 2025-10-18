@@ -631,13 +631,12 @@ body::before {
 }
 
 .header {
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(var(--blur-amount)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(150%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 
-        0 8px 32px rgba(99, 102, 241, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    /* Subtle glass effect with purple-tinted background matching page body */
+    background: rgba(245, 243, 251, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-bottom: none;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.04);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -768,6 +767,9 @@ body::before {
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: sticky;
+    top: 140px;
+    z-index: 99;
 }
 
 .filters-container {
@@ -1887,6 +1889,8 @@ select:focus {
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
+    /* Removed sticky positioning - stats bar scrolls naturally with page content */
+    /* Only header and filters should be sticky on main page */
 }
 
 .stat-card {
@@ -2246,22 +2250,23 @@ select:focus {
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
+    /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 100px;
+    top: 380px; /* Optimal position - entire header fully visible, no cutting */
     flex: 0 0 45%;
-    max-height: calc(100vh - 120px);
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(var(--blur-amount)) saturate(180%);
-    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    align-self: flex-start; 
+    max-height: calc(100vh - 400px);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden;
+    overflow: hidden; /* Header + body are children; body is scrollable */
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 85; /* BELOW filters (99) so panel never goes above header/filters */
 }
 
 @keyframes slideIn {
@@ -2279,7 +2284,9 @@ select:focus {
     padding: 2rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    position: relative;
+    position: relative; /* Not sticky - just stays at top of panel */
+    flex-shrink: 0;
+    z-index: 1;
 }
 
 .detail-close {
@@ -2323,8 +2330,10 @@ select:focus {
 
 .detail-body {
     padding: 2rem;
-    overflow-y: auto;
+    overflow-y: auto; /* This creates the scrollable area */
+    overflow-x: hidden;
     flex: 1;
+    /* Body scrolls, header stays visible at top naturally */
 }
 
 .detail-section {

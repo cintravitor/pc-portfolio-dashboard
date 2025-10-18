@@ -2252,10 +2252,10 @@ select:focus {
 .detail-panel {
     /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 340px; /* Stick well below filters - finding the sweet spot */
+    top: 360px; /* Sweet spot - header fully visible when scrolling main page */
     flex: 0 0 45%;
     align-self: flex-start; 
-    max-height: calc(100vh - 360px);
+    max-height: calc(100vh - 380px);
     background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);

@@ -768,6 +768,10 @@ body::before {
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: sticky;
+    top: 140px;
+    z-index: 95;
+    /* Stick below main header when scrolling */
 }
 
 .filters-container {
@@ -1888,7 +1892,7 @@ select:focus {
     gap: 1rem;
     margin-bottom: 2rem;
     position: sticky;
-    top: 0;
+    top: 240px;
     z-index: 90;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -1899,7 +1903,7 @@ select:focus {
     padding-left: 2rem;
     padding-right: 2rem;
     margin-top: -1rem;
-    /* Stick below main header when scrolling */
+    /* Stick below filters section (header at 140px + filters ~100px) */
 }
 
 .stat-card {
@@ -2260,9 +2264,9 @@ select:focus {
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: sticky;
-    top: 100px;
+    top: 240px;
     flex: 0 0 45%;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 260px);
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(var(--blur-amount)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
@@ -2276,7 +2280,7 @@ select:focus {
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 80;
-    /* Stay below header (z-index: 100) and stats bar (z-index: 90) */
+    /* Stay below header, filters, and stats bar */
 }
 
 @keyframes slideIn {

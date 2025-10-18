@@ -2250,24 +2250,23 @@ select:focus {
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
-    /* Use STICKY positioning - stays in place when scrolling, preserves flex layout */
+    /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 250px; /* Stick below header and filters when scrolling */
+    top: 250px; /* Stick below header (140px) + filters (~110px) when scrolling main page */
     flex: 0 0 45%;
-    align-self: flex-start; /* Prevents panel from stretching */
+    align-self: flex-start; 
     max-height: calc(100vh - 270px);
-    background: rgba(255, 255, 255, 0.95); /* More opaque to prevent transparency issues */
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden;
+    overflow: hidden; /* Header + body are children; body is scrollable */
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 90;
-    /* Removed backdrop-filter - causes stacking context issues */
+    z-index: 101; /* ABOVE filters (99) and main header (100) to prevent header from going behind */
 }
 
 @keyframes slideIn {

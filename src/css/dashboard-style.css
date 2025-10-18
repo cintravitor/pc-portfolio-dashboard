@@ -2256,19 +2256,18 @@ select:focus {
     flex: 0 0 45%;
     align-self: flex-start; /* Prevents panel from stretching */
     max-height: calc(100vh - 270px);
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(var(--blur-amount)) saturate(180%);
-    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(180%);
+    background: rgba(255, 255, 255, 0.95); /* More opaque to prevent transparency issues */
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);
     box-shadow: 
         0 20px 50px rgba(99, 102, 241, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden; /* Back to hidden - creates scroll context for detail-body */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 90; /* Below filters (99) but above content */
+    z-index: 90;
+    /* Removed backdrop-filter - causes stacking context issues */
 }
 
 @keyframes slideIn {
@@ -2286,8 +2285,7 @@ select:focus {
     padding: 2rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    position: sticky;
-    top: 0; /* Sticky within panel for internal scrolling */
+    position: relative; /* Not sticky - just stays at top of panel */
     flex-shrink: 0;
     z-index: 1;
 }
@@ -2333,8 +2331,10 @@ select:focus {
 
 .detail-body {
     padding: 2rem;
-    overflow-y: auto;
+    overflow-y: auto; /* This creates the scrollable area */
+    overflow-x: hidden;
     flex: 1;
+    /* Body scrolls, header stays visible at top naturally */
 }
 
 .detail-section {

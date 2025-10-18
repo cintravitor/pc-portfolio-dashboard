@@ -2286,10 +2286,10 @@ select:focus {
     padding: 2rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    position: sticky;
-    top: 0; /* Sticks to top of the panel (panel is already sticky at 250px) */
-    z-index: 10;
+    /* No sticky - header is normal element inside sticky panel */
+    /* Moves with panel when scrolling main page */
     flex-shrink: 0;
+    z-index: 10;
 }
 
 .detail-close {

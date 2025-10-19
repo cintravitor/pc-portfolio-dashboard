@@ -387,8 +387,8 @@
         
         console.log('📥 Filtered data count:', filteredData.length);
         
-        // Check if any filters are active
-        const hasActiveFilters = searchTerm || areaFilter || maturityFilter || ownerFilter || belowTargetOnly;
+        // Check if any filters are active (arrays need length check)
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || maturityFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data

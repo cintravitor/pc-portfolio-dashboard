@@ -33,9 +33,19 @@
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Search by solution name, problem, or description..." oninput="applyFilters()">
                     </div>
-                    <select id="filter-area" multiple size="4" onchange="applyFilters()"><option value="">P&C Area</option></select>
-                    <select id="filter-maturity" multiple size="4" onchange="applyFilters()"><option value="">Journey Stage</option></select>
-                    <select id="filter-owner" multiple size="4" onchange="applyFilters()"><option value="">Owner Name</option></select>
+                    <!-- Custom multi-select dropdowns -->
+                    <div class="custom-multiselect" id="filter-area-wrapper">
+                        <div class="multiselect-header" data-filter="area">P&C Area</div>
+                        <div class="multiselect-dropdown" data-filter="area"></div>
+                    </div>
+                    <div class="custom-multiselect" id="filter-maturity-wrapper">
+                        <div class="multiselect-header" data-filter="maturity">Journey Stage</div>
+                        <div class="multiselect-dropdown" data-filter="maturity"></div>
+                    </div>
+                    <div class="custom-multiselect" id="filter-owner-wrapper">
+                        <div class="multiselect-header" data-filter="owner">Owner Name</div>
+                        <div class="multiselect-dropdown" data-filter="owner"></div>
+                    </div>
                     <select id="sort-by" onchange="applyFilters()">
                         <option value="">Sort By...</option>
                         <option value="name-asc">Product Name (A-Z)</option>

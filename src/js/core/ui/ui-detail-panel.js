@@ -10,10 +10,45 @@
     'use strict';
     
     /**
-     * Generate performance-based recommendation for a metric
-     * Analyzes metric performance against target and provides actionable insights
+     * Generate AI-powered recommendation for a metric
+     * Falls back to rule-based if AI fails
+     * @param {Object} product - Full product object with context
+     * @param {string} metricType - 'UX' or 'BI'
+     * @param {Array} monthlyData - Monthly actual values
+     * @param {Array} targetData - Monthly target values
+     * @returns {Promise<string>} HTML string with recommendation
      */
-    function generatePerformanceRecommendation(monthlyData, targetData, metricName, metricType) {
+    async function generateAIRecommendation(product, metricType, monthlyData, targetData) {
+        // Try AI first if enabled and available
+        if (CONFIG.AI_RECOMMENDATIONS_ENABLED && window.AIRecommendations) {
+            try {
+                console.log('[Detail Panel] Generating AI recommendation for', metricType);
+                const aiText = await window.AIRecommendations.generate(product, metricType);
+                
+                // Return AI recommendation with subtle attribution
+                return `
+                    <div class="automation-recommendation ai-powered">
+                        <div class="recommendation-text">
+                            <span>${aiText}</span>
+                            <span class="ai-attribution">🤖 Powered by OpenAI</span>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.warn('[Detail Panel] AI generation failed, falling back to rule-based:', error);
+                // Fall through to rule-based
+            }
+        }
+        
+        // Fallback to rule-based recommendation
+        return generateRuleBasedRecommendation(monthlyData, targetData, metricType);
+    }
+    
+    /**
+     * Generate rule-based recommendation (fallback)
+     * Original logic preserved for when AI is unavailable
+     */
+    function generateRuleBasedRecommendation(monthlyData, targetData, metricType) {
         // Check if we have data
         if (!Array.isArray(monthlyData) || monthlyData.length === 0) {
             return `
@@ -257,7 +292,12 @@
                                 </div>
                             </div>
                             <!-- UX Performance Recommendation -->
-                            ${generatePerformanceRecommendation(product.monthlyUX, product.targetUX, product.keyMetricUX, 'UX')}
+                            <div id="ux-recommendation" class="recommendation-placeholder">
+                                <div class="automation-recommendation info">
+                                    <div class="recommendation-icon">🤖</div>
+                                    <div class="recommendation-text">Generating AI recommendation...</div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Key Metrics - BI -->
@@ -270,7 +310,12 @@
                                 </div>
                             </div>
                             <!-- BI Performance Recommendation -->
-                            ${generatePerformanceRecommendation(product.monthlyBI, product.targetBI, product.keyMetricBI, 'BI')}
+                            <div id="bi-recommendation" class="recommendation-placeholder">
+                                <div class="automation-recommendation info">
+                                    <div class="recommendation-icon">🤖</div>
+                                    <div class="recommendation-text">Generating AI recommendation...</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -304,6 +349,47 @@
                     }
                 });
         }, 100);
+        
+        // Generate AI recommendations asynchronously
+        generateAndDisplayRecommendations(product);
+    }
+    
+    /**
+     * Generate and display AI recommendations for both metrics
+     * @param {Object} product - Product object
+     */
+    async function generateAndDisplayRecommendations(product) {
+        // Generate UX recommendation
+        generateAIRecommendation(product, 'UX', product.monthlyUX, product.targetUX)
+            .then(html => {
+                const uxContainer = document.getElementById('ux-recommendation');
+                if (uxContainer) {
+                    uxContainer.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('Failed to generate UX recommendation:', error);
+                const uxContainer = document.getElementById('ux-recommendation');
+                if (uxContainer) {
+                    uxContainer.innerHTML = generateRuleBasedRecommendation(product.monthlyUX, product.targetUX, 'UX');
+                }
+            });
+        
+        // Generate BI recommendation
+        generateAIRecommendation(product, 'BI', product.monthlyBI, product.targetBI)
+            .then(html => {
+                const biContainer = document.getElementById('bi-recommendation');
+                if (biContainer) {
+                    biContainer.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('Failed to generate BI recommendation:', error);
+                const biContainer = document.getElementById('bi-recommendation');
+                if (biContainer) {
+                    biContainer.innerHTML = generateRuleBasedRecommendation(product.monthlyBI, product.targetBI, 'BI');
+                }
+            });
     }
     
     /**

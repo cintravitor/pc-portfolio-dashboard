@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&C Portfolio Dashboard - 2025</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/dashboard-style.css">
+    <link rel="stylesheet" href="src/css/dashboard-style.css?v=7.0.2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -134,11 +134,14 @@
     <!-- Core Modules (Load Before Main Script) -->
     <script src="src/js/core/data-manager.js"></script>
     
+    <!-- AI Module (Load before UI modules) -->
+    <script src="src/js/core/ai-recommendations.js?v=7.1.0"></script>
+    
     <!-- UI Modules (Modular Architecture) -->
     <script src="src/js/core/ui/ui-charts.js?v=6.2.2"></script>
     <script src="src/js/core/ui/ui-cards.js?v=6.2.2"></script>
     <script src="src/js/core/ui/ui-filters.js?v=6.2.2"></script>
-    <script src="src/js/core/ui/ui-detail-panel.js?v=6.3.3"></script>
+    <script src="src/js/core/ui/ui-detail-panel.js?v=7.0.2"></script>
     <script src="src/js/core/ui/ui-insights.js?v=6.2.2"></script>
     <script src="src/js/core/ui/ui-planning.js?v=6.2.2"></script>
     <script src="src/js/core/ui/ui-drill-down.js?v=6.2.2"></script>

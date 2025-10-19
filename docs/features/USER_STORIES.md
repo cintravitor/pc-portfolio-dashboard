@@ -1577,6 +1577,94 @@ This update changes filter behavior from single-select to multi-select. Users ca
 
 ---
 
+#### Story 6.6: Objective & Scannable Solution Card Visualization
+**As a** Portfolio Owner reviewing the Explore tab,
+**I want** the solution cards to clearly display objective, essential information (P&C Area, Owner's Name, a fully readable Solution Description, UX Metric & BI Metric last month results vs. target, and the smoke detector sign)
+**So that** I can scan the portfolio's health and immediately identify high-priority items or issues that require attention.
+
+**Acceptance Criteria:**
+- ✅ Each card displays Owner's name prominently with clear icon
+- ✅ Problem description extended to 120 characters (from 80) for better context
+- ✅ UX and BI metrics display actual values in format "UX 85/90" with color coding
+- ✅ Current metric value is bold, target value is muted for visual hierarchy
+- ✅ Metric badges use color-coded backgrounds (green = meeting target, red = below, gray = no data)
+- ✅ Smoke detector badge appears in top-right corner when issues detected
+- ✅ Smoke detector shows 🔥 for critical (≥3 detectors) or ⚠️ for warning (<3 detectors)
+- ✅ Smoke detector badge only visible when count > 0
+- ✅ All information is scannable without cluttering the card
+- ✅ Cards maintain consistent height for clean grid layout
+- ✅ P&C Area remains in section headers (not duplicated on cards)
+
+**Design Decisions (UX Expert Recommendations):**
+- **Problem over Solution:** Display "Which Problem it Solves" field (more valuable for scanning) rather than solution description
+- **Extended Context:** 120-character limit provides sufficient context without requiring drill-down
+- **Actual Values:** Metric badges show "85/90" format instead of just colored circles for clarity
+- **Visual Hierarchy:** Bold current value + muted target + color background creates scannable format
+- **Alert Prominence:** Smoke detector badge positioned top-right with pulse animation for critical issues
+- **Information Density:** All essential data visible without overwhelming the user
+
+**Data Used in Business Rule:**
+- `product.owner` - Owner's Name (displayed with 👤 icon)
+- `product.problem` - Problem statement (truncated to 120 chars)
+- `summary.uxValue` - Current UX metric value
+- `summary.uxTarget` - Target UX metric value
+- `summary.uxStatus` - UX status ('green', 'red', 'gray')
+- `summary.uxMetric` - UX metric name (for tooltip)
+- `summary.biValue` - Current BI metric value
+- `summary.biTarget` - Target BI metric value
+- `summary.biStatus` - BI status ('green', 'red', 'gray')
+- `summary.biMetric` - BI metric name (for tooltip)
+- `calculateSmokeDetectors(product)` - Count of triggered smoke detectors (0-4)
+- Badge severity: count ≥ 3 = 'critical', count < 3 = 'warning'
+
+**Data Tracked from User Interaction:**
+- User feedback on card scannability
+- Time to identify high-priority items (expected to decrease)
+- Smoke detector badge interactions (hovers, clicks)
+- Metric badge hover events (tooltip views)
+- Card comprehension without drill-down (expected to increase)
+- Visual clarity satisfaction ratings
+- Filter usage patterns with new card design
+
+**Technical Changes:**
+- Modified: `src/js/core/ui/ui-cards.js` - Added `getSmokeDetectorBadge()` and `getMetricBadgeWithValues()` helper functions (~60 lines)
+- Modified: `src/js/core/ui/ui-cards.js` - Updated card rendering to use new structure and 120-char truncation (~40 lines)
+- Modified: `src/css/dashboard-style.css` - Added styles for smoke badges, owner display, extended problem text, and metric badges (~160 lines)
+- Total changes: 2 files, ~260 lines added/modified
+
+**Visual Enhancements:**
+- Smoke detector badge with gradient background and pulse animation (critical only)
+- Metric badges with color-coded gradients and hover lift effects
+- Extended problem text with consistent spacing
+- Clean owner display with icon
+- Consistent card height (240px minimum) for grid alignment
+
+**Testing Completed:**
+- [ ] Local testing completed (5 test cases covering information density, metrics, smoke detector, responsiveness, performance)
+- [ ] Cross-browser testing completed (Chrome, Firefox, Safari, Edge)
+- [ ] Responsive design verified (desktop, tablet, mobile)
+- [ ] Scannability validated (cards are easy to scan without clutter)
+- [ ] Smoke detector badge functionality confirmed
+- [ ] Metric display clarity validated
+- [ ] No console errors
+- [ ] Documentation updated
+
+**Priority:** High (UX Enhancement - Core Feature)  
+**Story Points:** 13  
+**Version:** v6.2.6 (Minor Feature Release)  
+**Status:** 🚧 In Progress (Code Complete, Testing Pending)  
+**Branch:** `feature/scannable-solution-card`  
+**Date:** 2025-10-19
+
+**Key Benefits:**
+- **Increased Scannability:** All essential information visible at a glance
+- **Better Context:** 120-char problem descriptions provide sufficient detail
+- **Objective Metrics:** Actual values (85/90) clearer than colored circles alone
+- **Proactive Alerts:** Smoke detector badges highlight issues immediately
+- **Professional Polish:** Clean, consistent layout with visual hierarchy
+
+---
+
 ## 📝 Notes for Stakeholders
 
 ### What Makes This Product Valuable

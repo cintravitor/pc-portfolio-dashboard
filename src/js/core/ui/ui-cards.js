@@ -93,16 +93,18 @@
             const cardsHtml = products.map(product => {
                 const summary = window.DataManager.getCardSummaryMetrics(product);
                 
-                // Generate metric status indicators
-                const uxIndicator = getMetricIndicator('UX', summary.uxStatus, summary.uxMetric, summary.uxValue, summary.uxTarget);
-                const biIndicator = getMetricIndicator('BI', summary.biStatus, summary.biMetric, summary.biValue, summary.biTarget);
+                // Calculate smoke detector count for this product
+                const smokeCount = window.DataManager.calculateSmokeDetectors(product);
+                const smokeDetectorBadge = getSmokeDetectorBadge(smokeCount);
                 
-                // Get platform and automation info
-                const platformInfo = getPlatformInfo(product.platform);
-                const automationInfo = getAutomationInfo(product);
+                // Generate metric badges with actual values
+                const uxBadge = getMetricBadgeWithValues('UX', summary.uxStatus, summary.uxValue, summary.uxTarget, summary.uxMetric);
+                const biBadge = getMetricBadgeWithValues('BI', summary.biStatus, summary.biValue, summary.biTarget, summary.biMetric);
                 
                 return `
                 <div class="product-card product-card-compact fade-in" data-product-id="${product.id}">
+                    ${smokeDetectorBadge}
+                    
                     <div class="card-header-compact">
                         <div class="card-title-compact">
                             ${window.Utils.escapeHtml(product.name)}
@@ -113,34 +115,18 @@
                     </div>
                     
                     <div class="card-body-compact">
-                        <div class="card-meta-row">
-                            <div class="card-meta-item">
-                                <span class="meta-icon">👤</span>
-                                <span class="meta-text">${window.Utils.truncateText(window.Utils.escapeHtml(summary.owner), 25)}</span>
-                            </div>
+                        <div class="card-owner">
+                            <span class="owner-icon">👤</span>
+                            <span class="owner-name">${window.Utils.truncateText(window.Utils.escapeHtml(summary.owner), 30)}</span>
                         </div>
                         
-                        <div class="card-problem">
-                            ${window.Utils.truncateText(window.Utils.escapeHtml(summary.problem), 80)}
+                        <div class="card-problem-extended">
+                            ${window.Utils.truncateText(window.Utils.escapeHtml(summary.problem), 120)}
                         </div>
                         
-                        <div class="card-technical-info">
-                            <div class="technical-info-row">
-                                <span class="info-label">Platform:</span>
-                                <span class="platform-badge">${platformInfo}</span>
-                            </div>
-                            <div class="technical-info-row">
-                                <span class="info-label">Metrics:</span>
-                                <span class="automation-badge ${automationInfo.class}">${automationInfo.icon} ${automationInfo.text}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="card-metrics">
-                            <div class="metric-label">Performance:</div>
-                            <div class="metric-indicators">
-                                ${uxIndicator}
-                                ${biIndicator}
-                            </div>
+                        <div class="card-metrics-new">
+                            ${uxBadge}
+                            ${biBadge}
                         </div>
                     </div>
                 </div>
@@ -233,6 +219,58 @@
         } else {
             return `${icon} ${window.Utils.escapeHtml(firstPlatform)} +${platforms.length - 1}`;
         }
+    }
+    
+    /**
+     * Generate smoke detector badge HTML
+     * Shows warning badge in top-right corner of card when detectors are triggered
+     * @param {number} count - Number of smoke detectors triggered (0-4)
+     * @returns {string} HTML for smoke detector badge, or empty string if count is 0
+     */
+    function getSmokeDetectorBadge(count) {
+        if (!count || count === 0) return '';
+        
+        const icon = count >= 3 ? '🔥' : '⚠️';
+        const severity = count >= 3 ? 'critical' : 'warning';
+        const tooltip = `${count} smoke detector${count > 1 ? 's' : ''} triggered - Click card for details`;
+        
+        return `
+            <div class="smoke-detector-badge smoke-${severity}" title="${tooltip}">
+                ${icon}
+            </div>
+        `;
+    }
+    
+    /**
+     * Generate metric badge with actual values (current vs target)
+     * Displays metrics in compact, scannable format with color coding
+     * @param {string} label - Metric label (e.g., "UX", "BI")
+     * @param {string} status - Status color ('green', 'red', 'gray')
+     * @param {number|null} value - Current metric value
+     * @param {number|null} target - Target metric value
+     * @param {string} metricName - Name of the metric for tooltip
+     * @returns {string} HTML for metric badge
+     */
+    function getMetricBadgeWithValues(label, status, value, target, metricName) {
+        const statusClass = `metric-${status}`;
+        const icon = status === 'green' ? '✓' : status === 'red' ? '✗' : '—';
+        
+        // Format values for display
+        const currentDisplay = value !== null && !isNaN(value) ? Math.round(value) : 'N/A';
+        const targetDisplay = target !== null && !isNaN(target) ? Math.round(target) : 'N/A';
+        
+        // Create tooltip with metric details
+        const tooltip = `${label}: ${metricName}\nCurrent: ${currentDisplay} | Target: ${targetDisplay}`;
+        
+        return `
+            <div class="metric-badge ${statusClass}" title="${tooltip}">
+                <span class="metric-label">${label}</span>
+                <span class="metric-current">${currentDisplay}</span>
+                <span class="metric-separator">/</span>
+                <span class="metric-target">${targetDisplay}</span>
+                <span class="metric-icon">${icon}</span>
+            </div>
+        `;
     }
     
     /**

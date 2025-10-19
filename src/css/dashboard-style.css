@@ -2399,6 +2399,167 @@ select:focus {
     font-weight: 600;
 }
 
+/* ===== SCANNABLE CARD REDESIGN - v6.2.6 ===== */
+
+/* Smoke Detector Badge (top-right alert indicator) */
+.smoke-detector-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.125rem;
+    cursor: help;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smoke-detector-badge.smoke-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.smoke-detector-badge.smoke-critical {
+    background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+    border: 2px solid #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    animation: pulse-alert 2s ease-in-out infinite;
+}
+
+.smoke-detector-badge:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes pulse-alert {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+    }
+}
+
+/* Owner Display - Refined and Clear */
+.card-owner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.owner-icon {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.owner-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+/* Extended Problem Description - More Context */
+.card-problem-extended {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 0.875rem;
+    min-height: 3rem; /* Ensure consistent card height */
+}
+
+/* New Metric Badges - Scannable with Values */
+.card-metrics-new {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1.5px solid;
+    transition: all 0.2s ease;
+    cursor: help;
+}
+
+.metric-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Metric Badge - Green (Meeting Target) */
+.metric-badge.metric-green {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-color: #10b981;
+    color: #065f46;
+}
+
+/* Metric Badge - Red (Below Target) */
+.metric-badge.metric-red {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+/* Metric Badge - Gray (No Data) */
+.metric-badge.metric-gray {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #d1d5db;
+    color: #6b7280;
+}
+
+/* Metric Badge Components */
+.metric-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+.metric-current {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.metric-separator {
+    opacity: 0.5;
+    font-weight: 400;
+    margin: 0 0.125rem;
+}
+
+.metric-target {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.metric-icon {
+    font-size: 0.875rem;
+    margin-left: 0.125rem;
+}
+
+/* Ensure cards maintain consistent spacing with new layout */
+.product-card-compact {
+    position: relative; /* For absolute positioning of smoke badge */
+    padding: 1.5rem;
+    min-height: 240px; /* Consistent height for scannable grid */
+}
+
 .hidden { display: none !important; }
 
 /* ===== DETAIL PANEL ===== */

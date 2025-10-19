@@ -2471,18 +2471,17 @@ select:focus {
     font-size: 0.875rem;
     line-height: 1.6;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
-    /* No min-height to allow full text display */
     white-space: normal;
     word-wrap: break-word;
+    /* Line clamp handled by grid section below */
 }
 
 /* New Metric Badges - Scannable with Values */
 .card-metrics-new {
     display: flex;
     gap: 0.625rem;
-    margin-top: 1rem;
     flex-wrap: wrap;
+    /* margin-top removed - handled by grid gap */
 }
 
 .metric-badge {
@@ -2572,7 +2571,46 @@ select:focus {
 .product-card-compact {
     position: relative; /* For absolute positioning of smoke badge */
     padding: 1.5rem;
-    /* Removed min-height to allow full text display without truncation */
+    display: flex;
+    flex-direction: column;
+    min-height: 280px; /* Minimum height for visual consistency */
+}
+
+/* Card header stays at top */
+.card-header-compact {
+    flex-shrink: 0; /* Don't shrink */
+}
+
+/* Card body uses grid for consistent section alignment */
+.card-body-compact {
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Owner, Problem (flexible), Metrics */
+    gap: 0.75rem;
+    flex: 1;
+    align-content: start;
+}
+
+/* Owner section - fixed height */
+.card-owner {
+    grid-row: 1;
+}
+
+/* Problem description - flexible but controlled */
+.card-problem-extended {
+    grid-row: 2;
+    align-self: start; /* Align to top of flexible space */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 5; /* Maximum 5 lines */
+    -webkit-box-orient: vertical;
+    line-clamp: 5;
+}
+
+/* Metrics always align at bottom */
+.card-metrics-new {
+    grid-row: 3;
+    align-self: end; /* Stick to bottom */
+    margin-top: auto; /* Push to bottom */
 }
 
 .hidden { display: none !important; }

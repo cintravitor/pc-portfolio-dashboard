@@ -1074,7 +1074,7 @@ select:focus {
     letter-spacing: 0.01em;
     cursor: pointer;
     transition: all 0.3s;
-    margin-left: 1.5rem;
+    margin-left: auto;
 }
 
 .clear-filters:hover {

@@ -1520,6 +1520,63 @@ This update changes filter behavior from single-select to multi-select. Users ca
 
 ---
 
+#### Story 6.5: Cohesive 'Clear Filters' Button Design
+**As a** User interacting with filters,
+**I want** the "Clear Filters" button to be small, visible, and located below the "Sort by" filter in a cohesive color and format,
+**So that** the entire navigation experience is fluid, professional, and consistent with the webapp's look and feel, reinforcing experience excellence.
+
+**Acceptance Criteria:**
+- ✅ Button is visually smaller and more compact than before
+- ✅ Button maintains visibility (not hidden or hard to find)
+- ✅ Button positioned at end of filters row with visual separation
+- ✅ Purple gradient is lighter and more subtle (Mercury Light theme)
+- ✅ Visual styling creates "separate section" appearance
+- ✅ Button functionality remains unchanged
+- ✅ Responsive design maintained
+
+**Design Decisions:**
+- Reduced padding: 0.625rem 1.5rem → 0.5rem 1rem
+- Reduced font: 0.9375rem → 0.875rem
+- Lighter gradient with 70% opacity
+- Added left border separator (2px, purple, 30% opacity)
+- Added left margin (1.5rem) for visual separation
+- Reduced hover lift effect (2px → 1px)
+
+**Data Used in Business Rule:**
+- CSS variables: `--primary`, `--secondary` (with transparency)
+- Gradient colors: `rgba(102, 126, 234, 0.7)` and `rgba(118, 75, 162, 0.7)`
+- Visual separation via `margin-left: 1.5rem` and `border-left: 2px solid rgba(139, 92, 246, 0.3)`
+- All existing clear filters functionality preserved
+
+**Data Tracked from User Interaction:**
+- User feedback on button visibility and aesthetics
+- Time to locate clear filters button
+- Clear filters usage frequency
+- User satisfaction with cohesive design
+
+**Technical Changes:**
+- Modified: `src/css/dashboard-style.css` (lines 1065-1084) - Updated `.clear-filters` and `.clear-filters:hover` styles
+- No JavaScript changes required
+- No HTML changes required
+- Total changes: 1 file, 18 lines modified
+
+**Testing Completed:**
+- [x] Local testing completed (5 test cases)
+- [x] Visual design verified (small, subtle, cohesive)
+- [x] Cross-browser testing completed
+- [x] Responsive design verified
+- [x] Button functionality confirmed unchanged
+- [x] No console errors
+
+**Priority:** Low (UI polish)  
+**Story Points:** 2  
+**Version:** v6.2.4 (Patch Release)  
+**Status:** ✅ Complete  
+**Branch:** `feature/cohesive-clear-filters`  
+**Date:** 2025-10-19
+
+---
+
 ## 📝 Notes for Stakeholders
 
 ### What Makes This Product Valuable

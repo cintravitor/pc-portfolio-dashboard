@@ -13,10 +13,15 @@ Visit: [GitHub Pages URL]
 ├── src/                    # Source files
 │   ├── js/                 # JavaScript files
 │   │   ├── core/           # Core modules
+│   │   │   ├── ai-recommendations.js # AI-powered recommendations
 │   │   │   ├── utils.js        # Utility functions
 │   │   │   ├── state.js        # State management
 │   │   │   ├── data-manager.js # Data operations
-│   │   │   └── ui-manager.js   # UI rendering
+│   │   │   └── ui/             # UI modules
+│   │   │       ├── ui-cards.js
+│   │   │       ├── ui-filters.js
+│   │   │       ├── ui-detail-panel.js
+│   │   │       └── ...
 │   │   ├── config.js           # Configuration
 │   │   ├── dashboard-script.js # Main orchestrator
 │   │   └── GoogleAppsScript.gs # Backend script
@@ -24,13 +29,17 @@ Visit: [GitHub Pages URL]
 │   │   └── dashboard-style.css
 │   └── assets/             # Images and other assets
 ├── docs/                   # Documentation
-│   ├── README.md           # Original documentation
-│   ├── USER_STORIES.md     # User stories
-│   ├── ARCHITECTURE_*.md   # Architecture docs
-│   └── ...                 # Other documentation
+│   ├── architecture/       # Architecture documentation
+│   ├── deployment/         # Deployment guides
+│   ├── features/           # Feature documentation
+│   ├── guides/             # User and developer guides
+│   ├── implementation/     # Implementation summaries
+│   └── testing/            # Test documentation
+├── tests/                  # Test files
+├── scripts/                # Utility scripts
 ├── data/                   # Data files
 │   └── *.csv               # Portfolio datasets
-└── deploy-mercury-theme.sh # Deployment script
+└── google-apps-script/     # Backend scripts
 ```
 
 ## 🏗️ Architecture
@@ -69,23 +78,25 @@ The dashboard follows a modern, modular architecture:
 
 ## 📖 Documentation
 
-Full documentation is available in the [`docs/`](./docs/) folder:
+Full documentation is available in the [`docs/`](./docs/) folder. See [docs/README.md](./docs/README.md) for a complete index.
 
-### User Documentation
-- **[User Stories](./docs/USER_STORIES.md)** - Complete feature list (34 stories, all ✅ complete)
-- **[User Journeys](./docs/user-journeys.md)** - Real-world use cases and workflows 🆕
-- **[Product Roadmap](./docs/PRODUCT_ROADMAP.md)** - Future enhancements and timeline 🆕
-- [User Guide](./docs/USER_GUIDE_TABS.md) - How to use the dashboard
+### Quick Links
 
-### Technical Documentation
-- **[Architecture Report](./docs/STRATEGIC_ARCHITECTURE_REPORT.md)** - Strategic architecture review 🆕
-- **[Architecture Plan](./docs/ARCHITECTURE_REFACTOR_PLAN.md)** - Event-driven architecture design 🆕
-- [Architecture Overview](./docs/ARCHITECTURE_REFACTOR_COMPLETE.md) - Current architecture
-- [Anomaly Detection](./docs/ANOMALY_DETECTION_IMPLEMENTATION.md) - Anomaly detection system
+#### User Documentation
+- **[User Stories](./docs/features/USER_STORIES.md)** - Complete feature list (34 stories, all ✅ complete)
+- **[User Journeys](./docs/features/user-journeys.md)** - Real-world use cases and workflows
+- **[User Guide](./docs/guides/USER_GUIDE_TABS.md)** - How to use the dashboard
+- **[Product Roadmap](./docs/features/PRODUCT_ROADMAP.md)** - Future enhancements and timeline
 
-### Deployment & Setup
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - How to deploy
-- [Setup Instructions](./docs/SETUP_COMPLETE.md) - Getting started
+#### Technical Documentation
+- **[Architecture](./docs/architecture/)** - System architecture and design decisions
+- **[Developer Guide](./docs/guides/DEVELOPER_GUIDE.md)** - Technical documentation for contributors
+- **[AI Features](./docs/features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md)** - AI-powered recommendations 🆕
+
+#### Deployment & Setup
+- **[Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md)** - How to deploy
+- **[Local Testing](./docs/guides/LOCAL_TESTING_GUIDE.md)** - Getting started locally
+- **[Setup Instructions](./docs/deployment/SETUP_COMPLETE.md)** - Initial configuration
 
 ## 🚦 Getting Started
 
@@ -205,8 +216,8 @@ Want to see your name here? Check out [CONTRIBUTING.md](./CONTRIBUTING.md) to ge
 
 ---
 
-**Last Updated**: October 4, 2025  
-**Version**: 4.0  
+**Last Updated**: October 19, 2025  
+**Version**: 7.1.0  
 **Status**: ✅ Production Ready
 
 Made with ❤️ by the P&C team

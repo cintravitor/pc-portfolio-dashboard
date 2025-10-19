@@ -1,168 +1,187 @@
-# 📚 P&C Portfolio Dashboard - Documentation Hub
+# Documentation Index
 
-**Last Updated:** October 4, 2025  
-**Version:** 5.0.0  
-**Status:** Production
+Complete documentation for the P&C Portfolio Dashboard.
 
 ---
 
-## 🗂️ Documentation Structure
+## 📂 Documentation Structure
 
-This documentation is organized into clear categories for easy navigation:
+### [architecture/](./architecture/) - System Architecture
+Technical architecture, design decisions, and system patterns.
 
-### 📖 **[Architecture](./architecture/)** - System Design & Structure
-Technical architecture, design patterns, and system organization.
+- **[STRATEGIC_ARCHITECTURE_REPORT.md](./architecture/STRATEGIC_ARCHITECTURE_REPORT.md)** - Strategic architecture review
+- **[ARCHITECTURE_REFACTOR_PLAN.md](./architecture/ARCHITECTURE_REFACTOR_PLAN.md)** - Event-driven architecture design
+- **[ARCHITECTURE_REFACTOR_COMPLETE.md](./architecture/ARCHITECTURE_REFACTOR_COMPLETE.md)** - Current architecture overview
+- **[CODE_ARCHITECTURE.md](./architecture/CODE_ARCHITECTURE.md)** - Code organization and patterns
+- **[UI_MANAGER_SPLIT_GUIDE.md](./architecture/UI_MANAGER_SPLIT_GUIDE.md)** - UI module architecture
+- **[DRILL_DOWN_ARCHITECTURE.md](./architecture/DRILL_DOWN_ARCHITECTURE.md)** - Drill-down system design
+- **[COLLAPSIBLE_UI_ARCHITECTURE.md](./architecture/COLLAPSIBLE_UI_ARCHITECTURE.md)** - Progressive disclosure patterns
 
-**Key Documents:**
-- [Architecture Refactor Complete](./architecture/ARCHITECTURE_REFACTOR_COMPLETE.md) - Current architecture overview
-- [Architecture Review](./architecture/ARCHITECTURE_REVIEW.md) - Architecture assessment
-- [Strategic Architecture Report](./architecture/STRATEGIC_ARCHITECTURE_REPORT.md) - Strategic design decisions
-- [Drill-Down Architecture](./architecture/DRILL_DOWN_ARCHITECTURE.md) - Drill-down implementation design
-- [Architecture Visual Guide](./architecture/ARCHITECTURE_VISUAL_GUIDE.md) - Visual diagrams
+### [deployment/](./deployment/) - Deployment & Setup
+Guides for deploying and configuring the dashboard.
 
-### 📘 **[Guides](./guides/)** - How-To & Reference
-User guides, developer documentation, and setup instructions.
+- **[DEPLOYMENT_GUIDE.md](./deployment/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions
+- **[SETUP_COMPLETE.md](./deployment/SETUP_COMPLETE.md)** - Initial setup guide
+- **[ROLLBACK_INSTRUCTIONS.md](./deployment/ROLLBACK_INSTRUCTIONS.md)** - How to rollback deployments
+- **[DEPLOYMENT_COMPLETE.md](./deployment/DEPLOYMENT_COMPLETE.md)** - Post-deployment verification
+- **[CHECK_PRODUCTION_URL.md](./deployment/CHECK_PRODUCTION_URL.md)** - Production verification
+- **[QUICK_START_DEPLOYMENT.md](./deployment/QUICK_START_DEPLOYMENT.md)** - Quick deployment guide
 
-**Key Documents:**
-- [Developer Guide](./guides/DEVELOPER_GUIDE.md) - For contributors and developers
-- [User Guide](./guides/USER_GUIDE_TABS.md) - For end users
-- [Quick Start: Drill-Down](./guides/QUICK_START_DRILL_DOWN.md) - Get started quickly
-- [Apps Script Usage](./guides/APPS_SCRIPT_USAGE.md) - Backend setup
-- [Repository Settings](./guides/REPOSITORY_SETTINGS_GUIDE.md) - Git configuration
+### [features/](./features/) - Feature Documentation
+Detailed documentation for all dashboard features.
 
-### 🚀 **[Deployment](./deployment/)** - Deploy & Maintain
-Deployment procedures, setup guides, and rollback instructions.
+- **[USER_STORIES.md](./features/USER_STORIES.md)** - Complete feature list (34 stories)
+- **[user-journeys.md](./features/user-journeys.md)** - Real-world use cases
+- **[PRODUCT_ROADMAP.md](./features/PRODUCT_ROADMAP.md)** - Future enhancements
+- **[AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md](./features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md)** - AI feature guide 🆕
+- **[EXPLORER_TAB_USER_JOURNEY.md](./features/EXPLORER_TAB_USER_JOURNEY.md)** - Explorer tab documentation
+- **[ANOMALY_DETECTION_COMPLETE.md](./features/ANOMALY_DETECTION_COMPLETE.md)** - Anomaly detection system
+- **[SMOKE_DETECTORS_PHASE1_COMPLETE.md](./features/SMOKE_DETECTORS_PHASE1_COMPLETE.md)** - Smoke detectors feature
+- **[PLANNING_VIEW_IMPLEMENTATION_COMPLETE.md](./features/PLANNING_VIEW_IMPLEMENTATION_COMPLETE.md)** - Planning view
+- **[INSIGHTS_ANALYTICS_CONSOLIDATION_COMPLETE.md](./features/INSIGHTS_ANALYTICS_CONSOLIDATION_COMPLETE.md)** - Analytics features
+- **[DESIGN_THEME.md](./features/DESIGN_THEME.md)** - Design system and theme
+- **[MATURITY_STAGE_COLORS.md](./features/MATURITY_STAGE_COLORS.md)** - Maturity stage visualization
 
-**Key Documents:**
-- [Deployment Guide](./deployment/DEPLOYMENT_GUIDE.md) - Step-by-step deployment
-- [Setup Complete](./deployment/SETUP_COMPLETE.md) - Initial setup checklist
-- [Rollback Instructions](./deployment/ROLLBACK_INSTRUCTIONS.md) - Emergency procedures
-- [Deployment Status](./deployment/DEPLOYMENT_STATUS.md) - Current deployment info
+### [guides/](./guides/) - User & Developer Guides
+Practical guides for using and developing the dashboard.
 
-### ✨ **[Features](./features/)** - Feature Documentation
-Detailed documentation for each major feature and capability.
+- **[USER_GUIDE_TABS.md](./guides/USER_GUIDE_TABS.md)** - How to use the dashboard
+- **[DEVELOPER_GUIDE.md](./guides/DEVELOPER_GUIDE.md)** - Developer documentation
+- **[LOCAL_TESTING_GUIDE.md](./guides/LOCAL_TESTING_GUIDE.md)** - Local testing setup
+- **[REPOSITORY_GUIDE.md](./guides/REPOSITORY_GUIDE.md)** - Repository structure guide
+- **[APPS_SCRIPT_USAGE.md](./guides/APPS_SCRIPT_USAGE.md)** - Google Apps Script setup
+- **[DEVELOPER_COLLABORATION_SETUP.md](./guides/DEVELOPER_COLLABORATION_SETUP.md)** - Team collaboration
+- **[QUICK_START_DRILL_DOWN.md](./guides/QUICK_START_DRILL_DOWN.md)** - Drill-down feature guide
 
-**Current Features:**
-- [Insights & Analytics Consolidation](./features/INSIGHTS_ANALYTICS_CONSOLIDATION_COMPLETE.md) - Tab merge feature
-- [Planning & Action Drill-Down](./features/PLANNING_ACTION_DRILLDOWN_COMPLETE.md) - Drill-down functionality
-- [Anomaly Detection](./features/ANOMALY_DETECTION_IMPLEMENTATION.md) - Anomaly detection system
-- [User Stories](./features/USER_STORIES.md) - Complete feature list (34 stories)
-- [User Journeys](./features/user-journeys.md) - Real-world use cases
-- [Product Roadmap](./features/PRODUCT_ROADMAP.md) - Future plans
+### [implementation/](./implementation/) - Implementation Summaries
+Historical documentation of feature implementations and changes.
 
-### 🧪 **[Testing](./testing/)** - QA & Validation
-Test plans, verification reports, and testing procedures.
+#### Analytics & Dashboard
+- **[ANALYTICS_IMPLEMENTATION_SUMMARY.md](./implementation/ANALYTICS_IMPLEMENTATION_SUMMARY.md)** - Analytics system
+- **[ANALYTICS_DASHBOARD_COMPLETE_DELIVERABLE.md](./implementation/ANALYTICS_DASHBOARD_COMPLETE_DELIVERABLE.md)**
+- **[ANALYTICS_DASHBOARD_SUMMARY.md](./implementation/ANALYTICS_DASHBOARD_SUMMARY.md)**
+- **[ANALYTICS_GUIDE.md](./implementation/ANALYTICS_GUIDE.md)**
 
-**Key Documents:**
-- [Test Instructions](./testing/TEST_INSTRUCTIONS.md) - General testing guide
-- [Verification Report](./testing/VERIFICATION_REPORT.md) - Latest test results
-- [Test: Drill-Down](./testing/TEST_DRILL_DOWN.md) - Drill-down testing
-- [Test: Filter Pills](./testing/TEST_FILTER_PILLS.md) - Filter testing
+#### Bug Fixes & Code Changes
+- **[BUG_FIX_SUMMARY.md](./implementation/BUG_FIX_SUMMARY.md)** - Bug fix documentation
+- **[BUG_FIX_QA_REPORT.md](./implementation/BUG_FIX_QA_REPORT.md)** - QA reports
+- **[BUG_ANALYSIS_MISSING_METRICS.md](./implementation/BUG_ANALYSIS_MISSING_METRICS.md)**
+- **[CODE_CHANGES_BUG_FIXES.md](./implementation/CODE_CHANGES_BUG_FIXES.md)**
+- **[CODE_CHANGES_REFERENCE.md](./implementation/CODE_CHANGES_REFERENCE.md)**
 
-### 📦 **[Archive](./archive/)** - Historical Documents
-Obsolete or historical documentation kept for reference.
+#### Feature Implementations
+- **[CLEAN_METRICS_IMPLEMENTATION_SUMMARY.md](./implementation/CLEAN_METRICS_IMPLEMENTATION_SUMMARY.md)** - Metrics refactor
+- **[IMPLEMENTATION_SUMMARY_ENHANCED_UI.md](./implementation/IMPLEMENTATION_SUMMARY_ENHANCED_UI.md)** - UI enhancements
+- **[IMPLEMENTATION_SUMMARY.md](./implementation/IMPLEMENTATION_SUMMARY.md)** - General implementations
+- **[CREATE_REMAINING_MODULES.md](./implementation/CREATE_REMAINING_MODULES.md)** - Module creation
 
-**Contents:** Phase reports, completion docs, historical deployments
+#### Phase Deliverables
+- **[PHASE_2_DELIVERABLES_INDEX.md](./implementation/PHASE_2_DELIVERABLES_INDEX.md)**
+- **[PHASE_2_EXECUTIVE_SUMMARY.md](./implementation/PHASE_2_EXECUTIVE_SUMMARY.md)**
 
----
+#### Quality Assurance
+- **[QA_ARCHITECTURAL_REVIEW_REPORT.md](./implementation/QA_ARCHITECTURAL_REVIEW_REPORT.md)**
+- **[HOTFIX_TESTING_GUIDE_v6.2.4.md](./implementation/HOTFIX_TESTING_GUIDE_v6.2.4.md)**
 
-## 🎯 Quick Links
+### [testing/](./testing/) - Test Documentation
+Testing guides, test plans, and verification reports.
 
-### **For New Developers:**
-1. Start with [Developer Guide](./guides/DEVELOPER_GUIDE.md)
-2. Read [Architecture Overview](./architecture/ARCHITECTURE_REFACTOR_COMPLETE.md)
-3. Review [User Stories](./features/USER_STORIES.md)
-4. Check [Deployment Guide](./deployment/DEPLOYMENT_GUIDE.md)
-
-### **For End Users:**
-1. Read [User Guide](./guides/USER_GUIDE_TABS.md)
-2. Explore [User Journeys](./features/user-journeys.md)
-3. Check [Quick Start](./guides/QUICK_START_DRILL_DOWN.md)
-
-### **For DevOps:**
-1. Review [Deployment Guide](./deployment/DEPLOYMENT_GUIDE.md)
-2. Check [Rollback Instructions](./deployment/ROLLBACK_INSTRUCTIONS.md)
-3. Monitor [Deployment Status](./deployment/DEPLOYMENT_STATUS.md)
-
-### **For Product Managers:**
-1. Review [Product Roadmap](./features/PRODUCT_ROADMAP.md)
-2. Check [User Stories](./features/USER_STORIES.md)
-3. Explore [User Journeys](./features/user-journeys.md)
-
----
-
-## 📊 Documentation Statistics
-
-- **Total Documents:** 69 files
-- **Architecture Docs:** 9 files
-- **User Guides:** 6 files
-- **Deployment Docs:** 8 files
-- **Feature Docs:** 11 files
-- **Test Docs:** 6 files
-- **Archived Docs:** 28 files
+- **[TEST_INSTRUCTIONS.md](./testing/TEST_INSTRUCTIONS.md)** - General testing guide
+- **[VERIFICATION_REPORT.md](./testing/VERIFICATION_REPORT.md)** - Test verification
+- **[TEST_DRILL_DOWN.md](./testing/TEST_DRILL_DOWN.md)** - Drill-down testing
+- **[TEST_FILTER_PILLS.md](./testing/TEST_FILTER_PILLS.md)** - Filter testing
+- **[TEST_PUBSUB_SYSTEM.md](./testing/TEST_PUBSUB_SYSTEM.md)** - Event system testing
+- **[FINAL_VALIDATION_COMPLETE.md](./testing/FINAL_VALIDATION_COMPLETE.md)** - Final validation
 
 ---
 
-## 🔍 Finding What You Need
+## 🚀 Quick Navigation
 
-### **By Topic:**
-- **Setup & Installation:** See [Deployment](./deployment/)
-- **Code Architecture:** See [Architecture](./architecture/)
-- **Feature Details:** See [Features](./features/)
-- **Testing:** See [Testing](./testing/)
-- **How-To Guides:** See [Guides](./guides/)
+### Getting Started
+1. **[START_HERE.md](../START_HERE.md)** - Quick start guide
+2. **[README.md](../README.md)** - Project overview
+3. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - How to contribute
 
-### **By Role:**
-- **Developer:** Architecture → Guides → Features
-- **User:** Guides → Features
-- **DevOps:** Deployment → Testing
-- **Product Manager:** Features → Roadmap
+### For Users
+- **Using the Dashboard:** [guides/USER_GUIDE_TABS.md](./guides/USER_GUIDE_TABS.md)
+- **Feature List:** [features/USER_STORIES.md](./features/USER_STORIES.md)
+- **Use Cases:** [features/user-journeys.md](./features/user-journeys.md)
 
----
+### For Developers
+- **Setup:** [guides/DEVELOPER_GUIDE.md](./guides/DEVELOPER_GUIDE.md)
+- **Architecture:** [architecture/STRATEGIC_ARCHITECTURE_REPORT.md](./architecture/STRATEGIC_ARCHITECTURE_REPORT.md)
+- **Testing:** [guides/LOCAL_TESTING_GUIDE.md](./guides/LOCAL_TESTING_GUIDE.md)
+- **Deployment:** [deployment/DEPLOYMENT_GUIDE.md](./deployment/DEPLOYMENT_GUIDE.md)
 
-## 📝 Contributing to Documentation
-
-When adding new documentation:
-
-1. **Place in appropriate category:**
-   - Architecture = `/docs/architecture/`
-   - Guides = `/docs/guides/`
-   - Deployment = `/docs/deployment/`
-   - Features = `/docs/features/`
-   - Testing = `/docs/testing/`
-
-2. **Use clear naming convention:**
-   - `TOPIC_NAME.md` for main docs
-   - `TOPIC_NAME_GUIDE.md` for guides
-   - `TOPIC_NAME_COMPLETE.md` for completion reports
-
-3. **Update this README** with links to new documents
-
-4. **Archive obsolete docs** to `/docs/archive/`
+### For Product Owners
+- **Roadmap:** [features/PRODUCT_ROADMAP.md](./features/PRODUCT_ROADMAP.md)
+- **User Stories:** [features/USER_STORIES.md](./features/USER_STORIES.md)
+- **Analytics:** [implementation/ANALYTICS_GUIDE.md](./implementation/ANALYTICS_GUIDE.md)
 
 ---
 
-## 🌟 Documentation Best Practices
+## 🆕 Recent Updates
 
-- ✅ **Keep docs updated** with code changes
-- ✅ **Use clear headings** and structure
-- ✅ **Include examples** and code snippets
-- ✅ **Add diagrams** where helpful
-- ✅ **Archive old docs** instead of deleting
-- ✅ **Link between related docs**
+### Version 7.1.0 (October 19, 2025)
+- **AI-Powered Recommendations** - Added GPT-4o Mini integration
+- **Repository Restructure** - Organized documentation and code
+- **Improved Security** - Added .env.example and API key documentation
+
+### Version 7.0.0
+- **Clean Metrics Section** - Simplified metrics display
+- **Enhanced UI** - Improved detail panel design
+
+### Version 6.0.0
+- **Analytics Dashboard** - Comprehensive analytics features
+- **Bug Fixes** - Multiple stability improvements
+
+---
+
+## 📝 Document Types
+
+### 📘 Guides
+Step-by-step instructions for specific tasks.
+
+### 🏗️ Architecture
+Technical design and system patterns.
+
+### ✨ Features
+Feature specifications and user stories.
+
+### 🚀 Deployment
+Setup, configuration, and deployment instructions.
+
+### 🧪 Testing
+Test plans, scripts, and verification reports.
+
+### 📊 Implementation
+Historical records of feature implementations.
+
+---
+
+## 🔍 Finding Documentation
+
+### By Topic
+- **AI Features:** See [features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md](./features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md)
+- **Architecture:** Browse [architecture/](./architecture/)
+- **Deployment:** Check [deployment/](./deployment/)
+- **Testing:** Review [testing/](./testing/)
+
+### By Role
+- **End Users:** Start with [guides/USER_GUIDE_TABS.md](./guides/USER_GUIDE_TABS.md)
+- **Developers:** Read [guides/DEVELOPER_GUIDE.md](./guides/DEVELOPER_GUIDE.md)
+- **DevOps:** See [deployment/DEPLOYMENT_GUIDE.md](./deployment/DEPLOYMENT_GUIDE.md)
+- **Product Owners:** Check [features/PRODUCT_ROADMAP.md](./features/PRODUCT_ROADMAP.md)
 
 ---
 
 ## 📞 Need Help?
 
-- **Issues:** [GitHub Issues](https://github.com/cintravitor/pc-portfolio-dashboard/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/cintravitor/pc-portfolio-dashboard/discussions)
-- **Documentation Issues:** File an issue with `documentation` label
+- **GitHub Issues:** [Report bugs or request features](https://github.com/cintravitor/pc-portfolio-dashboard/issues)
+- **GitHub Discussions:** [Ask questions](https://github.com/cintravitor/pc-portfolio-dashboard/discussions)
+- **Contributing:** See [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ---
 
-**Last Reorganization:** October 4, 2025  
-**Reorganized By:** Senior Software Architect  
-**Purpose:** Improve clarity, navigation, and maintainability
-
-Made with 📚 for better documentation organization.
+**Last Updated:** October 19, 2025  
+**Documentation Version:** 7.1.0

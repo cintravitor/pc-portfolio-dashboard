@@ -1,333 +1,234 @@
-# 🚀 Smoke Detectors - Testing & Deployment Guide
+# 🚀 P&C Portfolio Dashboard - Quick Start Guide
 
-**Status:** ✅ Implementation Complete - Ready for Testing  
-**Risk Level:** LOW (Non-breaking, additive feature)
+Welcome to the P&C Portfolio Dashboard! This guide will help you get started quickly.
 
 ---
 
 ## 📋 Quick Start (5 Minutes)
 
-### Option 1: Automated Testing Script (Recommended)
+### For Users
 
-```bash
-# Run the interactive test script
-./TEST_NOW.sh
-```
+1. **Visit the live dashboard:**  
+   [https://cintravitor.github.io/pc-portfolio-dashboard/](https://cintravitor.github.io/pc-portfolio-dashboard/)
 
-This script will:
-1. ✅ Create a safety backup tag
-2. ✅ Check file integrity
-3. ✅ Guide you through manual testing
-4. ✅ Create feature branch
-5. ✅ Stage and commit changes
-6. ✅ Prepare for deployment
+2. **Explore the features:**
+   - **Explorer Tab** - Browse all products with filters
+   - **Executive View** - High-level KPIs and metrics
+   - **Insights & Analytics** - Data analysis and trends
+   - **Planning & Action** - Anomaly detection and recommendations
 
-### Option 2: Manual Testing
+### For Developers
 
-1. **Open the dashboard:**
+1. **Clone the repository:**
    ```bash
-   open index.html
+   git clone https://github.com/cintravitor/pc-portfolio-dashboard.git
+   cd pc-portfolio-dashboard
    ```
 
-2. **Open Browser DevTools** (F12 or Cmd+Option+I)
+2. **Start local server:**
+   ```bash
+   python3 -m http.server 8080
+   ```
 
-3. **Run unit tests in Console:**
+3. **Open in browser:**
+   ```bash
+   open http://localhost:8080
+   ```
+
+4. **Make changes and test:**
+   - Edit files in `src/`
+   - Refresh browser to see changes
+   - Check browser console for errors
+
+---
+
+## 📁 Repository Structure
+
+```
+├── src/
+│   ├── js/core/          # Core modules (AI, data, state, UI)
+│   ├── js/config.js      # Configuration (API keys, settings)
+│   └── css/              # Stylesheets
+├── docs/
+│   ├── architecture/     # Architecture documentation
+│   ├── deployment/       # Deployment guides
+│   ├── features/         # Feature documentation
+│   ├── guides/           # User and developer guides
+│   ├── implementation/   # Implementation summaries
+│   └── testing/          # Test documentation
+├── tests/                # Test files
+├── scripts/              # Utility scripts
+├── data/                 # CSV data files
+└── google-apps-script/   # Backend scripts
+```
+
+---
+
+## 🔧 Configuration
+
+### API Keys Setup
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `src/js/config.js` with your keys:
+   - **Google Apps Script URL** - Get from Apps Script deployment
+   - **LiteLLM API Key** - Get from LiteLLM dashboard
+
+3. **Important:** Never commit real API keys to version control!
+
+See detailed configuration guide: [docs/guides/DEVELOPER_GUIDE.md](./docs/guides/DEVELOPER_GUIDE.md)
+
+---
+
+## 🎯 Key Features
+
+### AI-Powered Recommendations 🆕
+- Contextual insights using GPT-4o Mini
+- Appears below metric charts in detail panels
+- Based on product context, maturity, and performance trends
+
+### Modular Architecture
+- Clean separation of concerns
+- Easy to extend and maintain
+- Comprehensive error handling
+
+### Real-time Data
+- Connects to Google Sheets via Apps Script
+- Auto-refresh every 24 hours
+- Manual refresh available
+
+---
+
+## 📖 Documentation
+
+### Essential Reading
+- **[README.md](./README.md)** - Complete project overview
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - How to contribute
+- **[docs/README.md](./docs/README.md)** - Documentation index
+
+### Quick Links
+- **User Guide:** [docs/guides/USER_GUIDE_TABS.md](./docs/guides/USER_GUIDE_TABS.md)
+- **Developer Guide:** [docs/guides/DEVELOPER_GUIDE.md](./docs/guides/DEVELOPER_GUIDE.md)
+- **Deployment Guide:** [docs/deployment/DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md)
+- **AI Features:** [docs/features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md](./docs/features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md)
+
+---
+
+## 🧪 Testing
+
+### Run Tests Locally
+
+1. **Start local server** (if not running):
+   ```bash
+   python3 -m http.server 8080
+   ```
+
+2. **Open test files:**
+   - Unit tests: `tests/*.test.js`
+   - Smoke tests: `tests/smoke-detectors.test.html`
+
+3. **Run tests in browser console:**
    ```javascript
-   window.runSmokeDetectorTests()
+   // Open DevTools (F12) and run:
+   window.runTests()
    ```
-   Expected: `✅ All 32 tests passed!`
 
-4. **Navigate to Planning & Action tab**
-   - Look for "🔍 Smoke Detectors" section (should appear first)
-   - Click on any badge (🚨 or ⚠️)
-   - Modal should open showing detector analysis
-
-5. **Verify no console errors** (no red text in Console)
-
-6. **Test other tabs** to ensure nothing broke
+### Manual Testing
+- Open the dashboard
+- Click through all tabs
+- Test filters and search
+- Open product details
+- Verify AI recommendations appear
+- Check for console errors
 
 ---
 
-## ✅ What to Test
+## 🚀 Deployment
 
-### Critical Tests (Must Pass)
-- [ ] Dashboard loads without errors
-- [ ] Planning & Action tab displays Smoke Detectors table
-- [ ] Badges are clickable
-- [ ] Modal opens and shows correct information
-- [ ] All 4 detectors show status (triggered/ok)
-- [ ] "View Full Product Details" navigates correctly
-- [ ] No breaking changes to existing features
+### Deploy to Production
 
-### Nice-to-Have Tests
-- [ ] Mobile responsive (resize browser)
-- [ ] Animations are smooth
-- [ ] Hover effects work
-- [ ] Empty state displays if no detectors
+1. **Ensure all tests pass**
+2. **Commit your changes:**
+   ```bash
+   git add .
+   git commit -m "feat: your feature description"
+   ```
+3. **Push to main:**
+   ```bash
+   git push origin main
+   ```
+4. **GitHub Pages auto-deploys** - Wait 2-3 minutes
 
----
-
-## 🔒 Safety Measures in Place
-
-### Automatic Backups
-When you run `./TEST_NOW.sh`, it creates:
-- **Backup tag:** `backup-pre-smoke-detectors-YYYYMMDD-HHMMSS`
-- **Feature branch:** `feature/smoke-detectors-v1.0`
-
-### Quick Rollback
-If anything goes wrong:
-```bash
-./ROLLBACK_NOW.sh
-```
-
-Or manually:
-```bash
-# List backup tags
-git tag -l "backup-*"
-
-# Rollback to latest backup
-git reset --hard backup-pre-smoke-detectors-YYYYMMDD-HHMMSS
-```
-
----
-
-## 📊 Testing Checklist
-
-Copy this checklist and mark items as you test:
-
-```
-Pre-Testing:
-[ ] Backup created
-[ ] Git status clean
-
-Unit Tests:
-[ ] Run window.runSmokeDetectorTests()
-[ ] Result: 32/32 tests passing
-
-Visual Tests:
-[ ] Smoke Detectors section appears in Planning & Action
-[ ] Table displays products with detectors > 0
-[ ] Badges show correct icons and counts
-[ ] Severity labels appear (Critical/Warning)
-
-Interaction Tests:
-[ ] Click badge opens modal
-[ ] Modal shows product info correctly
-[ ] All 4 detectors display status
-[ ] Recommendations appear for triggered detectors
-[ ] "Close" button works
-[ ] Click outside modal closes it
-[ ] "View Full Product Details" navigates correctly
-
-Integration Tests:
-[ ] Other tabs still work (Explore, Executive, Insights)
-[ ] Search functionality works
-[ ] Filter functionality works
-[ ] Existing drill-downs work
-
-Browser Tests:
-[ ] Chrome - works
-[ ] Firefox - works
-[ ] Safari - works
-[ ] Edge - works
-
-Responsive Tests:
-[ ] Desktop (1920x1080) - works
-[ ] Tablet (768x1024) - works
-[ ] Mobile (375x667) - works
-
-Performance Tests:
-[ ] Page load < 2 seconds
-[ ] Table render < 200ms
-[ ] Modal open < 100ms
-[ ] No memory leaks
-
-Console Check:
-[ ] No JavaScript errors (red text)
-[ ] No unhandled promise rejections
-[ ] Only expected warnings (if any)
-```
-
-**Overall Result:** [ ] PASS / [ ] FAIL
-
----
-
-## 🚀 Deployment Workflow
-
-### If All Tests Pass ✅
-
-```bash
-# 1. Run the test script (creates backup and commits)
-./TEST_NOW.sh
-
-# 2. Merge to main
-git checkout main
-git merge feature/smoke-detectors-v1.0 --no-ff
-
-# 3. Tag the release
-git tag -a v5.1.0 -m "Release: Smoke Detectors v1.0"
-
-# 4. Push to remote
-git push origin main
-git push origin v5.1.0
-```
-
-### If Tests Fail ❌
-
-```bash
-# 1. Document the issue
-# 2. Rollback
-./ROLLBACK_NOW.sh
-
-# 3. Fix the issue
-# 4. Re-test
-./TEST_NOW.sh
-```
+### Deployment Checklist
+See: [docs/deployment/DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md)
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Issue: Unit tests fail
-**Solution:**
-```javascript
-// Check if function exists
-typeof window.DataManager.calculateSmokeDetectors
-// Should return: "function"
+### Common Issues
 
-// Test with a simple product
-const testProduct = {
-    keyMetricUX: '75',
-    keyMetricBI: '150',
-    maturity: '1. Development',
-    monthlyUX: [100, 105, 110],
-    monthlyBI: [200, 210, 220],
-    rawRow: new Array(65).fill(0).concat([1])
-};
-window.DataManager.calculateSmokeDetectors(testProduct);
-// Should return: 0
-```
+**Dashboard won't load:**
+- Check browser console for errors
+- Verify local server is running on port 8080
+- Hard refresh: Cmd+Shift+R (Mac) or Ctrl+Shift+F5 (Windows)
 
-### Issue: Smoke Detectors section doesn't appear
-**Solution:**
-```javascript
-// Re-render Planning tab
-window.UIManager.Planning.render();
+**AI recommendations not appearing:**
+- Check `src/js/config.js` has valid API key
+- Verify `AI_RECOMMENDATIONS_ENABLED: true`
+- Check browser console for API errors
+- Clear cache: `window.AIRecommendations.clearCache()`
 
-// Check if data exists
-window.State.getPortfolioData().length
-// Should return: > 0
-
-// Check if any products have detectors
-window.State.getPortfolioData().filter(p => 
-    window.DataManager.calculateSmokeDetectors(p) > 0
-).length
-```
-
-### Issue: Modal doesn't open
-**Solution:**
-1. Check console for JavaScript errors
-2. Verify function is exported:
-   ```javascript
-   typeof window.openSmokeDetectorDrillDown
-   // Should return: "function"
-   ```
-3. Clear browser cache and reload
-
-### Issue: Styling looks broken
-**Solution:**
-1. Hard refresh: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
-2. Clear browser cache
-3. Check if CSS file loaded in Network tab
+**Data not loading:**
+- Verify Google Apps Script URL in `config.js`
+- Check Apps Script deployment is published
+- Test URL directly in browser
 
 ---
 
-## 📚 Documentation
+## 🤝 Contributing
 
-### Quick References
-- **Testing Guide:** `SMOKE_DETECTORS_TESTING_GUIDE.md`
-- **README:** `SMOKE_DETECTORS_README.md`
-- **Phase 1 Docs:** `docs/features/SMOKE_DETECTORS_PHASE1_COMPLETE.md`
-- **Phase 2 Docs:** `docs/features/SMOKE_DETECTORS_PHASE2_COMPLETE.md`
+We welcome contributions! Here's how:
 
-### Deployment Plans
-- **Pre-Deployment Checklist:** `PRE_DEPLOYMENT_CHECKLIST.md`
-- **Rollback Plan:** `DEPLOYMENT_ROLLBACK_PLAN.md`
-- **Deployment Plan:** `docs/deployment/SMOKE_DETECTORS_DEPLOYMENT_PLAN.md`
-
----
-
-## 🎯 Success Criteria
-
-The feature is ready for deployment if:
-
-✅ All unit tests passing (32/32)  
-✅ Visual tests pass (table displays, badges clickable)  
-✅ Modal opens and shows correct information  
-✅ Drill-down navigation works  
-✅ No console errors  
-✅ No breaking changes to existing features  
-✅ Performance is acceptable (< 200ms render)  
-✅ Works in all major browsers  
-
----
-
-## 🚨 Emergency Contacts
-
-**If critical issues arise:**
-
-1. **Rollback immediately:**
+1. **Fork the repository**
+2. **Create a feature branch:**
    ```bash
-   ./ROLLBACK_NOW.sh
+   git checkout -b feature/your-feature-name
    ```
+3. **Make your changes**
+4. **Test thoroughly**
+5. **Commit with conventional commits:**
+   ```bash
+   git commit -m "feat: add new feature"
+   ```
+6. **Push and create Pull Request**
 
-2. **Document the issue** in git commit message
-
-3. **Notify stakeholders** (if deployed to production)
-
----
-
-## 📞 Next Steps
-
-### After Successful Testing
-1. ✅ Mark tests as passed in `PRE_DEPLOYMENT_CHECKLIST.md`
-2. ✅ Run `./TEST_NOW.sh` to commit
-3. ✅ Merge to main branch
-4. ✅ Tag release as v5.1.0
-5. ✅ Push to remote
-6. ✅ Monitor for 24 hours
-7. ✅ Gather user feedback
-
-### After Failed Testing
-1. ❌ Document issues found
-2. ❌ Run `./ROLLBACK_NOW.sh` if needed
-3. ❌ Fix issues in code
-4. ❌ Re-test thoroughly
-5. ❌ Update documentation if needed
-6. ❌ Try deployment again
+See detailed guidelines: [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ---
 
-## 🎉 You're Ready!
+## 📞 Need Help?
 
-Everything is in place for safe testing and deployment:
-
-✅ **Code:** Fully implemented and documented  
-✅ **Tests:** 32 unit tests ready to run  
-✅ **Backups:** Automatic backup system in place  
-✅ **Rollback:** One-command rollback available  
-✅ **Documentation:** Comprehensive guides provided  
-
-**To start testing right now:**
-
-```bash
-./TEST_NOW.sh
-```
-
-Good luck! 🚀
+- **Documentation:** Browse [docs/](./docs/)
+- **Issues:** [GitHub Issues](https://github.com/cintravitor/pc-portfolio-dashboard/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/cintravitor/pc-portfolio-dashboard/discussions)
 
 ---
 
-*Last Updated: October 6, 2025*  
-*Feature: Smoke Detectors v1.0*  
-*Status: Ready for Testing*
+## ✅ Next Steps
+
+1. ✅ Read [README.md](./README.md) for complete overview
+2. ✅ Review [docs/features/USER_STORIES.md](./docs/features/USER_STORIES.md) for feature list
+3. ✅ Check [docs/architecture/](./docs/architecture/) for technical details
+4. ✅ Start contributing! See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+---
+
+**Last Updated:** October 19, 2025  
+**Version:** 7.1.0  
+**Status:** ✅ Production Ready
+
+Happy coding! 🎉

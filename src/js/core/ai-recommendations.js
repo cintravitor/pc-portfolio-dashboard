@@ -2,11 +2,27 @@
  * AI Recommendations Module
  * Generates context-aware metric recommendations using LiteLLM API
  * 
+ * DEPENDENCIES: CONFIG
+ * 
  * @module ai-recommendations
  */
 
 (function() {
     'use strict';
+    
+    // ==================== DEPENDENCY CHECK ====================
+    if (typeof CONFIG === 'undefined') {
+        console.error('[AIRecommendations] ❌ CONFIG not found');
+        console.error('[AIRecommendations] Ensure config.js is loaded before ai-recommendations.js');
+        return; // Gracefully fail - AI is optional feature
+    }
+    
+    if (!CONFIG.AI_RECOMMENDATIONS_ENABLED) {
+        console.log('[AIRecommendations] ⏸️ AI recommendations disabled in config');
+        return;
+    }
+    
+    console.log('[AIRecommendations] ✅ Dependency verified');
     
     /**
      * Build enhanced prompt with product context and metric data

@@ -6,7 +6,29 @@
  * - Removed global variables (portfolioData, filteredData, columnMapping)
  * - All state access goes through window.State getters/setters
  * - Utility functions accessed via window.Utils
+ * 
+ * DEPENDENCIES: window.State, window.Utils, CONFIG
  */
+
+// ==================== DEPENDENCY CHECK ====================
+
+(function checkDependencies() {
+    const required = ['State', 'Utils'];
+    const missing = required.filter(dep => !window[dep]);
+    
+    if (missing.length > 0) {
+        console.error('[DataManager] ❌ Missing dependencies:', missing);
+        console.error('[DataManager] Load order must be: config.js → utils.js → state.js → data-manager.js');
+        throw new Error(`DataManager dependency error: ${missing.join(', ')} not found`);
+    }
+    
+    if (typeof CONFIG === 'undefined') {
+        console.error('[DataManager] ❌ CONFIG not found');
+        throw new Error('DataManager requires CONFIG to be loaded first');
+    }
+    
+    console.log('[DataManager] ✅ Dependencies verified');
+})();
 
 // ==================== NOTE: STATE MANAGEMENT ====================
 // This module NO LONGER maintains its own state variables.

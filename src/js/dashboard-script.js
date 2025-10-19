@@ -5,7 +5,80 @@
  * This is a simplified, high-level orchestrator that delegates work to specialized modules:
  * - core/data-manager.js: Handles all data operations
  * - core/ui-manager.js: Handles all UI rendering and interactions
+ * 
+ * DEPENDENCIES: All core modules must be loaded before this script
  */
+
+// ==================== CRITICAL DEPENDENCY VERIFICATION ====================
+
+/**
+ * Verify all critical dependencies are loaded
+ * This prevents cryptic runtime errors if scripts fail to load
+ * @throws {Error} If critical dependencies are missing
+ */
+(function verifyCoreDependencies() {
+    console.log('[Dashboard] Verifying dependencies...');
+    
+    const criticalDependencies = [
+        { name: 'CONFIG', description: 'Configuration object' },
+        { name: 'State', description: 'State management', path: 'window.State' },
+        { name: 'Utils', description: 'Utility functions', path: 'window.Utils' },
+        { name: 'DataManager', description: 'Data operations', path: 'window.DataManager' },
+        { name: 'UIManager', description: 'UI management', path: 'window.UIManager' }
+    ];
+    
+    const optionalDependencies = [
+        { name: 'Analytics', description: 'Analytics tracking', path: 'window.Analytics' },
+        { name: 'AIRecommendations', description: 'AI features', path: 'window.AIRecommendations' }
+    ];
+    
+    // Check critical dependencies
+    const missingCritical = criticalDependencies.filter(dep => {
+        const exists = dep.name === 'CONFIG' ? typeof CONFIG !== 'undefined' : window[dep.name];
+        return !exists;
+    });
+    
+    if (missingCritical.length > 0) {
+        console.error('[Dashboard] ❌ CRITICAL ERROR: Missing dependencies');
+        missingCritical.forEach(dep => {
+            console.error(`  - ${dep.name} (${dep.description}) not loaded`);
+        });
+        console.error('[Dashboard] Check that all scripts loaded successfully');
+        console.error('[Dashboard] Check browser console for earlier errors');
+        
+        // Show user-friendly error
+        document.body.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: Arial;">
+                <div style="text-align: center; max-width: 500px; padding: 2rem;">
+                    <h2 style="color: #ef4444;">⚠️ Dashboard Loading Error</h2>
+                    <p>Critical modules failed to load. Please:</p>
+                    <ol style="text-align: left; margin: 1rem 0;">
+                        <li>Refresh the page</li>
+                        <li>Clear browser cache (Cmd+Shift+R or Ctrl+Shift+F5)</li>
+                        <li>Check browser console for details</li>
+                    </ol>
+                    <p style="font-size: 0.875rem; color: #666;">
+                        Missing: ${missingCritical.map(d => d.name).join(', ')}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        throw new Error(`Critical dependencies missing: ${missingCritical.map(d => d.name).join(', ')}`);
+    }
+    
+    // Check optional dependencies
+    const missingOptional = optionalDependencies.filter(dep => !window[dep.name]);
+    if (missingOptional.length > 0) {
+        console.warn('[Dashboard] ⚠️ Optional features unavailable:');
+        missingOptional.forEach(dep => {
+            console.warn(`  - ${dep.name} (${dep.description})`);
+        });
+    }
+    
+    console.log('[Dashboard] ✅ All critical dependencies verified');
+    console.log('[Dashboard] 🎯 Ready to initialize');
+})();
 
 // ==================== DATA LOADING & INITIALIZATION ====================
 

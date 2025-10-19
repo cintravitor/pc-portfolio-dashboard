@@ -198,6 +198,19 @@
     }
     
     /**
+     * Helper function to get selected values from multi-select dropdown
+     * @param {HTMLSelectElement} selectElement - The select element
+     * @returns {Array<string>} Array of selected values (excluding empty default option)
+     */
+    function getSelectedValues(selectElement) {
+        if (!selectElement) return [];
+        const selected = Array.from(selectElement.selectedOptions)
+            .map(option => option.value)
+            .filter(value => value !== ''); // Exclude empty default option
+        return selected;
+    }
+    
+    /**
      * Populate filter dropdowns with unique values
      */
     function populateFilters() {
@@ -208,13 +221,13 @@
         const maturitySelect = document.getElementById('filter-maturity');
         const ownerSelect = document.getElementById('filter-owner');
 
-        areaSelect.innerHTML = '<option value="">All Areas</option>' + 
+        areaSelect.innerHTML = '<option value="">P&C Area</option>' + 
             filterOptions.areas.map(a => `<option value="${window.Utils.escapeHtml(a)}">${window.Utils.escapeHtml(a)}</option>`).join('');
         
-        maturitySelect.innerHTML = '<option value="">All Stages</option>' + 
+        maturitySelect.innerHTML = '<option value="">Journey Stage</option>' + 
             filterOptions.maturities.map(m => `<option value="${window.Utils.escapeHtml(m)}">${window.Utils.escapeHtml(m)}</option>`).join('');
         
-        ownerSelect.innerHTML = '<option value="">All Owners</option>' + 
+        ownerSelect.innerHTML = '<option value="">Owner Name</option>' + 
             filterOptions.owners.map(o => `<option value="${window.Utils.escapeHtml(o)}">${window.Utils.escapeHtml(o)}</option>`).join('');
     }
     
@@ -223,13 +236,13 @@
      */
     function applyFiltersFromUI() {
         const searchTerm = document.getElementById('search-input').value;
-        const areaFilter = document.getElementById('filter-area').value;
-        const maturityFilter = document.getElementById('filter-maturity').value;
-        const ownerFilter = document.getElementById('filter-owner').value;
+        const areaFilters = getSelectedValues(document.getElementById('filter-area'));
+        const maturityFilters = getSelectedValues(document.getElementById('filter-maturity'));
+        const ownerFilters = getSelectedValues(document.getElementById('filter-owner'));
         const sortBy = document.getElementById('sort-by').value;
         const belowTargetOnly = document.getElementById('filter-below-target').checked;
 
-        window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy, belowTargetOnly);
+        window.DataManager.applyFilters(searchTerm, areaFilters, maturityFilters, ownerFilters, sortBy, belowTargetOnly);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
@@ -259,9 +272,22 @@
      */
     function clearFilters() {
         document.getElementById('search-input').value = '';
-        document.getElementById('filter-area').value = '';
-        document.getElementById('filter-maturity').value = '';
-        document.getElementById('filter-owner').value = '';
+        
+        // Clear multi-select dropdowns (deselect all options)
+        const areaSelect = document.getElementById('filter-area');
+        const maturitySelect = document.getElementById('filter-maturity');
+        const ownerSelect = document.getElementById('filter-owner');
+        
+        if (areaSelect) {
+            Array.from(areaSelect.options).forEach(opt => opt.selected = false);
+        }
+        if (maturitySelect) {
+            Array.from(maturitySelect.options).forEach(opt => opt.selected = false);
+        }
+        if (ownerSelect) {
+            Array.from(ownerSelect.options).forEach(opt => opt.selected = false);
+        }
+        
         document.getElementById('sort-by').value = '';
         document.getElementById('filter-below-target').checked = false;
         applyFiltersFromUI();
@@ -281,11 +307,11 @@
             return;
         }
         
-        // Get current filter values
+        // Get current filter values (multi-select arrays)
         const searchTerm = document.getElementById('search-input')?.value || '';
-        const areaFilter = document.getElementById('filter-area')?.value || '';
-        const maturityFilter = document.getElementById('filter-maturity')?.value || '';
-        const ownerFilter = document.getElementById('filter-owner')?.value || '';
+        const areaFilters = getSelectedValues(document.getElementById('filter-area'));
+        const maturityFilters = getSelectedValues(document.getElementById('filter-maturity'));
+        const ownerFilters = getSelectedValues(document.getElementById('filter-owner'));
         const sortBy = document.getElementById('sort-by')?.value || '';
         const belowTargetOnly = document.getElementById('filter-below-target')?.checked || false;
         
@@ -301,30 +327,39 @@
             });
         }
         
-        if (areaFilter) {
-            activeFilters.push({
-                type: 'area',
-                label: 'Area',
-                value: areaFilter,
-                icon: '🏢'
+        // Handle multiple area selections
+        if (areaFilters && areaFilters.length > 0) {
+            areaFilters.forEach(area => {
+                activeFilters.push({
+                    type: 'area',
+                    label: 'P&C Area',
+                    value: area,
+                    icon: '🏢'
+                });
             });
         }
         
-        if (maturityFilter) {
-            activeFilters.push({
-                type: 'maturity',
-                label: 'Maturity',
-                value: maturityFilter,
-                icon: '🔄'
+        // Handle multiple maturity selections
+        if (maturityFilters && maturityFilters.length > 0) {
+            maturityFilters.forEach(maturity => {
+                activeFilters.push({
+                    type: 'maturity',
+                    label: 'Journey Stage',
+                    value: maturity,
+                    icon: '🔄'
+                });
             });
         }
         
-        if (ownerFilter) {
-            activeFilters.push({
-                type: 'owner',
-                label: 'Owner',
-                value: ownerFilter,
-                icon: '👤'
+        // Handle multiple owner selections
+        if (ownerFilters && ownerFilters.length > 0) {
+            ownerFilters.forEach(owner => {
+                activeFilters.push({
+                    type: 'owner',
+                    label: 'Owner',
+                    value: owner,
+                    icon: '👤'
+                });
             });
         }
         
@@ -369,7 +404,7 @@
                     <strong>${window.Utils.escapeHtml(filter.label)}:</strong> ${window.Utils.escapeHtml(filter.value)}
                 </span>
                 <button class="filter-pill-remove" 
-                        onclick="window.UIManager.Filters.removeFilterPill('${filter.type}')" 
+                        onclick="window.UIManager.Filters.removeFilterPill('${filter.type}', '${window.Utils.escapeHtml(filter.value)}')" 
                         title="Remove ${window.Utils.escapeHtml(filter.label)} filter"
                         aria-label="Remove ${window.Utils.escapeHtml(filter.label)} filter">
                     ×
@@ -380,9 +415,11 @@
     
     /**
      * Remove a specific filter pill
-     * @param {string} filterType - Type of filter to remove
+     * For multi-select filters, this removes only the specific value, not all selections
+     * @param {string} filterType - Type of filter to remove (e.g., 'area', 'maturity', 'owner')
+     * @param {string} filterValue - Specific value to remove (for multi-select)
      */
-    function removeFilterPill(filterType) {
+    function removeFilterPill(filterType, filterValue) {
         // Clear the specific filter
         switch (filterType) {
             case 'search':
@@ -392,17 +429,38 @@
                 
             case 'area':
                 const areaFilter = document.getElementById('filter-area');
-                if (areaFilter) areaFilter.value = '';
+                if (areaFilter && filterValue) {
+                    // Find and deselect the specific option
+                    Array.from(areaFilter.options).forEach(opt => {
+                        if (opt.value === filterValue) {
+                            opt.selected = false;
+                        }
+                    });
+                }
                 break;
                 
             case 'maturity':
                 const maturityFilter = document.getElementById('filter-maturity');
-                if (maturityFilter) maturityFilter.value = '';
+                if (maturityFilter && filterValue) {
+                    // Find and deselect the specific option
+                    Array.from(maturityFilter.options).forEach(opt => {
+                        if (opt.value === filterValue) {
+                            opt.selected = false;
+                        }
+                    });
+                }
                 break;
                 
             case 'owner':
                 const ownerFilter = document.getElementById('filter-owner');
-                if (ownerFilter) ownerFilter.value = '';
+                if (ownerFilter && filterValue) {
+                    // Find and deselect the specific option
+                    Array.from(ownerFilter.options).forEach(opt => {
+                        if (opt.value === filterValue) {
+                            opt.selected = false;
+                        }
+                    });
+                }
                 break;
                 
             case 'below-target':

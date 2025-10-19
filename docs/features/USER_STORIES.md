@@ -29,8 +29,8 @@
 - ✅ **Phase 8: Filter Visibility** - Enhanced filter discoverability (v6.2.3)
 
 ### Total Progress
-**33 User Stories:** ✅ 32 Complete, 🚧 1 In Progress (97.0%)  
-**241 Story Points:** ✅ 239 Complete, 🚧 2 In Progress (99.2%)  
+**34 User Stories:** ✅ 32 Complete, 🚧 2 In Progress (94.1%)  
+**289 Story Points:** ✅ 287 Complete, 🚧 2 In Progress (99.3%)  
 **Product Status:** 🚀 Production Ready
 
 ---
@@ -1185,8 +1185,8 @@
 ## 📊 Summary Statistics
 
 **Total Stories:** 34  
-**Total Story Points:** 287  
-**Completion Rate:** ✅ 100% (All stories complete)
+**Total Story Points:** 289  
+**Completion Rate:** 🚧 94.1% (32 complete, 2 in progress)
 
 ### By Priority:
 - **Critical:** 5 stories (73 points) ✅
@@ -1395,6 +1395,75 @@
 
 ---
 
+#### Story 6.3: Clear & Unambiguous Filter Labeling with Multi-Select
+**As a** User applying filters  
+**I want** filter labels to use clear, unambiguous text (e.g., "P&C Area" instead of "All Areas", "Journey Stage" instead of "All Stages", and "Owner Name" instead of "All Owners") AND the ability to select multiple options within each filter  
+**So that** I can intuitively understand filtering criteria and efficiently filter by multiple values simultaneously (e.g., view both HRBP and PATO products at once)
+
+**Acceptance Criteria:**
+- 🚧 Filter dropdown for P&C Area shows "P&C Area" as default option text
+- 🚧 Filter dropdown for Maturity Stage shows "Journey Stage" as default option text
+- 🚧 Filter dropdown for Owner shows "Owner Name" as default option text
+- 🚧 All three filters support multi-select (Ctrl/Cmd + Click to select multiple)
+- 🚧 Multi-select logic: OR within same filter, AND across different filters
+- 🚧 Filter pills display each selected value separately
+- 🚧 Clicking X on a pill removes only that specific selection
+- 🚧 Clear filters button deselects all multi-select options
+- 🚧 Stats bar updates correctly with multi-select combinations
+- 🚧 No JavaScript errors or broken functionality
+
+**Data Used in Business Rule:**
+- `index.html` - Added `multiple` and `size="1"` attributes to filter dropdowns
+- `ui-filters.js` - `getSelectedValues()` helper extracts arrays from multi-select
+- `data-manager.js` - `applyFilters()` accepts arrays, uses `.includes()` for OR logic
+- Multi-select logic: `(Area1 OR Area2) AND (Stage1 OR Stage2) AND (Owner1)`
+- Filter pills: Each selection creates separate pill for granular removal
+- Label mapping: "P&C Area", "Journey Stage", "Owner Name"
+
+**Data Tracked from User Interaction:**
+- User feedback on filter label clarity
+- Multi-select usage frequency
+- Average number of selections per filter
+- Filter combinations most commonly used
+- Time to first successful filter application (expected to decrease)
+- Filter usage frequency (expected to increase)
+- User errors in filter selection (expected to decrease)
+- Support requests about filtering (expected to decrease)
+
+**Technical Changes:**
+- Modified: `index.html` (lines 36-38) - Added `multiple size="1"` attributes, updated labels
+- Modified: `src/js/core/ui/ui-filters.js` - Added `getSelectedValues()`, updated `applyFiltersFromUI()`, `renderFilterPills()`, `removeFilterPill()`, `clearFilters()`
+- Modified: `src/js/core/data-manager.js` (lines 184-208) - Changed params to arrays, updated filter logic
+- Modified: `src/css/dashboard-style.css` - Added multi-select styling with visual feedback
+- Total changes: 4 files, ~100 lines modified/added
+
+**Visual Enhancements:**
+- Multi-select dropdowns expand to 200px height when focused
+- Selected options highlighted with purple gradient background
+- Hover states for options
+- Smooth transitions for expand/collapse
+- Filter pills show each selection individually
+
+**Testing Completed:**
+- [ ] Local testing completed (10 test cases with multi-select validation)
+- [ ] Cross-browser testing completed (Chrome, Firefox, Safari, Edge)
+- [ ] Responsive design verified (desktop, tablet, mobile)
+- [ ] Multi-select works on touch devices
+- [ ] No console errors
+- [ ] Documentation updated
+
+**Priority:** High (UX Enhancement + Breaking Change)  
+**Story Points:** 8  
+**Version:** v6.2.3 (Patch Release - Breaking Change)  
+**Status:** 🚧 In Progress (Code Complete, Testing In Progress)  
+**Branch:** `feature/clear-filter-labels`  
+**Date:** 2025-10-19
+
+**Breaking Change Note:**  
+This update changes filter behavior from single-select to multi-select. Users can now select multiple options within the same filter type (e.g., select both "HRBP" and "PATO" simultaneously). This is a significant UX improvement but changes existing user workflows.
+
+---
+
 ## 📝 Notes for Stakeholders
 
 ### What Makes This Product Valuable
@@ -1456,6 +1525,6 @@ See the [Product Roadmap](./PRODUCT_ROADMAP.md) for complete details, timelines,
 
 **Document Maintained By:** Product Team  
 **Review Cycle:** Quarterly  
-**Last Updated:** October 18, 2025 (Story 6.1 added)  
+**Last Updated:** October 19, 2025 (Story 6.3 added - Multi-select filters with clear labels)  
 **Next Review:** January 2026
 

@@ -892,6 +892,37 @@ select:focus {
     transform: translateY(-1px);
 }
 
+/* Multi-select filter dropdowns */
+.filters-container select[multiple] {
+    min-height: 42px;
+    max-height: 42px;
+    overflow-y: hidden;
+    cursor: pointer;
+}
+
+.filters-container select[multiple]:focus {
+    max-height: 200px;
+    overflow-y: auto;
+    transition: max-height 0.2s ease;
+}
+
+.filters-container select[multiple] option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 4px;
+}
+
+.filters-container select[multiple] option:checked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    font-weight: 500;
+}
+
+.filters-container select[multiple] option:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
 /* Filter Checkbox */
 .filter-checkbox {
     display: flex;

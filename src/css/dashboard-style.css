@@ -2404,15 +2404,16 @@ select:focus {
 /* Smoke Detector Badge (top-right alert indicator) */
 .smoke-detector-badge {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 32px;
-    height: 32px;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
+    line-height: 1;
     cursor: help;
     z-index: 10;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2432,7 +2433,7 @@ select:focus {
 }
 
 .smoke-detector-badge:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
     box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
 }
 
@@ -2468,36 +2469,39 @@ select:focus {
 /* Extended Problem Description - More Context */
 .card-problem-extended {
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.6;
     color: var(--text-secondary);
-    margin-bottom: 0.875rem;
-    min-height: 3rem; /* Ensure consistent card height */
+    margin-bottom: 1rem;
+    /* No min-height to allow full text display */
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 /* New Metric Badges - Scannable with Values */
 .card-metrics-new {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: 0.625rem;
+    margin-top: 1rem;
     flex-wrap: wrap;
 }
 
 .metric-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.625rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     border: 1.5px solid;
     transition: all 0.2s ease;
     cursor: help;
+    line-height: 1.2;
 }
 
 .metric-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* Metric Badge - Green (Meeting Target) */
@@ -2526,38 +2530,49 @@ select:focus {
     font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.8;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+    line-height: 1;
+}
+
+.metric-values {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.125rem;
 }
 
 .metric-current {
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: -0.02em;
+    line-height: 1;
 }
 
 .metric-separator {
-    opacity: 0.5;
+    opacity: 0.4;
     font-weight: 400;
-    margin: 0 0.125rem;
+    font-size: 0.875rem;
+    margin: 0 0.0625rem;
 }
 
 .metric-target {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
-    opacity: 0.7;
+    opacity: 0.65;
+    line-height: 1;
 }
 
 .metric-icon {
     font-size: 0.875rem;
     margin-left: 0.125rem;
+    opacity: 0.9;
 }
 
 /* Ensure cards maintain consistent spacing with new layout */
 .product-card-compact {
     position: relative; /* For absolute positioning of smoke badge */
     padding: 1.5rem;
-    min-height: 240px; /* Consistent height for scannable grid */
+    /* Removed min-height to allow full text display without truncation */
 }
 
 .hidden { display: none !important; }

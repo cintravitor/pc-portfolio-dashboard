@@ -109,19 +109,16 @@
                         <div class="card-title-compact">
                             ${window.Utils.escapeHtml(product.name)}
                         </div>
-                        <span class="status-badge-compact ${window.Utils.getStatusClass(summary.maturity)}">
-                            ${window.Utils.escapeHtml(summary.maturity)}
-                        </span>
                     </div>
                     
                     <div class="card-body-compact">
                         <div class="card-owner">
                             <span class="owner-icon">👤</span>
-                            <span class="owner-name">${window.Utils.truncateText(window.Utils.escapeHtml(summary.owner), 30)}</span>
+                            <span class="owner-name">${window.Utils.escapeHtml(summary.owner)}</span>
                         </div>
                         
                         <div class="card-problem-extended">
-                            ${window.Utils.truncateText(window.Utils.escapeHtml(summary.problem), 120)}
+                            ${window.Utils.escapeHtml(summary.problem)}
                         </div>
                         
                         <div class="card-metrics-new">
@@ -255,19 +252,35 @@
         const statusClass = `metric-${status}`;
         const icon = status === 'green' ? '✓' : status === 'red' ? '✗' : '—';
         
-        // Format values for display
-        const currentDisplay = value !== null && !isNaN(value) ? Math.round(value) : 'N/A';
-        const targetDisplay = target !== null && !isNaN(target) ? Math.round(target) : 'N/A';
+        // Format values for display - preserve decimals if present
+        let currentDisplay, targetDisplay;
+        
+        if (value !== null && !isNaN(value)) {
+            // Round to 1 decimal if needed, otherwise show as integer
+            currentDisplay = value % 1 === 0 ? Math.round(value) : value.toFixed(1);
+        } else {
+            currentDisplay = 'N/A';
+        }
+        
+        if (target !== null && !isNaN(target)) {
+            // Round to 1 decimal if needed, otherwise show as integer
+            targetDisplay = target % 1 === 0 ? Math.round(target) : target.toFixed(1);
+        } else {
+            targetDisplay = 'N/A';
+        }
         
         // Create tooltip with metric details
-        const tooltip = `${label}: ${metricName}\nCurrent: ${currentDisplay} | Target: ${targetDisplay}`;
+        const metricNameDisplay = metricName && metricName !== 'N/A' ? metricName : 'Not defined';
+        const tooltip = `${label} Metric: ${metricNameDisplay}\nCurrent: ${currentDisplay} | Target: ${targetDisplay}`;
         
         return `
             <div class="metric-badge ${statusClass}" title="${tooltip}">
-                <span class="metric-label">${label}</span>
-                <span class="metric-current">${currentDisplay}</span>
-                <span class="metric-separator">/</span>
-                <span class="metric-target">${targetDisplay}</span>
+                <span class="metric-label">${label}:</span>
+                <span class="metric-values">
+                    <span class="metric-current">${currentDisplay}</span>
+                    <span class="metric-separator">/</span>
+                    <span class="metric-target">${targetDisplay}</span>
+                </span>
                 <span class="metric-icon">${icon}</span>
             </div>
         `;

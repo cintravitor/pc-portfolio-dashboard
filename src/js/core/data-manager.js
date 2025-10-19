@@ -180,10 +180,27 @@ async function fetchSheetData() {
 
 /**
  * Apply filters to the data
+ * @param {string} searchTerm - Search query string
+ * @param {Array<string>} areaFilters - Array of selected P&C areas (multi-select)
+ * @param {Array<string>} maturityFilters - Array of selected maturity stages (multi-select)
+ * @param {Array<string>} ownerFilters - Array of selected owners (multi-select)
+ * @param {string} sortBy - Sort option
+ * @param {boolean} belowTargetOnly - Filter for below-target products only
+ * 
+ * Multi-select logic: OR within same filter type, AND across different filter types
+ * Example: (Area1 OR Area2) AND (Stage1 OR Stage2) AND (Owner1)
  */
-function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', ownerFilter = '', sortBy = '', belowTargetOnly = false) {
+function applyFilters(searchTerm = '', areaFilters = [], maturityFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false) {
     // Get portfolio data from State
     const portfolioData = window.State.getPortfolioData();
+    
+    console.log('🔧 DataManager.applyFilters called:', {
+        portfolioDataCount: portfolioData.length,
+        areaFilters,
+        maturityFilters,
+        ownerFilters,
+        searchTerm
+    });
     
     // First, filter the data
     let filteredData = portfolioData.filter(product => {
@@ -193,9 +210,10 @@ function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', own
             product.solution.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.owner.toLowerCase().includes(searchTerm.toLowerCase());
         
-        const matchesArea = !areaFilter || product.area === areaFilter;
-        const matchesMaturity = !maturityFilter || product.maturity === maturityFilter;
-        const matchesOwner = !ownerFilter || product.owner === ownerFilter;
+        // Multi-select logic: if array is empty, match all; otherwise check if product value is in array (OR logic)
+        const matchesArea = areaFilters.length === 0 || areaFilters.includes(product.area);
+        const matchesMaturity = maturityFilters.length === 0 || maturityFilters.includes(product.maturity);
+        const matchesOwner = ownerFilters.length === 0 || ownerFilters.includes(product.owner);
         
         // Below-target filter logic
         let matchesBelowTarget = true;
@@ -256,6 +274,12 @@ function applyFilters(searchTerm = '', areaFilter = '', maturityFilter = '', own
 
     // Store filtered data in State
     window.State.setFilteredData(filteredData);
+    
+    console.log('✅ DataManager filtered:', {
+        originalCount: portfolioData.length,
+        filteredCount: filteredData.length,
+        filters: { areaFilters, maturityFilters, ownerFilters }
+    });
 
     return filteredData;
 }

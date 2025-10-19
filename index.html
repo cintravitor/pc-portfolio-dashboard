@@ -33,9 +33,19 @@
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Search by solution name, problem, or description..." oninput="applyFilters()">
                     </div>
-                    <select id="filter-area" onchange="applyFilters()"><option value="">All Areas</option></select>
-                    <select id="filter-maturity" onchange="applyFilters()"><option value="">All Stages</option></select>
-                    <select id="filter-owner" onchange="applyFilters()"><option value="">All Owners</option></select>
+                    <!-- Custom multi-select dropdowns -->
+                    <div class="custom-multiselect" id="filter-area-wrapper">
+                        <div class="multiselect-header" data-filter="area">P&C Area</div>
+                        <div class="multiselect-dropdown" data-filter="area"></div>
+                    </div>
+                    <div class="custom-multiselect" id="filter-maturity-wrapper">
+                        <div class="multiselect-header" data-filter="maturity">Journey Stage</div>
+                        <div class="multiselect-dropdown" data-filter="maturity"></div>
+                    </div>
+                    <div class="custom-multiselect" id="filter-owner-wrapper">
+                        <div class="multiselect-header" data-filter="owner">Owner Name</div>
+                        <div class="multiselect-dropdown" data-filter="owner"></div>
+                    </div>
                     <select id="sort-by" onchange="applyFilters()">
                         <option value="">Sort By...</option>
                         <option value="name-asc">Product Name (A-Z)</option>
@@ -48,7 +58,7 @@
                         <input type="checkbox" id="filter-below-target" onchange="applyFilters()">
                         <span>Below Target Metrics</span>
                     </label>
-                    <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
+                    <button class="clear-filters" onclick="window.UIManager.Filters.clearFilters()">Clear Filters</button>
                 </div>
             </div>
         </div>

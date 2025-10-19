@@ -17,33 +17,20 @@
     function setupTacticalFilters() {
         console.log('Setting up tactical filters and sorting...');
         
+        // Initialize custom multi-select dropdowns
+        initializeCustomMultiselect();
+        
         // Populate filter dropdowns with current data
         populateFilters();
         
-        // Setup event listeners for all filter controls
+        // Setup event listeners for search and sort
         const searchInput = document.getElementById('search-input');
-        const areaSelect = document.getElementById('filter-area');
-        const maturitySelect = document.getElementById('filter-maturity');
-        const ownerSelect = document.getElementById('filter-owner');
         const sortBySelect = document.getElementById('sort-by');
         
         // Use debounced filtering for search input (improves performance)
         if (searchInput) {
             const debouncedFilter = window.DataManager.debounce(applyFiltersFromUI, 300);
             searchInput.addEventListener('input', debouncedFilter);
-        }
-        
-        // Add change listeners for filter dropdowns
-        if (areaSelect) {
-            areaSelect.addEventListener('change', applyFiltersFromUI);
-        }
-        
-        if (maturitySelect) {
-            maturitySelect.addEventListener('change', applyFiltersFromUI);
-        }
-        
-        if (ownerSelect) {
-            ownerSelect.addEventListener('change', applyFiltersFromUI);
         }
         
         // Add change listener for sort dropdown
@@ -75,6 +62,9 @@
                 filterByMissingMetric('BI');
             });
         }
+        
+        // Add console logging for debugging multi-select
+        console.log('✅ Data quality filters and multi-select setup complete');
     }
     
     /**
@@ -198,24 +188,168 @@
     }
     
     /**
-     * Populate filter dropdowns with unique values
+     * Custom multi-select state storage
+     */
+    const multiSelectState = {
+        area: new Set(),
+        maturity: new Set(),
+        owner: new Set()
+    };
+    
+    /**
+     * Initialize custom multi-select dropdowns
+     */
+    function initializeCustomMultiselect() {
+        console.log('🔧 Initializing custom multi-select dropdowns...');
+        
+        // Setup click handlers for headers
+        const headers = document.querySelectorAll('.multiselect-header');
+        headers.forEach(header => {
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const filterType = this.getAttribute('data-filter');
+                const dropdown = document.querySelector(`.multiselect-dropdown[data-filter="${filterType}"]`);
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.multiselect-dropdown').forEach(dd => {
+                    if (dd !== dropdown) {
+                        dd.classList.remove('open');
+                    }
+                });
+                document.querySelectorAll('.multiselect-header').forEach(h => {
+                    if (h !== this) {
+                        h.classList.remove('active');
+                    }
+                });
+                
+                // Toggle this dropdown
+                dropdown.classList.toggle('open');
+                this.classList.toggle('active');
+            });
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-multiselect')) {
+                document.querySelectorAll('.multiselect-dropdown').forEach(dd => {
+                    dd.classList.remove('open');
+                });
+                document.querySelectorAll('.multiselect-header').forEach(h => {
+                    h.classList.remove('active');
+                });
+            }
+        });
+        
+        console.log('✅ Custom multi-select initialized');
+    }
+    
+    /**
+     * Helper function to get selected values from custom multi-select
+     * @param {string} filterType - Type of filter ('area', 'maturity', 'owner')
+     * @returns {Array<string>} Array of selected values
+     */
+    function getSelectedValues(filterType) {
+        return Array.from(multiSelectState[filterType]);
+    }
+    
+    /**
+     * Populate custom multi-select dropdowns with unique values
      */
     function populateFilters() {
         const filterOptions = window.DataManager.getFilterOptions();
         
-        // Populate dropdowns
-        const areaSelect = document.getElementById('filter-area');
-        const maturitySelect = document.getElementById('filter-maturity');
-        const ownerSelect = document.getElementById('filter-owner');
-
-        areaSelect.innerHTML = '<option value="">All Areas</option>' + 
-            filterOptions.areas.map(a => `<option value="${window.Utils.escapeHtml(a)}">${window.Utils.escapeHtml(a)}</option>`).join('');
+        console.log('📋 Populating filters:', filterOptions);
         
-        maturitySelect.innerHTML = '<option value="">All Stages</option>' + 
-            filterOptions.maturities.map(m => `<option value="${window.Utils.escapeHtml(m)}">${window.Utils.escapeHtml(m)}</option>`).join('');
+        // Populate area dropdown
+        const areaDropdown = document.querySelector('.multiselect-dropdown[data-filter="area"]');
+        if (areaDropdown) {
+            areaDropdown.innerHTML = filterOptions.areas.map(area => `
+                <div class="multiselect-option" data-value="${window.Utils.escapeHtml(area)}">
+                    <input type="checkbox" id="area-${window.Utils.escapeHtml(area).replace(/\s+/g, '-')}" />
+                    <label for="area-${window.Utils.escapeHtml(area).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(area)}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            areaDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleMultiselectChange('area', this);
+                });
+            });
+        }
         
-        ownerSelect.innerHTML = '<option value="">All Owners</option>' + 
-            filterOptions.owners.map(o => `<option value="${window.Utils.escapeHtml(o)}">${window.Utils.escapeHtml(o)}</option>`).join('');
+        // Populate maturity dropdown
+        const maturityDropdown = document.querySelector('.multiselect-dropdown[data-filter="maturity"]');
+        if (maturityDropdown) {
+            maturityDropdown.innerHTML = filterOptions.maturities.map(maturity => `
+                <div class="multiselect-option" data-value="${window.Utils.escapeHtml(maturity)}">
+                    <input type="checkbox" id="maturity-${window.Utils.escapeHtml(maturity).replace(/\s+/g, '-')}" />
+                    <label for="maturity-${window.Utils.escapeHtml(maturity).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(maturity)}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            maturityDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleMultiselectChange('maturity', this);
+                });
+            });
+        }
+        
+        // Populate owner dropdown
+        const ownerDropdown = document.querySelector('.multiselect-dropdown[data-filter="owner"]');
+        if (ownerDropdown) {
+            ownerDropdown.innerHTML = filterOptions.owners.map(owner => `
+                <div class="multiselect-option" data-value="${window.Utils.escapeHtml(owner)}">
+                    <input type="checkbox" id="owner-${window.Utils.escapeHtml(owner).replace(/\s+/g, '-')}" />
+                    <label for="owner-${window.Utils.escapeHtml(owner).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(owner)}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            ownerDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleMultiselectChange('owner', this);
+                });
+            });
+        }
+        
+        console.log('✅ Filters populated');
+    }
+    
+    /**
+     * Handle multi-select option change
+     */
+    function handleMultiselectChange(filterType, optionElement) {
+        const value = optionElement.getAttribute('data-value');
+        const checkbox = optionElement.querySelector('input[type="checkbox"]');
+        
+        if (checkbox.checked) {
+            multiSelectState[filterType].add(value);
+            optionElement.classList.add('selected');
+        } else {
+            multiSelectState[filterType].delete(value);
+            optionElement.classList.remove('selected');
+        }
+        
+        console.log(`✓ ${filterType} selection:`, Array.from(multiSelectState[filterType]));
+        
+        // Apply filters immediately
+        setTimeout(() => {
+            applyFiltersFromUI();
+        }, 50); // Small delay to ensure checkbox state is updated
     }
     
     /**
@@ -223,19 +357,38 @@
      */
     function applyFiltersFromUI() {
         const searchTerm = document.getElementById('search-input').value;
-        const areaFilter = document.getElementById('filter-area').value;
-        const maturityFilter = document.getElementById('filter-maturity').value;
-        const ownerFilter = document.getElementById('filter-owner').value;
+        const areaFilters = getSelectedValues('area');
+        const maturityFilters = getSelectedValues('maturity');
+        const ownerFilters = getSelectedValues('owner');
         const sortBy = document.getElementById('sort-by').value;
         const belowTargetOnly = document.getElementById('filter-below-target').checked;
 
-        window.DataManager.applyFilters(searchTerm, areaFilter, maturityFilter, ownerFilter, sortBy, belowTargetOnly);
+        // Debug logging
+        console.log('🔍 Applying filters:', {
+            areas: areaFilters,
+            maturity: maturityFilters,
+            owners: ownerFilters,
+            search: searchTerm
+        });
+
+        console.log('📤 Sending to DataManager:', {
+            searchTerm,
+            areaFilters,
+            maturityFilters,
+            ownerFilters,
+            sortBy,
+            belowTargetOnly
+        });
+
+        window.DataManager.applyFilters(searchTerm, areaFilters, maturityFilters, ownerFilters, sortBy, belowTargetOnly);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
         
-        // Check if any filters are active
-        const hasActiveFilters = searchTerm || areaFilter || maturityFilter || ownerFilter || belowTargetOnly;
+        console.log('📥 Filtered data count:', filteredData.length);
+        
+        // Check if any filters are active (arrays need length check)
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || maturityFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data
@@ -258,12 +411,30 @@
      * Clear all filters
      */
     function clearFilters() {
-        document.getElementById('search-input').value = '';
-        document.getElementById('filter-area').value = '';
-        document.getElementById('filter-maturity').value = '';
-        document.getElementById('filter-owner').value = '';
-        document.getElementById('sort-by').value = '';
-        document.getElementById('filter-below-target').checked = false;
+        console.log('🧹 Clearing all filters...');
+        
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
+        
+        // Clear custom multi-select state
+        multiSelectState.area.clear();
+        multiSelectState.maturity.clear();
+        multiSelectState.owner.clear();
+        
+        // Uncheck all checkboxes and remove selected class
+        document.querySelectorAll('.multiselect-option').forEach(option => {
+            const checkbox = option.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = false;
+            option.classList.remove('selected');
+        });
+        
+        const sortBy = document.getElementById('sort-by');
+        if (sortBy) sortBy.value = '';
+        
+        const belowTarget = document.getElementById('filter-below-target');
+        if (belowTarget) belowTarget.checked = false;
+        
+        console.log('✅ Filters cleared, applying empty filters...');
         applyFiltersFromUI();
     }
     
@@ -281,11 +452,11 @@
             return;
         }
         
-        // Get current filter values
+        // Get current filter values (custom multi-select arrays)
         const searchTerm = document.getElementById('search-input')?.value || '';
-        const areaFilter = document.getElementById('filter-area')?.value || '';
-        const maturityFilter = document.getElementById('filter-maturity')?.value || '';
-        const ownerFilter = document.getElementById('filter-owner')?.value || '';
+        const areaFilters = getSelectedValues('area');
+        const maturityFilters = getSelectedValues('maturity');
+        const ownerFilters = getSelectedValues('owner');
         const sortBy = document.getElementById('sort-by')?.value || '';
         const belowTargetOnly = document.getElementById('filter-below-target')?.checked || false;
         
@@ -301,30 +472,39 @@
             });
         }
         
-        if (areaFilter) {
-            activeFilters.push({
-                type: 'area',
-                label: 'Area',
-                value: areaFilter,
-                icon: '🏢'
+        // Handle multiple area selections
+        if (areaFilters && areaFilters.length > 0) {
+            areaFilters.forEach(area => {
+                activeFilters.push({
+                    type: 'area',
+                    label: 'P&C Area',
+                    value: area,
+                    icon: '🏢'
+                });
             });
         }
         
-        if (maturityFilter) {
-            activeFilters.push({
-                type: 'maturity',
-                label: 'Maturity',
-                value: maturityFilter,
-                icon: '🔄'
+        // Handle multiple maturity selections
+        if (maturityFilters && maturityFilters.length > 0) {
+            maturityFilters.forEach(maturity => {
+                activeFilters.push({
+                    type: 'maturity',
+                    label: 'Journey Stage',
+                    value: maturity,
+                    icon: '🔄'
+                });
             });
         }
         
-        if (ownerFilter) {
-            activeFilters.push({
-                type: 'owner',
-                label: 'Owner',
-                value: ownerFilter,
-                icon: '👤'
+        // Handle multiple owner selections
+        if (ownerFilters && ownerFilters.length > 0) {
+            ownerFilters.forEach(owner => {
+                activeFilters.push({
+                    type: 'owner',
+                    label: 'Owner',
+                    value: owner,
+                    icon: '👤'
+                });
             });
         }
         
@@ -369,7 +549,7 @@
                     <strong>${window.Utils.escapeHtml(filter.label)}:</strong> ${window.Utils.escapeHtml(filter.value)}
                 </span>
                 <button class="filter-pill-remove" 
-                        onclick="window.UIManager.Filters.removeFilterPill('${filter.type}')" 
+                        onclick="window.UIManager.Filters.removeFilterPill('${filter.type}', '${window.Utils.escapeHtml(filter.value)}')" 
                         title="Remove ${window.Utils.escapeHtml(filter.label)} filter"
                         aria-label="Remove ${window.Utils.escapeHtml(filter.label)} filter">
                     ×
@@ -380,9 +560,11 @@
     
     /**
      * Remove a specific filter pill
-     * @param {string} filterType - Type of filter to remove
+     * For multi-select filters, this removes only the specific value, not all selections
+     * @param {string} filterType - Type of filter to remove (e.g., 'area', 'maturity', 'owner')
+     * @param {string} filterValue - Specific value to remove (for multi-select)
      */
-    function removeFilterPill(filterType) {
+    function removeFilterPill(filterType, filterValue) {
         // Clear the specific filter
         switch (filterType) {
             case 'search':
@@ -391,18 +573,33 @@
                 break;
                 
             case 'area':
-                const areaFilter = document.getElementById('filter-area');
-                if (areaFilter) areaFilter.value = '';
+                multiSelectState.area.delete(filterValue);
+                const areaOption = document.querySelector(`.multiselect-dropdown[data-filter="area"] .multiselect-option[data-value="${filterValue}"]`);
+                if (areaOption) {
+                    areaOption.classList.remove('selected');
+                    const checkbox = areaOption.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
                 break;
                 
             case 'maturity':
-                const maturityFilter = document.getElementById('filter-maturity');
-                if (maturityFilter) maturityFilter.value = '';
+                multiSelectState.maturity.delete(filterValue);
+                const maturityOption = document.querySelector(`.multiselect-dropdown[data-filter="maturity"] .multiselect-option[data-value="${filterValue}"]`);
+                if (maturityOption) {
+                    maturityOption.classList.remove('selected');
+                    const checkbox = maturityOption.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
                 break;
                 
             case 'owner':
-                const ownerFilter = document.getElementById('filter-owner');
-                if (ownerFilter) ownerFilter.value = '';
+                multiSelectState.owner.delete(filterValue);
+                const ownerOption = document.querySelector(`.multiselect-dropdown[data-filter="owner"] .multiselect-option[data-value="${filterValue}"]`);
+                if (ownerOption) {
+                    ownerOption.classList.remove('selected');
+                    const checkbox = ownerOption.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
                 break;
                 
             case 'below-target':

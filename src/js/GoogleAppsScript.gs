@@ -30,9 +30,12 @@ function doGet(e) {
       return getDescriptiveData();
     }
     
-    // Default: return all data from active spreadsheet
-    // Get the active spreadsheet
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    // Default: return all data from the "[2025] P&C Portfolio" sheet
+    // IMPORTANT: Always read from the source of truth sheet
+    const spreadsheetId = '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI';
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    const sheetName = '[2025] P&C Portfolio';
+    const sheet = spreadsheet.getSheetByName(sheetName);
     
     // Get all data from the sheet
     const data = sheet.getDataRange().getValues();
@@ -82,15 +85,13 @@ function getDescriptiveData() {
     // Open the specific spreadsheet by ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     
-    // Get the sheet by GID (1988087509)
-    // Note: We'll get the active sheet or you can specify by name
-    const sheet = spreadsheet.getActiveSheet();
-    
-    // Alternative: Get sheet by name if you know the name
-    // const sheet = spreadsheet.getSheetByName('Sheet1');
+    // IMPORTANT: Always read from the "[2025] P&C Portfolio" sheet
+    // This is the single source of truth for all portfolio data
+    const sheetName = '[2025] P&C Portfolio';
+    const sheet = spreadsheet.getSheetByName(sheetName);
     
     if (!sheet) {
-      throw new Error('Sheet not found in the specified spreadsheet');
+      throw new Error(`Sheet "${sheetName}" not found in the specified spreadsheet. Available sheets: ${spreadsheet.getSheets().map(s => s.getName()).join(', ')}`);
     }
     
     // Get all data from the sheet
@@ -101,7 +102,7 @@ function getDescriptiveData() {
     }
     
     // Get sheet metadata
-    const sheetName = sheet.getName();
+    const actualSheetName = sheet.getName();
     const sheetId = sheet.getSheetId();
     const lastRow = sheet.getLastRow();
     const lastColumn = sheet.getLastColumn();
@@ -110,7 +111,7 @@ function getDescriptiveData() {
     const jsonData = {
       success: true,
       spreadsheetId: spreadsheetId,
-      sheetName: sheetName,
+      sheetName: actualSheetName,
       sheetId: sheetId,
       data: data,
       metadata: {

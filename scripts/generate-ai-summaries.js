@@ -1,8 +1,14 @@
 /**
  * AI Batch Summarization Script for Problem Descriptions
  * 
- * This script reads problem descriptions from the CSV dataset and generates
- * 120-character summaries using AI via your existing LiteLLM configuration.
+ * This script fetches LIVE data from Google Sheets (via Apps Script) and generates
+ * 146-character summaries using AI via your existing LiteLLM configuration.
+ * 
+ * ✨ KEY FEATURE: Uses the SAME Apps Script URL as the web app!
+ *    - No more outdated CSV files
+ *    - Always uses latest data from Google Sheets
+ *    - Single source of truth
+ *    - Consistent with web app architecture
  * 
  * Uses the same LiteLLM endpoint and API key as your existing AI recommendations feature.
  * 
@@ -10,20 +16,19 @@
  *   node scripts/generate-ai-summaries.js
  * 
  * Requirements:
- *   npm install csv-parse node-fetch
+ *   npm install node-fetch (or Node 18+ with native fetch)
  * 
  * API Configuration:
- *   Uses existing LiteLLM config from your application (src/js/config.js)
- *   Endpoint: https://ist-prod-litellm.nullmplatform.com/chat/completions
- *   Model: openai/gpt-4o-mini (via LiteLLM proxy)
+ *   - Data Source: Apps Script Web App (same as web app)
+ *   - AI Endpoint: https://ist-prod-litellm.nullmplatform.com/chat/completions
+ *   - AI Model: openai/gpt-4o-mini (via LiteLLM proxy)
  * 
  * Output:
- *   data/ai-summaries.json - Contains original → summary mapparies
+ *   data/ai-summaries.json - Contains original → summary mappings
  */
 
 const fs = require('fs');
 const path = require('path');
-const { parse } = require('csv-parse/sync');
 
 // Use native fetch if available (Node 18+), otherwise use node-fetch
 const fetch = globalThis.fetch || require('node-fetch');
@@ -32,31 +37,32 @@ const fetch = globalThis.fetch || require('node-fetch');
 const configPath = path.join(__dirname, '../src/js/config.js');
 const configContent = fs.readFileSync(configPath, 'utf-8');
 
-// Extract LiteLLM configuration from config.js
+// Extract configuration from config.js (same source as web app!)
 const LITELLM_API_KEY = 'sk-Cv-XPJMj9Si0Hk8EB2KeLg'; // From your existing config
 const LITELLM_API_ENDPOINT = 'https://ist-prod-litellm.nullmplatform.com/chat/completions';
 const AI_MODEL = 'openai/gpt-4o-mini'; // Via LiteLLM proxy
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxIAPLG0ypxN_vAao2W81YwDKjbNwc8G37HslkG-6gFlHOdnNuXC0DFdLu7nvw0q6Zo/exec';
 
 // Configuration
 const CONFIG = {
-    csvPath: path.join(__dirname, '../data/[P&C Portfolio] Official Solution Portfolio Dataset - [2025] P&C Portfolio.csv'),
+    webAppUrl: WEB_APP_URL, // Use Apps Script instead of CSV! 🎉
     outputPath: path.join(__dirname, '../data/ai-summaries.json'),
     litellmApiKey: LITELLM_API_KEY,
     litellmEndpoint: LITELLM_API_ENDPOINT,
     aiModel: AI_MODEL,
-    maxChars: 140, // Increased from 120 to allow complete sentences with context
+    maxChars: 146, // Increased to 146 to capture ALL solutions without truncation
     dryRun: false // Set to true to test without API calls
 };
 
 // AI Prompt Template (Enhanced with Full Context)
 const PROMPT_TEMPLATE = `ROLE: You are a Senior Product Manager with extensive expertise in HR challenges and employee experience. You excel at translating complex business and employee challenges into sharp, clear problem statements using deep product knowledge and understanding of organizational pain points.
 
-TASK: Create a complete, scannable problem statement in 140 characters or less.
+TASK: Create a complete, scannable problem statement in 146 characters or less.
 
 RECOMMENDED STRUCTURE (use as a guide, not a strict template):
 "[The problem] affects [target group] in [context/situation], leading to [consequence/impact]"
 
-Feel free to adapt this structure as needed to create the clearest, most natural statement within 140 characters.
+Feel free to adapt this structure as needed to create the clearest, most natural statement within 146 characters.
 
 CONTEXT FROM DATASET:
 - Solution Name: {SOLUTION_NAME}
@@ -67,13 +73,14 @@ CONTEXT FROM DATASET:
 
 CRITICAL RULES:
 1. Use ALL context above to inform your summary (especially Target User and Journey Stage)
-2. Maximum 140 characters - COMPLETE sentences only, NO "..." truncation
+2. Maximum 146 characters - COMPLETE sentences only, NO "..." truncation
 3. The last character MUST be a period (.) or letter, NEVER "..."
-4. Use objective, professional language
-5. Be specific about WHO is affected (from Target User field when relevant)
-6. Be specific about IMPACT/CONSEQUENCE (from Problem Description)
-7. Make it scannable (2-second understanding)
-8. Prioritize clarity over strict adherence to structure
+4. The ENTIRE summary must be visible without CSS truncation - complete thoughts only
+5. Use objective, professional language
+6. Be specific about WHO is affected (from Target User field when relevant)
+7. Be specific about IMPACT/CONSEQUENCE (from Problem Description)
+8. Make it scannable (2-second understanding)
+9. Prioritize clarity over strict adherence to structure
 
 EXAMPLES:
 
@@ -83,6 +90,7 @@ Input:
 - Journey Stage: "Career Development"
 - Problem: "No structured talent brokering process for senior leaders results in suboptimal alignment of skills and roles."
 Output: "Lack of structured talent brokering for senior leaders causes skill-role misalignment, leading to underutilized talent and reduced productivity."
+(140 chars)
 
 Input:
 - Solution: "People Plan"
@@ -90,8 +98,9 @@ Input:
 - Journey Stage: "Strategic Planning"
 - Problem: "Absence of structured People Plan leads to inconsistencies in aligning HR strategies with business objectives."
 Output: "HRBPs lack unified People Plans in strategic planning, causing misalignment of HR strategies with business goals and missed talent opportunities."
+(146 chars - using full limit)
 
-YOUR SUMMARY (140 chars max, COMPLETE sentence ending with period):`;
+YOUR SUMMARY (146 chars max, COMPLETE sentence ending with period):`;
 
 /**
  * Call LiteLLM API to generate summary with full context (using your existing configuration)
@@ -160,10 +169,10 @@ async function generateSummary(context) {
             throw new Error('Summary truncated with "..." - this violates the prompt rules');
         }
         
-        // Validate length
+        // Validate length (strict: must be <= 146 chars for complete visibility)
         if (summary.length > CONFIG.maxChars) {
             console.warn(`⚠️  Summary too long (${summary.length} chars) - REJECTING: ${solutionName}`);
-            throw new Error(`Summary exceeds ${CONFIG.maxChars} characters`);
+            throw new Error(`Summary exceeds ${CONFIG.maxChars} characters - text must be fully visible without truncation`);
         }
         
         // Validate it's a complete sentence
@@ -180,7 +189,48 @@ async function generateSummary(context) {
 }
 
 /**
- * Process CSV and generate summaries
+ * Fetch data from Apps Script (same source as web app!)
+ */
+async function fetchPortfolioData() {
+    console.log('📡 Fetching latest data from Google Sheets (via Apps Script)...');
+    console.log(`URL: ${CONFIG.webAppUrl}\n`);
+    
+    const response = await fetch(CONFIG.webAppUrl);
+    
+    if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+    }
+    
+    const jsonData = await response.json();
+    
+    if (!jsonData.success || !jsonData.data) {
+        throw new Error('Invalid response from Apps Script');
+    }
+    
+    // Convert raw data array to records with headers
+    const rawData = jsonData.data;
+    if (rawData.length < 3) {
+        throw new Error('Not enough data in spreadsheet');
+    }
+    
+    // Skip metadata row (row 0), use row 1 as headers, data starts at row 2
+    const headers = rawData[1];
+    const records = rawData.slice(2).map(row => {
+        const record = {};
+        headers.forEach((header, index) => {
+            record[header] = row[index];
+        });
+        return record;
+    });
+    
+    console.log(`✅ Fetched ${records.length} solutions (last updated: ${jsonData.lastUpdated})\n`);
+    console.log(`📊 Data is LIVE from Google Sheets (no stale CSV!))\n`);
+    
+    return records;
+}
+
+/**
+ * Process data and generate summaries
  */
 async function processBatch() {
     console.log('🤖 AI Batch Summarization Starting...\n');
@@ -188,16 +238,8 @@ async function processBatch() {
     console.log(`Max chars: ${CONFIG.maxChars}`);
     console.log(`Dry run: ${CONFIG.dryRun}\n`);
     
-    // Read CSV
-    console.log('📁 Reading CSV dataset...');
-    const csvContent = fs.readFileSync(CONFIG.csvPath, 'utf-8');
-    const records = parse(csvContent, {
-        columns: true,
-        skip_empty_lines: true,
-        from_line: 2 // Skip metadata row (line 1), start from actual headers (line 2)
-    });
-    
-    console.log(`✅ Found ${records.length} solutions\n`);
+    // Fetch data from Apps Script (same as web app!)
+    const records = await fetchPortfolioData();
     
     // Process each solution
     const summaries = {};

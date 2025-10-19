@@ -2637,10 +2637,11 @@ select:focus {
     align-self: start; /* Align to top of flexible space */
 }
 
-/* Problem description - AI summaries are 120 chars max, no line clamp needed */
+/* Problem description - AI summaries are 146 chars max, NO line clamp - full text visible */
 .card-problem-extended {
-    /* Allow natural wrapping of 120-char AI summaries */
-    /* No overflow clipping - AI ensures complete sentences within 120 chars */
+    /* Allow natural wrapping of 146-char AI summaries */
+    /* No overflow clipping - AI ensures complete sentences within 146 chars */
+    /* ENTIRE text must be visible - this is a design requirement */
     word-wrap: break-word;
     overflow-wrap: break-word;
 }

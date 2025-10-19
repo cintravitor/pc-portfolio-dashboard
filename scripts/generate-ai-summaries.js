@@ -44,43 +44,61 @@ const CONFIG = {
     litellmApiKey: LITELLM_API_KEY,
     litellmEndpoint: LITELLM_API_ENDPOINT,
     aiModel: AI_MODEL,
-    maxChars: 120,
+    maxChars: 140, // Increased from 120 to allow complete sentences with context
     dryRun: false // Set to true to test without API calls
 };
 
-// AI Prompt Template
+// AI Prompt Template (Enhanced with Full Context)
 const PROMPT_TEMPLATE = `ROLE: You are a Senior Product Manager with extensive expertise in HR challenges and employee experience. You excel at translating complex business and employee challenges into sharp, clear problem statements using deep product knowledge and understanding of organizational pain points.
 
-TASK: Summarize the following problem statement in exactly 120 characters or less.
+TASK: Create a complete, scannable problem statement in 140 characters or less.
 
-RULES:
-- Keep the core business problem clear
-- Use objective, professional language
-- Focus on WHAT is broken, not HOW to fix it
-- Preserve critical context (who is affected, what area)
-- Remove redundant phrases like "The lack of", "affects directly", etc.
-- Make it scannable (someone should understand the issue in 2 seconds)
+RECOMMENDED STRUCTURE (use as a guide, not a strict template):
+"[The problem] affects [target group] in [context/situation], leading to [consequence/impact]"
+
+Feel free to adapt this structure as needed to create the clearest, most natural statement within 140 characters.
+
+CONTEXT FROM DATASET:
+- Solution Name: {SOLUTION_NAME}
+- Target User: {TARGET_USER}
+- Main Journey Stage: {JOURNEY_STAGE}
+- Is Regulatory?: {IS_REGULATORY}
+- Problem Description: {PROBLEM_TEXT}
+
+CRITICAL RULES:
+1. Use ALL context above to inform your summary (especially Target User and Journey Stage)
+2. Maximum 140 characters - COMPLETE sentences only, NO "..." truncation
+3. The last character MUST be a period (.) or letter, NEVER "..."
+4. Use objective, professional language
+5. Be specific about WHO is affected (from Target User field when relevant)
+6. Be specific about IMPACT/CONSEQUENCE (from Problem Description)
+7. Make it scannable (2-second understanding)
+8. Prioritize clarity over strict adherence to structure
 
 EXAMPLES:
 
-Original: "The inability to effortlessly track and register the outcome of calibration discussions affects directly HIRBPs (and indirectly all Nubankers) as they are not able to track calibration conversations and decisions, leading to inefficiencies and frustration as they struggle to resolve their inquiries, while also navigating through multiple knowledge hubs and help centers."
-Summary: "No centralized tracking for calibration discussions, causing inefficiencies and frustration for HRBPs navigating multiple systems."
+Input:
+- Solution: "M5+ Talent Brokering"
+- Target User: "Senior Leaders (M5+)"
+- Journey Stage: "Career Development"
+- Problem: "No structured talent brokering process for senior leaders results in suboptimal alignment of skills and roles."
+Output: "Lack of structured talent brokering for senior leaders causes skill-role misalignment, leading to underutilized talent and reduced productivity."
 
-Original: "Operational inefficiencies when consulting and executing their transactions, mainly with Oracle, impacting the system and performing many actions involved time-consuming steps and multiple clicks. Users also struggled with the non-intuitive path into the system and not the best user experience"
-Summary: "Oracle system inefficiencies: time-consuming multi-step processes with poor UX frustrate users during transactions."
+Input:
+- Solution: "People Plan"
+- Target User: "HRBPs"
+- Journey Stage: "Strategic Planning"
+- Problem: "Absence of structured People Plan leads to inconsistencies in aligning HR strategies with business objectives."
+Output: "HRBPs lack unified People Plans in strategic planning, causing misalignment of HR strategies with business goals and missed talent opportunities."
 
-Original: "With many portals and slack channels, Nubankers lacked a trustworthy place to open tickets, ask questions, and get support, creating an ambient of non official replies and lack of data follow up."
-Summary: "No centralized support platform: scattered portals/Slack channels create unreliable responses and poor data tracking."
-
-PROBLEM DESCRIPTION TO SUMMARIZE:
-{PROBLEM_TEXT}
-
-YOUR SUMMARY (120 chars max):`;
+YOUR SUMMARY (140 chars max, COMPLETE sentence ending with period):`;
 
 /**
- * Call LiteLLM API to generate summary (using your existing configuration)
+ * Call LiteLLM API to generate summary with full context (using your existing configuration)
  */
-async function generateSummary(problemText, solutionName) {
+async function generateSummary(context) {
+    const { problemText, solutionName, targetUser, journeyStage, isRegulatory } = context;
+    
     if (CONFIG.dryRun) {
         console.log(`[DRY RUN] Would summarize: ${solutionName}`);
         return problemText.substring(0, 120); // Mock summary
@@ -92,7 +110,13 @@ async function generateSummary(problemText, solutionName) {
             throw new Error('LiteLLM API key not configured');
         }
         
-        const prompt = PROMPT_TEMPLATE.replace('{PROBLEM_TEXT}', problemText);
+        // Replace placeholders with full context
+        const prompt = PROMPT_TEMPLATE
+            .replace('{SOLUTION_NAME}', solutionName || 'N/A')
+            .replace('{TARGET_USER}', targetUser || 'N/A')
+            .replace('{JOURNEY_STAGE}', journeyStage || 'N/A')
+            .replace('{IS_REGULATORY}', isRegulatory || 'No')
+            .replace('{PROBLEM_TEXT}', problemText);
         
         const requestBody = {
             model: CONFIG.aiModel,
@@ -123,12 +147,28 @@ async function generateSummary(problemText, solutionName) {
             throw new Error('Invalid response structure from LiteLLM');
         }
         
-        const summary = data.choices[0].message.content.trim();
+        let summary = data.choices[0].message.content.trim();
+        
+        // Remove quotes if AI wrapped the response
+        if (summary.startsWith('"') && summary.endsWith('"')) {
+            summary = summary.slice(1, -1);
+        }
+        
+        // CRITICAL VALIDATION: Reject truncated summaries
+        if (summary.endsWith('...')) {
+            console.warn(`⚠️  Summary truncated with "..." - REJECTING: ${solutionName}`);
+            throw new Error('Summary truncated with "..." - this violates the prompt rules');
+        }
         
         // Validate length
         if (summary.length > CONFIG.maxChars) {
-            console.warn(`⚠️  Summary too long (${summary.length} chars) for: ${solutionName}`);
-            return summary.substring(0, CONFIG.maxChars - 3) + '...';
+            console.warn(`⚠️  Summary too long (${summary.length} chars) - REJECTING: ${solutionName}`);
+            throw new Error(`Summary exceeds ${CONFIG.maxChars} characters`);
+        }
+        
+        // Validate it's a complete sentence
+        if (summary.length < 20) {
+            console.warn(`⚠️  Summary too short (${summary.length} chars) - might be incomplete: ${solutionName}`);
         }
         
         return summary;
@@ -168,6 +208,9 @@ async function processBatch() {
     for (const record of records) {
         const solutionName = record['Solution name'];
         const problemText = record['Which Problem it Solves'];
+        const targetUser = record['Target User'];
+        const journeyStage = record['Main Journey Stage Impacted'];
+        const isRegulatory = record['Is a regulatory demand?'];
         
         if (!solutionName || !problemText) {
             console.log(`⏭️  Skipping: Missing name or problem text`);
@@ -176,21 +219,37 @@ async function processBatch() {
         
         processedCount++;
         console.log(`[${processedCount}/${records.length}] Processing: ${solutionName.substring(0, 50)}...`);
+        console.log(`   Target User: ${targetUser || 'N/A'}`);
+        console.log(`   Journey Stage: ${journeyStage || 'N/A'}`);
         
-        const summary = await generateSummary(problemText, solutionName);
+        // Pass full context to AI
+        const context = {
+            solutionName,
+            problemText,
+            targetUser,
+            journeyStage,
+            isRegulatory
+        };
+        
+        const summary = await generateSummary(context);
         
         if (summary) {
             summaries[solutionName] = {
                 original: problemText,
                 summary: summary,
                 length: summary.length,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                context: {
+                    targetUser: targetUser || 'N/A',
+                    journeyStage: journeyStage || 'N/A',
+                    isRegulatory: isRegulatory || 'No'
+                }
             };
             successCount++;
             console.log(`✅ Summary (${summary.length} chars): ${summary}\n`);
         } else {
             errorCount++;
-            console.log(`❌ Failed to generate summary\n`);
+            console.log(`❌ Failed to generate summary (will use line-clamped original as fallback)\n`);
         }
         
         // Rate limiting: wait 100ms between requests

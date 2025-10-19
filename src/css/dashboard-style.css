@@ -2637,13 +2637,12 @@ select:focus {
     align-self: start; /* Align to top of flexible space */
 }
 
-/* Problem description - line clamp applied here */
+/* Problem description - AI summaries are 120 chars max, no line clamp needed */
 .card-problem-extended {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 5; /* Maximum 5 lines */
-    -webkit-box-orient: vertical;
-    line-clamp: 5;
+    /* Allow natural wrapping of 120-char AI summaries */
+    /* No overflow clipping - AI ensures complete sentences within 120 chars */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Attribution stays outside line-clamp (in wrapper, below extended text) */

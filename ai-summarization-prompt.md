@@ -4,102 +4,122 @@
 You are summarizing problem statements for a People & Culture (P&C) portfolio dashboard. Each solution addresses a specific operational challenge for HRBPs, Talent Acquisition, People Analytics, and other P&C functions at Nubank.
 
 ## Task
-Generate a concise, scannable summary of each problem description that:
-1. **Stays within 120 characters maximum** (hard limit)
-2. **Preserves the core business problem** (what's broken or inefficient)
-3. **Uses professional, objective language** (no marketing fluff)
-4. **Focuses on the pain point**, not the solution
-5. **Maintains business context** (HRBP, TA, managers, employees, etc.)
+Generate a concise, scannable summary that:
+1. **Stays within 140 characters maximum** (hard limit - must end naturally, NO truncation)
+2. **Uses this structure as a guide** (not strict): "[The problem] affects [target group] in [context/situation], leading to [consequence/impact]"
+3. **Uses ALL available context** from dataset (Solution Name, Target User, Journey Stage, Regulatory Demand, Problem Description)
+4. **Uses professional, objective language** (no marketing fluff)
+5. **Focuses on the pain point**, not the solution
+6. **Completes the sentence naturally** (absolutely NO "...", NO cut-offs, NO mid-word truncation)
+7. **Prioritizes clarity** over strict adherence to structure
 
-## Prompt Template
+## Enhanced Prompt Template
 
 ```
 ROLE: You are a Senior Product Manager with extensive expertise in HR challenges and employee experience. You excel at translating complex business and employee challenges into sharp, clear problem statements using deep product knowledge and understanding of organizational pain points.
 
-TASK: Summarize the following problem statement in exactly 120 characters or less.
+TASK: Create a complete, scannable problem statement in 140 characters or less.
 
-RULES:
-- Keep the core business problem clear
-- Use objective, professional language
-- Focus on WHAT is broken, not HOW to fix it
-- Preserve critical context (who is affected, what area)
-- Remove redundant phrases like "The lack of", "affects directly", etc.
-- Make it scannable (someone should understand the issue in 2 seconds)
+RECOMMENDED STRUCTURE (use as a guide, not a strict template):
+"[The problem] affects [target group] in [context/situation], leading to [consequence/impact]"
+
+Feel free to adapt this structure as needed to create the clearest, most natural statement within 140 characters.
+
+CONTEXT FROM DATASET:
+- Solution Name: {SOLUTION_NAME}
+- Target User: {TARGET_USER}
+- Main Journey Stage: {JOURNEY_STAGE}
+- Is Regulatory?: {IS_REGULATORY}
+- Problem Description: {PROBLEM_TEXT}
+
+CRITICAL RULES:
+1. Use ALL context above to inform your summary (especially Target User and Journey Stage)
+2. Maximum 140 characters - COMPLETE sentences only, NO "..." truncation
+3. The last character MUST be a period (.) or letter, NEVER "..."
+4. Use objective, professional language
+5. Be specific about WHO is affected (from Target User field when relevant)
+6. Be specific about IMPACT/CONSEQUENCE (from Problem Description)
+7. Make it scannable (2-second understanding)
+8. Prioritize clarity over strict adherence to structure
 
 EXAMPLES:
 
-Original: "The inability to effortlessly track and register the outcome of calibration discussions affects directly HIRBPs (and indirectly all Nubankers) as they are not able to track calibration conversations and decisions, leading to inefficiencies and frustration as they struggle to resolve their inquiries, while also navigating through multiple knowledge hubs and help centers."
+Input:
+- Solution: "M5+ Talent Brokering"
+- Target User: "Senior Leaders (M5+)"
+- Journey Stage: "Career Development"
+- Problem: "No structured talent brokering process for senior leaders results in suboptimal alignment of skills and roles."
 
-Summary: "No centralized tracking for calibration discussions, causing inefficiencies and frustration for HRBPs navigating multiple systems."
-(119 chars)
+Output: "Lack of structured talent brokering for senior leaders causes skill-role misalignment, leading to underutilized talent and reduced productivity."
+(140 chars - COMPLETE SENTENCE, no truncation)
 
-Original: "Operational inefficiencies when consulting and executing their transactions, mainly with Oracle, impacting the system and performing many actions involved time-consuming steps and multiple clicks. Users also struggled with the non-intuitive path into the system and not the best user experience"
+Input:
+- Solution: "People Plan"
+- Target User: "HRBPs"
+- Journey Stage: "Strategic Planning"
+- Problem: "Absence of structured People Plan leads to inconsistencies in aligning HR strategies with business objectives."
 
-Summary: "Oracle system inefficiencies: time-consuming multi-step processes with poor UX frustrate users during transactions."
-(118 chars)
+Output: "HRBPs lack unified People Plans in strategic planning, causing misalignment of HR strategies with business goals and missed talent opportunities."
+(140 chars - COMPLETE SENTENCE, no truncation)
 
-Original: "With many portals and slack channels, Nubankers lacked a trustworthy place to open tickets, ask questions, and get support, creating an ambient of non official replies and lack of data follow up."
-
-Summary: "No centralized support platform: scattered portals/Slack channels create unreliable responses and poor data tracking."
-(119 chars)
-
-Original: "Operational inefficiencies in sending documentation by email and inserting hiring data manual, generating inconsistencies and delays in the onboarding process."
-
-Summary: "Manual documentation and data entry in onboarding causes inefficiencies, inconsistencies, and delays."
-(102 chars)
-
-PROBLEM DESCRIPTION TO SUMMARIZE:
-{PROBLEM_TEXT}
-
-YOUR SUMMARY (120 chars max):
+YOUR SUMMARY (140 chars max, COMPLETE sentence ending with period):
 ```
 
 ## Quality Criteria for Review
 
 After AI generates summaries, verify each one meets:
-- ✅ **Length:** ≤ 120 characters
+- ✅ **Length:** ≤ 140 characters
+- ✅ **Structure:** Generally follows "[problem] affects [who] in [context], leading to [impact]" (flexible)
+- ✅ **Complete:** NO "..." truncation, ends with period or letter
+- ✅ **Context-Rich:** Uses Target User and Journey Stage when relevant
 - ✅ **Clarity:** Problem is immediately understandable
 - ✅ **Accuracy:** Core issue preserved from original
-- ✅ **Context:** Key stakeholders/systems mentioned if critical
 - ✅ **Professional:** No casual language or fluff
 - ✅ **Scannable:** Can be understood in 2-3 seconds
 
 ## Batch Processing Approach
 
-1. **Input:** Read problem descriptions from CSV
-2. **Process:** Send each to AI with prompt above
+1. **Input:** Read ALL fields from CSV (Name, Target User, Journey Stage, Regulatory, Problem)
+2. **Process:** Send complete context to AI with enhanced prompt above
 3. **Output:** Generate JSON file with mappings:
    ```json
    {
      "AskNu": {
        "original": "The inability to effortlessly track...",
-       "summary": "No centralized tracking for calibration...",
-       "length": 119
+       "summary": "HRBPs lack centralized calibration tracking in performance management, causing inefficiencies.",
+       "length": 98,
+       "context": {
+         "target_user": "HRBPs",
+         "journey_stage": "Performance Management"
+       }
      }
    }
    ```
-4. **Review:** You manually review JSON file
+4. **Review:** Manually review JSON file for truncations
 5. **Integrate:** Update code to use summaries
 6. **Fallback:** Keep original if summary missing
 
-## Cost Estimate (for your approval)
+## Cost Estimate
 
-Assuming ~50 solutions × 200 chars avg = 10,000 chars
-- **OpenAI GPT-4o-mini:** ~$0.01 (cheap, good quality)
+Assuming ~90 solutions × 300 chars avg context = 27,000 chars
+- **OpenAI GPT-4o-mini:** ~$0.003 (cheap, good quality) ✅ CURRENT
 - **Claude Haiku:** ~$0.02 (very cheap, excellent)
 - **Gemini Flash:** ~$0.005 (cheapest, good)
 
-**Recommendation:** Use GPT-4o-mini or Claude Haiku for best quality/cost balance.
+**Current:** Using GPT-4o-mini via LiteLLM
 
 ---
 
-## ⚠️ IMPORTANT: Review Before Execution
+## ⚠️ IMPORTANT: No Truncation Policy
 
-**Please review the prompt above and confirm:**
-1. Is the prompt aligned with your business context?
-2. Are the example summaries at the right level of detail?
-3. Should I add/remove any instructions?
-4. Which AI model do you prefer? (GPT-4o-mini recommended)
+**The AI MUST generate COMPLETE sentences within 140 characters.**
 
-Once you approve, I'll implement the batch script and generate summaries for your review.
+- ❌ BAD: "No structured talent brokering for senior leaders causes skill-role misalignment, leading to underutilization and red..."
+- ✅ GOOD: "Lack of structured talent brokering for senior leaders causes skill-role misalignment, leading to underutilized talent and reduced productivity."
+
+With 140 characters, the AI has room to:
+1. Include complete context (who is affected)
+2. State the problem clearly
+3. Describe the impact fully
+4. End with a natural period (no truncation)
 

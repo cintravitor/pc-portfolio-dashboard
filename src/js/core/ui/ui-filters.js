@@ -75,6 +75,9 @@
                 filterByMissingMetric('BI');
             });
         }
+        
+        // Add console logging for debugging multi-select
+        console.log('✅ Data quality filters and multi-select setup complete');
     }
     
     /**
@@ -241,6 +244,14 @@
         const ownerFilters = getSelectedValues(document.getElementById('filter-owner'));
         const sortBy = document.getElementById('sort-by').value;
         const belowTargetOnly = document.getElementById('filter-below-target').checked;
+
+        // Debug logging
+        console.log('🔍 Applying filters:', {
+            areas: areaFilters,
+            maturity: maturityFilters,
+            owners: ownerFilters,
+            search: searchTerm
+        });
 
         window.DataManager.applyFilters(searchTerm, areaFilters, maturityFilters, ownerFilters, sortBy, belowTargetOnly);
         

@@ -894,33 +894,53 @@ select:focus {
 
 /* Multi-select filter dropdowns */
 .filters-container select[multiple] {
-    min-height: 42px;
-    max-height: 42px;
-    overflow-y: hidden;
-    cursor: pointer;
-}
-
-.filters-container select[multiple]:focus {
-    max-height: 200px;
+    min-width: 160px;
+    min-height: 160px;
+    padding: 0.5rem;
     overflow-y: auto;
-    transition: max-height 0.2s ease;
+    cursor: pointer;
+    /* Center text for default option */
+    text-align: center;
+    text-align-last: center;
 }
 
 .filters-container select[multiple] option {
-    padding: 8px 12px;
+    padding: 10px 14px;
     cursor: pointer;
-    border-radius: 4px;
-    margin: 2px 4px;
+    border-radius: 6px;
+    margin: 3px 0;
+    text-align: left;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.filters-container select[multiple] option:first-child {
+    /* Default option styling */
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    cursor: default;
+    background: transparent;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+    padding-bottom: 12px;
 }
 
 .filters-container select[multiple] option:checked {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: white !important;
-    font-weight: 500;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    transform: scale(1.02);
 }
 
-.filters-container select[multiple] option:hover {
-    background: rgba(139, 92, 246, 0.1);
+.filters-container select[multiple] option:hover:not(:first-child) {
+    background: rgba(139, 92, 246, 0.15);
+    transform: translateX(2px);
+}
+
+.filters-container select[multiple] option:active {
+    transform: scale(0.98);
 }
 
 /* Filter Checkbox */

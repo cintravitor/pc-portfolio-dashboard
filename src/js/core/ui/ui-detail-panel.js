@@ -10,185 +10,122 @@
     'use strict';
     
     /**
-     * Generate Metric Automation Section HTML
-     * Determines if metrics are automated or manual based on data presence and patterns
+     * Generate performance-based recommendation for a metric
+     * Analyzes metric performance against target and provides actionable insights
      */
-    function generateMetricAutomationSection(product) {
-        // Helper function to determine if a metric has data extraction
-        const determineDataExtraction = (monthlyData, metricName) => {
-            if (!Array.isArray(monthlyData) || monthlyData.length === 0) {
-                return { status: 'No Data', class: 'status-empty', icon: '❌' };
-            }
-            
-            // Count valid data points
-            let validDataPoints = 0;
-            for (let i = 0; i < monthlyData.length; i++) {
-                const val = monthlyData[i];
-                if (val && val !== '' && val !== 'N/A' && val !== '-') {
-                    validDataPoints++;
+    function generatePerformanceRecommendation(monthlyData, targetData, metricName, metricType) {
+        // Check if we have data
+        if (!Array.isArray(monthlyData) || monthlyData.length === 0) {
+            return `
+                <div class="automation-recommendation info">
+                    <div class="recommendation-icon">📊</div>
+                    <div class="recommendation-text">No data available for this metric. Establish baseline measurements to track ${metricType === 'UX' ? 'user experience' : 'business impact'}.</div>
+                </div>
+            `;
+        }
+        
+        // Check if target data exists at all
+        const hasTargetArray = Array.isArray(targetData) && targetData.length > 0;
+        let hasAnyValidTarget = false;
+        
+        if (hasTargetArray) {
+            // Check if there's at least one valid target value
+            for (let i = 0; i < targetData.length; i++) {
+                const targetVal = targetData[i];
+                if (targetVal && targetVal !== '' && targetVal !== 'N/A' && targetVal !== '-' && !isNaN(parseFloat(targetVal))) {
+                    hasAnyValidTarget = true;
+                    break;
                 }
             }
-            
-            // Determine automation level based on data consistency
-            // Assume automated if more than 6 months of data present
-            if (validDataPoints >= 6) {
-                return { 
-                    status: 'Automated', 
-                    class: 'status-automated', 
-                    icon: '✅',
-                    detail: `${validDataPoints} months of data collected`
-                };
-            } else if (validDataPoints >= 3) {
-                return { 
-                    status: 'Semi-Automated', 
-                    class: 'status-semi-automated', 
-                    icon: '⚙️',
-                    detail: `${validDataPoints} months of data collected`
-                };
-            } else if (validDataPoints > 0) {
-                return { 
-                    status: 'Manual', 
-                    class: 'status-manual', 
-                    icon: '✏️',
-                    detail: `${validDataPoints} months of data collected`
-                };
-            } else {
-                return { 
-                    status: 'No Data', 
-                    class: 'status-empty', 
-                    icon: '❌',
-                    detail: 'No data collected'
-                };
-            }
-        };
-        
-        const uxAutomation = determineDataExtraction(product.monthlyUX, product.keyMetricUX);
-        const biAutomation = determineDataExtraction(product.monthlyBI, product.keyMetricBI);
-        
-        // Overall automation score
-        let overallStatus = 'Not Automated';
-        let overallClass = 'status-empty';
-        let overallIcon = '❌';
-        
-        if (uxAutomation.status === 'Automated' && biAutomation.status === 'Automated') {
-            overallStatus = 'Fully Automated';
-            overallClass = 'status-automated';
-            overallIcon = '✅';
-        } else if (uxAutomation.status === 'Automated' || biAutomation.status === 'Automated' || 
-                   uxAutomation.status === 'Semi-Automated' || biAutomation.status === 'Semi-Automated') {
-            overallStatus = 'Partially Automated';
-            overallClass = 'status-semi-automated';
-            overallIcon = '⚙️';
-        } else if (uxAutomation.status === 'Manual' || biAutomation.status === 'Manual') {
-            overallStatus = 'Manual Collection';
-            overallClass = 'status-manual';
-            overallIcon = '✏️';
         }
         
-        return `
-            <div class="detail-section">
-                <div class="detail-section-title">Data Extraction Status</div>
-                
-                <!-- Overall Automation Status -->
-                <div class="automation-overall-status ${overallClass}">
-                    <div class="automation-status-icon">${overallIcon}</div>
-                    <div class="automation-status-content">
-                        <div class="automation-status-label">Overall Automation</div>
-                        <div class="automation-status-value">${overallStatus}</div>
-                    </div>
-                </div>
-                
-                <!-- UX Metric Automation -->
-                <div class="detail-field">
-                    <div class="detail-field-label">
-                        User Experience Metric
-                        ${product.keyMetricUX ? `<span class="metric-name">(${window.Utils.escapeHtml(product.keyMetricUX)})</span>` : ''}
-                    </div>
-                    <div class="automation-status-row">
-                        <div class="automation-badge ${uxAutomation.class}">
-                            <span class="automation-icon">${uxAutomation.icon}</span>
-                            <span class="automation-text">${uxAutomation.status}</span>
-                        </div>
-                        <div class="automation-detail">${uxAutomation.detail}</div>
-                    </div>
-                </div>
-                
-                <!-- BI Metric Automation -->
-                <div class="detail-field">
-                    <div class="detail-field-label">
-                        Business Impact Metric
-                        ${product.keyMetricBI ? `<span class="metric-name">(${window.Utils.escapeHtml(product.keyMetricBI)})</span>` : ''}
-                    </div>
-                    <div class="automation-status-row">
-                        <div class="automation-badge ${biAutomation.class}">
-                            <span class="automation-icon">${biAutomation.icon}</span>
-                            <span class="automation-text">${biAutomation.status}</span>
-                        </div>
-                        <div class="automation-detail">${biAutomation.detail}</div>
-                    </div>
-                </div>
-                
-                <!-- Automation Recommendations -->
-                <div class="automation-recommendations">
-                    <div class="detail-section-title" style="margin-top: 1.5rem; margin-bottom: 0.75rem;">💡 Recommendations</div>
-                    ${generateAutomationRecommendations(uxAutomation, biAutomation, overallStatus)}
-                </div>
-            </div>
-        `;
-    }
-    
-    /**
-     * Generate automation recommendations based on current status
-     */
-    function generateAutomationRecommendations(uxAutomation, biAutomation, overallStatus) {
-        const recommendations = [];
+        // Count valid data points and analyze performance
+        let validDataPoints = 0;
+        let belowTargetCount = 0;
+        let aboveTargetCount = 0;
         
-        if (overallStatus === 'Fully Automated') {
-            recommendations.push({
-                icon: '✅',
-                text: 'Excellent! Both metrics are fully automated. Continue monitoring data quality.',
-                type: 'success'
-            });
+        for (let i = 0; i < monthlyData.length; i++) {
+            const actualVal = monthlyData[i];
+            const targetVal = targetData && targetData[i] ? targetData[i] : null;
+            
+            if (actualVal && actualVal !== '' && actualVal !== 'N/A' && actualVal !== '-') {
+                validDataPoints++;
+                
+                if (targetVal && targetVal !== '' && targetVal !== 'N/A' && targetVal !== '-') {
+                    const actual = parseFloat(actualVal);
+                    const target = parseFloat(targetVal);
+                    
+                    if (!isNaN(actual) && !isNaN(target)) {
+                        if (actual < target) {
+                            belowTargetCount++;
+                        } else if (actual >= target) {
+                            aboveTargetCount++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // No valid data points
+        if (validDataPoints === 0) {
+            return `
+                <div class="automation-recommendation info">
+                    <div class="recommendation-icon">📊</div>
+                    <div class="recommendation-text">No data available for this metric. Establish baseline measurements to track ${metricType === 'UX' ? 'user experience' : 'business impact'}.</div>
+                </div>
+            `;
+        }
+        
+        // Has data but no valid targets at all
+        if (!hasAnyValidTarget) {
+            return `
+                <div class="automation-recommendation info">
+                    <div class="recommendation-icon">🎯</div>
+                    <div class="recommendation-text">Data is being tracked. Consider setting target values to measure performance against goals.</div>
+                </div>
+            `;
+        }
+        
+        // Has targets but no successful comparisons (e.g., data and targets don't align)
+        const totalComparisons = belowTargetCount + aboveTargetCount;
+        
+        if (totalComparisons === 0) {
+            return `
+                <div class="automation-recommendation info">
+                    <div class="recommendation-icon">📊</div>
+                    <div class="recommendation-text">Metric data is available, but performance comparison is limited. Ensure actual and target values align for the same time periods.</div>
+                </div>
+            `;
+        }
+        
+        // Calculate performance ratio
+        const belowTargetRatio = belowTargetCount / totalComparisons;
+        
+        if (belowTargetRatio >= 0.6) {
+            // Consistently below target
+            return `
+                <div class="automation-recommendation warning">
+                    <div class="recommendation-icon">⚠️</div>
+                    <div class="recommendation-text">${metricType === 'UX' ? 'User experience' : 'Business impact'} metric is frequently below target. Consider improvement initiatives to address performance gaps.</div>
+                </div>
+            `;
+        } else if (belowTargetRatio >= 0.3) {
+            // Mixed performance
+            return `
+                <div class="automation-recommendation info">
+                    <div class="recommendation-icon">📈</div>
+                    <div class="recommendation-text">Performance is variable. Review months below target and identify patterns or opportunities for optimization.</div>
+                </div>
+            `;
         } else {
-            if (uxAutomation.status === 'No Data' || uxAutomation.status === 'Manual') {
-                recommendations.push({
-                    icon: '🎯',
-                    text: 'Consider automating UX metric collection to improve data consistency and reduce manual effort.',
-                    type: 'warning'
-                });
-            }
-            
-            if (biAutomation.status === 'No Data' || biAutomation.status === 'Manual') {
-                recommendations.push({
-                    icon: '📊',
-                    text: 'Consider automating Business Impact metric collection for more reliable tracking.',
-                    type: 'warning'
-                });
-            }
-            
-            if (uxAutomation.status === 'No Data' && biAutomation.status === 'No Data') {
-                recommendations.push({
-                    icon: '⚠️',
-                    text: 'No metrics are being collected. Establish baseline measurements and set up data collection pipelines.',
-                    type: 'error'
-                });
-            }
+            // Meeting or exceeding target
+            return `
+                <div class="automation-recommendation success">
+                    <div class="recommendation-icon">✅</div>
+                    <div class="recommendation-text">Great work! ${metricType === 'UX' ? 'User experience' : 'Business impact'} metric is consistently meeting or exceeding target. Keep up the momentum.</div>
+                </div>
+            `;
         }
-        
-        if (recommendations.length === 0) {
-            recommendations.push({
-                icon: '👍',
-                text: 'Metrics are being collected regularly. Monitor for any gaps in data collection.',
-                type: 'info'
-            });
-        }
-        
-        return recommendations.map(rec => `
-            <div class="automation-recommendation ${rec.type}">
-                <div class="recommendation-icon">${rec.icon}</div>
-                <div class="recommendation-text">${rec.text}</div>
-            </div>
-        `).join('');
     }
     
     /**
@@ -299,13 +236,13 @@
                     </div>
                 </div>
 
-                <!-- SECTION 2: Metrics & Performance (Collapsible, Collapsed by Default) -->
+                <!-- SECTION 2: Metrics (Collapsible, Collapsed by Default) -->
                 <div class="detail-collapsible-section">
                     <div class="detail-collapsible-header collapsed" data-section="metrics">
                         <div class="collapsible-header-content">
                             <span class="collapsible-icon">📊</span>
-                            <h3 class="collapsible-title">Metrics & Performance</h3>
-                            <span class="collapsible-subtitle">KPI tracking and trend charts</span>
+                            <h3 class="collapsible-title">Metrics</h3>
+                            <span class="collapsible-subtitle">Track performance and take action</span>
                         </div>
                         <span class="collapsible-toggle">+</span>
                     </div>
@@ -319,6 +256,8 @@
                                     <canvas id="chart-ux"></canvas>
                                 </div>
                             </div>
+                            <!-- UX Performance Recommendation -->
+                            ${generatePerformanceRecommendation(product.monthlyUX, product.targetUX, product.keyMetricUX, 'UX')}
                         </div>
 
                         <!-- Key Metrics - BI -->
@@ -330,10 +269,9 @@
                                     <canvas id="chart-bi"></canvas>
                                 </div>
                             </div>
+                            <!-- BI Performance Recommendation -->
+                            ${generatePerformanceRecommendation(product.monthlyBI, product.targetBI, product.keyMetricBI, 'BI')}
                         </div>
-                        
-                        <!-- Metric Automation Information -->
-                        ${generateMetricAutomationSection(product)}
                     </div>
                 </div>
             </div>

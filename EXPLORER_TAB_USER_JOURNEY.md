@@ -238,8 +238,8 @@ Slides in from right when a product card is clicked.
   - Contextual note (💡) explaining platform importance
   - Warning (⚠️) if platform not specified
 
-**Section 2: Metrics & Performance (Collapsed by Default)**
-- **Section Header**: Icon + title + subtitle + toggle (−/+)
+**Section 2: Metrics (Collapsed by Default)**
+- **Section Header**: Icon + title "Metrics" + subtitle "Track performance and take action" + toggle (−/+)
 - **UX Metrics Chart**:
   - Section title: "Key Metrics - User Experience"
   - Metric name as field label
@@ -248,28 +248,20 @@ Slides in from right when a product card is clicked.
   - Actual values as solid line
   - Target as dashed line
   - Interactive tooltips on hover
+  - **Performance Recommendation**: Contextual recommendation based on UX metric performance
+    - Analyzes if metric is below/above/meeting target
+    - Icon + text
+    - Color-coded by performance (success/info/warning/error)
   
 - **BI Metrics Chart**:
   - Section title: "Key Metrics - Business Impact"
   - Metric name as field label
   - Canvas element with Chart.js line chart
   - Same format as UX chart
-  
-- **Data Extraction Status**:
-  - Overall automation status card:
-    - Icon (✅ Fully Automated, ⚙️ Partial, ✏️ Manual, ❌ None)
-    - Status text
-    - Color-coded background
-  - UX Metric automation:
-    - Metric name
-    - Status badge (Automated/Semi-Automated/Manual/No Data)
-    - Data collection detail (e.g., "8 months of data collected")
-  - BI Metric automation:
-    - Same format as UX
-  - Recommendations section (💡):
-    - Context-aware recommendations
+  - **Performance Recommendation**: Contextual recommendation based on BI metric performance
+    - Analyzes if metric is below/above/meeting target
     - Icon + text
-    - Color-coded by severity (success/info/warning/error)
+    - Color-coded by performance (success/info/warning/error)
 
 #### Visual Styling:
 - **Width**: ~400px on desktop, full screen on mobile
@@ -1018,7 +1010,7 @@ Shown if data fetch fails.
     - Light orange background
     - Icon + text encouraging documentation
   
-  **Section 2: Metrics & Performance (Default: Collapsed)**
+  **Section 2: Metrics (Default: Collapsed)**
   
   *UX Metrics Chart:*
   - Section title: "Key Metrics - User Experience"
@@ -1034,41 +1026,24 @@ Shown if data fetch fails.
     - Data line: Solid blue line
     - Target line: Dashed gray line
     - Tooltips: Show exact values on hover
+  - Performance recommendation:
+    - Analyzes UX metric vs target
+    - Contextual, actionable insight
+    - Color-coded by performance level
   
   *BI Metrics Chart:*
   - Same format as UX chart
   - Different metric name
+  - Performance recommendation:
+    - Analyzes BI metric vs target
+    - Contextual, actionable insight
+    - Color-coded by performance level
   
-  *Data Extraction Status:*
-  - Overall automation card:
-    - Large icon (✅/⚙️/✏️/❌)
-    - Status text
-    - Color-coded background:
-      - Green: Fully Automated
-      - Blue: Partially Automated
-      - Yellow: Manual Collection
-      - Red: Not Automated
-  - UX Metric row:
-    - Label: "User Experience Metric"
-    - Metric name in parentheses
-    - Status badge (Automated/Semi-Automated/Manual/No Data)
-    - Detail text: "X months of data collected"
-  - BI Metric row:
-    - Same format as UX row
-  - Recommendations section (💡):
-    - Title: "💡 Recommendations"
-    - Recommendation cards:
-      - Icon (✅/🎯/📊/⚠️/👍)
-      - Text explanation
-      - Color-coded by type:
-        - Green: Success
-        - Blue: Info
-        - Yellow: Warning
-        - Red: Error
-    - Examples:
-      - "Excellent! Both metrics are fully automated. Continue monitoring data quality."
-      - "Consider automating UX metric collection to improve data consistency..."
-      - "⚠️ No metrics are being collected. Establish baseline measurements..."
+  *Recommendation Examples:*
+  - Success: "Great work! User experience metric is consistently meeting or exceeding target. Keep up the momentum."
+  - Warning: "User experience metric is frequently below target. Consider improvement initiatives to address performance gaps."
+  - Info: "Performance is variable. Review months below target and identify patterns or opportunities for optimization."
+  - Info: "No data available for this metric. Establish baseline measurements to track business impact."
 
 **Acceptance Criteria:**
 - ✅ Clicking card opens detail panel on right
@@ -1089,12 +1064,13 @@ Shown if data fetch fails.
 4. Core Details section visible → Already expanded
 5. User reads solution scope → Problem, solution, target user
 6. User checks ownership → Owner name, maturity stage
-7. User clicks "Metrics & Performance" header → Section expands (300ms)
+7. User clicks "Metrics" header → Section expands (300ms)
 8. Charts load → Spinning indicator while loading
 9. Charts render → UX chart appears first, then BI chart
 10. User hovers over chart → Tooltip shows exact value
-11. User scrolls down → Sees data extraction status
-12. User reads recommendations → Understands data quality
+11. User scrolls down → Sees UX performance recommendation
+12. User continues scrolling → Sees BI performance recommendation
+13. User reads recommendations → Understands performance and next steps
 13. User clicks × button → Panel slides out (300ms)
 14. Main content expands → Returns to full width
 

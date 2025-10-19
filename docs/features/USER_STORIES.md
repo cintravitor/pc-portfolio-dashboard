@@ -1570,7 +1570,7 @@ This update changes filter behavior from single-select to multi-select. Users ca
 
 **Priority:** Low (UI polish)  
 **Story Points:** 2  
-**Version:** v6.2.4 (Patch Release)  
+**Version:** v6.2.6 (Patch Release)  
 **Status:** ✅ Complete  
 **Branch:** `feature/cohesive-clear-filters`  
 **Date:** 2025-10-19

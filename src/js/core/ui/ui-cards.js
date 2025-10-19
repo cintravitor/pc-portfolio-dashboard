@@ -119,6 +119,7 @@
                         
                         <div class="card-problem-extended">
                             ${window.Utils.escapeHtml(summary.problem)}
+                            <span class="ai-attribution">powered by OpenAI</span>
                         </div>
                         
                         <div class="card-metrics-new">

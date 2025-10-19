@@ -253,6 +253,24 @@
     }
     
     /**
+     * Update visual state of filter headers based on selections
+     */
+    function updateFilterHeaderStates() {
+        ['area', 'maturity', 'owner'].forEach(filterType => {
+            const header = document.querySelector(`.multiselect-header[data-filter="${filterType}"]`);
+            const hasSelections = multiSelectState[filterType].size > 0;
+            
+            if (header) {
+                if (hasSelections) {
+                    header.classList.add('has-selections');
+                } else {
+                    header.classList.remove('has-selections');
+                }
+            }
+        });
+    }
+    
+    /**
      * Populate custom multi-select dropdowns with unique values
      */
     function populateFilters() {
@@ -346,6 +364,9 @@
         
         console.log(`✓ ${filterType} selection:`, Array.from(multiSelectState[filterType]));
         
+        // Update visual feedback on header
+        updateFilterHeaderStates();
+        
         // Apply filters immediately
         setTimeout(() => {
             applyFiltersFromUI();
@@ -433,6 +454,9 @@
         
         const belowTarget = document.getElementById('filter-below-target');
         if (belowTarget) belowTarget.checked = false;
+        
+        // Clear visual feedback from headers
+        updateFilterHeaderStates();
         
         console.log('✅ Filters cleared, applying empty filters...');
         applyFiltersFromUI();
@@ -616,6 +640,9 @@
                 console.warn('Unknown filter type:', filterType);
                 return;
         }
+        
+        // Update visual feedback on headers
+        updateFilterHeaderStates();
         
         // Re-apply filters and update UI
         applyFiltersFromUI();

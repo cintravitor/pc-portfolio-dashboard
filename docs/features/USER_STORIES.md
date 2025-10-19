@@ -1464,6 +1464,62 @@ This update changes filter behavior from single-select to multi-select. Users ca
 
 ---
 
+#### Story 6.4: Visual Feedback for Active Filters
+**As a** User applying filters  
+**I want** a clear, light visual format to appear on a filter when an option is selected  
+**So that** I know immediately which filters are currently being applied, improving comprehension and reducing confusion without being distracting
+
+**Acceptance Criteria:**
+- 🚧 Filter headers display subtle visual feedback when options are selected
+- 🚧 Visual feedback is clear but light (subtle border, background tint)
+- 🚧 NOT high-contrast or distracting
+- 🚧 Visual state updates immediately when selecting/deselecting options
+- 🚧 Visual state clears when all options deselected
+- 🚧 Works for all three filters (P&C Area, Journey Stage, Owner Name)
+- 🚧 Complements existing filter pills (doesn't replace them)
+
+**Design Decision:**
+- Used `.has-selections` class (distinct from `.active` which means dropdown is open)
+- Light purple tint (4% opacity) on background
+- Subtle purple border (40% opacity)
+- Purple dropdown arrow indicator
+- Minimal box shadow for depth
+
+**Data Used in Business Rule:**
+- `multiSelectState[filterType].size` - Number of selections per filter type
+- `updateFilterHeaderStates()` - Function to sync visual state with selection state
+- `.has-selections` CSS class applied/removed based on state
+- Visual feedback updates in real-time on selection/deselection
+
+**Data Tracked from User Interaction:**
+- User feedback on filter discoverability improvement
+- Time to understand active filter state (expected to decrease)
+- Filter usage confidence (expected to increase)
+- User satisfaction with visual clarity
+- Reduced confusion about which filters are active
+
+**Technical Changes:**
+- Modified: `src/css/dashboard-style.css` - Added `.multiselect-header.has-selections` styles
+- Modified: `src/js/core/ui/ui-filters.js` - Added `updateFilterHeaderStates()` function and calls in `handleMultiselectChange()`, `removeFilterPill()`, `clearFilters()`
+- Total changes: 2 files, ~30 lines added
+
+**Testing Completed:**
+- [ ] Local testing completed (6 test cases covering selection, deselection, multiple filters, clear all)
+- [ ] Cross-browser testing completed (Chrome, Firefox, Safari, Edge)
+- [ ] Responsive design verified (desktop, tablet, mobile)
+- [ ] Visual subtlety confirmed (clear but light, not distracting)
+- [ ] No console errors
+- [ ] Documentation updated
+
+**Priority:** Medium (UX Enhancement)  
+**Story Points:** 3  
+**Version:** v6.2.5 (Patch Release)  
+**Status:** 🚧 In Progress  
+**Branch:** `feature/active-filter-feedback`  
+**Date:** 2025-10-19
+
+---
+
 ## 📝 Notes for Stakeholders
 
 ### What Makes This Product Valuable

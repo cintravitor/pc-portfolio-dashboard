@@ -153,7 +153,8 @@ async function processBatch() {
     const csvContent = fs.readFileSync(CONFIG.csvPath, 'utf-8');
     const records = parse(csvContent, {
         columns: true,
-        skip_empty_lines: true
+        skip_empty_lines: true,
+        from_line: 2 // Skip metadata row (line 1), start from actual headers (line 2)
     });
     
     console.log(`✅ Found ${records.length} solutions\n`);

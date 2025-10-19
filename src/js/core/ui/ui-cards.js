@@ -117,8 +117,10 @@
                             <span class="owner-name">${window.Utils.escapeHtml(summary.owner)}</span>
                         </div>
                         
-                        <div class="card-problem-extended">
-                            ${window.Utils.escapeHtml(summary.problem)}
+                        <div class="card-problem-wrapper">
+                            <div class="card-problem-extended">
+                                ${window.Utils.escapeHtml(summary.problem)}
+                            </div>
                             <span class="ai-attribution">powered by OpenAI</span>
                         </div>
                         

@@ -2466,6 +2466,13 @@ select:focus {
     letter-spacing: -0.01em;
 }
 
+/* Problem Wrapper - Contains text and attribution */
+.card-problem-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
 /* Extended Problem Description - More Context */
 .card-problem-extended {
     font-size: 0.875rem;
@@ -2473,13 +2480,10 @@ select:focus {
     color: var(--text-secondary);
     white-space: normal;
     word-wrap: break-word;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
     /* Line clamp handled by grid section below */
 }
 
-/* AI Attribution Tag - Below Text (No Overlap) */
+/* AI Attribution Tag - Always Visible Below Text */
 .ai-attribution {
     display: block;
     font-size: 0.625rem; /* Smaller than description (0.875rem) */
@@ -2489,9 +2493,8 @@ select:focus {
     opacity: 0.7;
     font-style: italic;
     text-align: right;
-    margin-top: 0.25rem;
     padding-right: 0.25rem; /* Prevent right-side cut-off */
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0; /* Don't shrink - always visible */
     pointer-events: none; /* Don't interfere with text selection */
     user-select: none;
 }
@@ -2615,16 +2618,22 @@ select:focus {
     grid-row: 1;
 }
 
-/* Problem description - flexible but controlled */
-.card-problem-extended {
+/* Problem wrapper in grid */
+.card-problem-wrapper {
     grid-row: 2;
     align-self: start; /* Align to top of flexible space */
+}
+
+/* Problem description - line clamp applied here */
+.card-problem-extended {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 5; /* Maximum 5 lines */
     -webkit-box-orient: vertical;
     line-clamp: 5;
 }
+
+/* Attribution stays outside line-clamp (in wrapper, below extended text) */
 
 /* Metrics always align at bottom */
 .card-metrics-new {

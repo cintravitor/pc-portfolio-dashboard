@@ -2404,7 +2404,7 @@ select:focus {
 /* Smoke Detector Badge (top-right alert indicator) */
 .smoke-detector-badge {
     position: absolute;
-    top: 0.5rem;
+    top: 0.625rem;
     right: 0.5rem;
     width: 28px;
     height: 28px;
@@ -2418,6 +2418,7 @@ select:focus {
     z-index: 10;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: auto; /* Ensure it's clickable */
+    transform: translateY(0); /* Precise optical centering */
 }
 
 .smoke-detector-badge.smoke-warning {

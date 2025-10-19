@@ -38,6 +38,28 @@
 // - window.State.getColumnMapping() / setColumnMapping()
 // - window.State.getConstants() for configuration values
 
+// ==================== AI SUMMARIES ====================
+/**
+ * Get AI-generated summary for a solution (with fallback to original)
+ * AI summaries are loaded from ai-summaries-data.js
+ * 
+ * @param {string} solutionName - Name of the solution
+ * @param {string} originalProblem - Original problem text (fallback)
+ * @returns {string} AI summary or original problem text
+ */
+function getAISummary(solutionName, originalProblem) {
+    // Check if AI summaries are loaded
+    if (window.AI_SUMMARIES && window.AI_SUMMARIES[solutionName]) {
+        const summaryData = window.AI_SUMMARIES[solutionName];
+        if (summaryData.summary) {
+            return summaryData.summary;
+        }
+    }
+    
+    // Fallback to original problem (will be line-clamped by CSS)
+    return originalProblem || 'No problem statement defined';
+}
+
 // ==================== DATA FETCHING ====================
 
 /**
@@ -1123,7 +1145,7 @@ function getCardSummaryMetrics(product) {
     // Return summary object
     return {
         owner: product.owner || 'Not assigned',
-        problem: product.problem || 'No problem statement defined',
+        problem: getAISummary(product.name, product.problem),
         maturity: product.maturity || 'Not specified',
         area: product.area || 'Not specified',
         uxStatus: uxStatus,

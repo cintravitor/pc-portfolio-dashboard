@@ -2473,22 +2473,25 @@ select:focus {
     color: var(--text-secondary);
     white-space: normal;
     word-wrap: break-word;
-    position: relative;
-    padding-bottom: 1.25rem; /* Space for AI attribution */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     /* Line clamp handled by grid section below */
 }
 
-/* AI Attribution Tag - Bottom Right */
+/* AI Attribution Tag - Below Text (No Overlap) */
 .ai-attribution {
-    position: absolute;
-    bottom: 0;
-    right: 0;
+    display: block;
     font-size: 0.625rem; /* Smaller than description (0.875rem) */
     color: #9ca3af; /* Light gray */
     font-weight: 500;
     letter-spacing: 0.02em;
     opacity: 0.7;
     font-style: italic;
+    text-align: right;
+    margin-top: 0.25rem;
+    padding-right: 0.25rem; /* Prevent right-side cut-off */
+    flex-shrink: 0; /* Don't shrink */
     pointer-events: none; /* Don't interfere with text selection */
     user-select: none;
 }

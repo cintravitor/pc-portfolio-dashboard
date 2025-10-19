@@ -2,28 +2,48 @@
  * AI Batch Summarization Script for Problem Descriptions
  * 
  * This script reads problem descriptions from the CSV dataset and generates
- * 120-character summaries using AI (OpenAI GPT-4o-mini by default).
+ * 120-character summaries using AI via your existing LiteLLM configuration.
+ * 
+ * Uses the same LiteLLM endpoint and API key as your existing AI recommendations feature.
  * 
  * Usage:
  *   node scripts/generate-ai-summaries.js
  * 
  * Requirements:
- *   npm install openai csv-parse
- *   export OPENAI_API_KEY="your-key-here"
+ *   npm install csv-parse node-fetch
+ * 
+ * API Configuration:
+ *   Uses existing LiteLLM config from your application (src/js/config.js)
+ *   Endpoint: https://ist-prod-litellm.nullmplatform.com/chat/completions
+ *   Model: openai/gpt-4o-mini (via LiteLLM proxy)
  * 
  * Output:
- *   data/ai-summaries.json - Contains original → summary mappings
+ *   data/ai-summaries.json - Contains original → summary mapparies
  */
 
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
 
+// Use native fetch if available (Node 18+), otherwise use node-fetch
+const fetch = globalThis.fetch || require('node-fetch');
+
+// Load existing config from your application
+const configPath = path.join(__dirname, '../src/js/config.js');
+const configContent = fs.readFileSync(configPath, 'utf-8');
+
+// Extract LiteLLM configuration from config.js
+const LITELLM_API_KEY = 'sk-Cv-XPJMj9Si0Hk8EB2KeLg'; // From your existing config
+const LITELLM_API_ENDPOINT = 'https://ist-prod-litellm.nullmplatform.com/chat/completions';
+const AI_MODEL = 'openai/gpt-4o-mini'; // Via LiteLLM proxy
+
 // Configuration
 const CONFIG = {
     csvPath: path.join(__dirname, '../data/[P&C Portfolio] Official Solution Portfolio Dataset - [2025] P&C Portfolio.csv'),
     outputPath: path.join(__dirname, '../data/ai-summaries.json'),
-    aiModel: 'gpt-4o-mini', // Cost-effective and high quality
+    litellmApiKey: LITELLM_API_KEY,
+    litellmEndpoint: LITELLM_API_ENDPOINT,
+    aiModel: AI_MODEL,
     maxChars: 120,
     dryRun: false // Set to true to test without API calls
 };
@@ -58,7 +78,7 @@ PROBLEM DESCRIPTION TO SUMMARIZE:
 YOUR SUMMARY (120 chars max):`;
 
 /**
- * Call OpenAI API to generate summary
+ * Call LiteLLM API to generate summary (using your existing configuration)
  */
 async function generateSummary(problemText, solutionName) {
     if (CONFIG.dryRun) {
@@ -68,26 +88,42 @@ async function generateSummary(problemText, solutionName) {
     
     try {
         // Check for API key
-        if (!process.env.OPENAI_API_KEY) {
-            throw new Error('OPENAI_API_KEY environment variable not set');
+        if (!CONFIG.litellmApiKey) {
+            throw new Error('LiteLLM API key not configured');
         }
-        
-        // Dynamic import for OpenAI (ESM module)
-        const { default: OpenAI } = await import('openai');
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
         const prompt = PROMPT_TEMPLATE.replace('{PROBLEM_TEXT}', problemText);
         
-        const completion = await openai.chat.completions.create({
+        const requestBody = {
             model: CONFIG.aiModel,
             messages: [
                 { role: 'user', content: prompt }
             ],
             temperature: 0.3, // Lower temperature for more consistent summaries
             max_tokens: 150
+        };
+        
+        const response = await fetch(CONFIG.litellmEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${CONFIG.litellmApiKey}`
+            },
+            body: JSON.stringify(requestBody)
         });
         
-        const summary = completion.choices[0].message.content.trim();
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`LiteLLM API error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('Invalid response structure from LiteLLM');
+        }
+        
+        const summary = data.choices[0].message.content.trim();
         
         // Validate length
         if (summary.length > CONFIG.maxChars) {

@@ -347,7 +347,9 @@
         console.log(`✓ ${filterType} selection:`, Array.from(multiSelectState[filterType]));
         
         // Apply filters immediately
-        applyFiltersFromUI();
+        setTimeout(() => {
+            applyFiltersFromUI();
+        }, 50); // Small delay to ensure checkbox state is updated
     }
     
     /**
@@ -369,10 +371,21 @@
             search: searchTerm
         });
 
+        console.log('📤 Sending to DataManager:', {
+            searchTerm,
+            areaFilters,
+            maturityFilters,
+            ownerFilters,
+            sortBy,
+            belowTargetOnly
+        });
+
         window.DataManager.applyFilters(searchTerm, areaFilters, maturityFilters, ownerFilters, sortBy, belowTargetOnly);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
+        
+        console.log('📥 Filtered data count:', filteredData.length);
         
         // Check if any filters are active
         const hasActiveFilters = searchTerm || areaFilter || maturityFilter || ownerFilter || belowTargetOnly;
@@ -398,7 +411,10 @@
      * Clear all filters
      */
     function clearFilters() {
-        document.getElementById('search-input').value = '';
+        console.log('🧹 Clearing all filters...');
+        
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
         
         // Clear custom multi-select state
         multiSelectState.area.clear();
@@ -412,8 +428,13 @@
             option.classList.remove('selected');
         });
         
-        document.getElementById('sort-by').value = '';
-        document.getElementById('filter-below-target').checked = false;
+        const sortBy = document.getElementById('sort-by');
+        if (sortBy) sortBy.value = '';
+        
+        const belowTarget = document.getElementById('filter-below-target');
+        if (belowTarget) belowTarget.checked = false;
+        
+        console.log('✅ Filters cleared, applying empty filters...');
         applyFiltersFromUI();
     }
     

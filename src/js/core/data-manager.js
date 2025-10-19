@@ -194,6 +194,14 @@ function applyFilters(searchTerm = '', areaFilters = [], maturityFilters = [], o
     // Get portfolio data from State
     const portfolioData = window.State.getPortfolioData();
     
+    console.log('🔧 DataManager.applyFilters called:', {
+        portfolioDataCount: portfolioData.length,
+        areaFilters,
+        maturityFilters,
+        ownerFilters,
+        searchTerm
+    });
+    
     // First, filter the data
     let filteredData = portfolioData.filter(product => {
         const matchesSearch = !searchTerm || 
@@ -266,6 +274,12 @@ function applyFilters(searchTerm = '', areaFilters = [], maturityFilters = [], o
 
     // Store filtered data in State
     window.State.setFilteredData(filteredData);
+    
+    console.log('✅ DataManager filtered:', {
+        originalCount: portfolioData.length,
+        filteredCount: filteredData.length,
+        filters: { areaFilters, maturityFilters, ownerFilters }
+    });
 
     return filteredData;
 }

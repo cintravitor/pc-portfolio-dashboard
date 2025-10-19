@@ -2404,19 +2404,20 @@ select:focus {
 /* Smoke Detector Badge (top-right alert indicator) */
 .smoke-detector-badge {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 36px;
-    height: 36px;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 1.25rem;
+    font-size: 1rem;
     line-height: 1;
     cursor: help;
     z-index: 10;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto; /* Ensure it's clickable */
 }
 
 .smoke-detector-badge.smoke-warning {
@@ -2602,6 +2603,17 @@ select:focus {
 /* Card header stays at top */
 .card-header-compact {
     flex-shrink: 0; /* Don't shrink */
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 2rem; /* Prevent badge from expanding header */
+    padding-right: 2.5rem; /* Space for smoke detector badge */
+}
+
+.card-title-compact {
+    flex: 1;
+    min-width: 0; /* Allow text to shrink if needed */
 }
 
 /* Card body uses grid for consistent section alignment */

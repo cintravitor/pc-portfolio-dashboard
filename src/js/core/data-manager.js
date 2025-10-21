@@ -63,6 +63,48 @@ function getAISummary(solutionName, originalProblem) {
 // ==================== DATA FETCHING ====================
 
 /**
+ * Fetch governance dashboard data from Google Apps Script
+ * Uses the new getGovernanceData endpoint with pre-processed metrics
+ */
+async function fetchGovernanceData() {
+    try {
+        if (!CONFIG.WEB_APP_URL || CONFIG.WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+            throw new Error('Missing Web App URL. Please configure config.js');
+        }
+
+        console.log('Fetching governance data from Google Apps Script...');
+        console.log('URL:', CONFIG.WEB_APP_URL + '?action=getGovernanceData');
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        const response = await fetch(CONFIG.WEB_APP_URL + '?action=getGovernanceData', { 
+            signal: controller.signal,
+            mode: 'cors',
+            cache: 'no-cache'
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        if (!jsonData.success) {
+            throw new Error(jsonData.error || 'Unknown error');
+        }
+
+        console.log('✅ Successfully fetched governance data');
+        return jsonData;
+
+    } catch (error) {
+        console.error('Error fetching governance data:', error);
+        throw error; // Re-throw to let caller handle
+    }
+}
+
+/**
  * Fetch data from Google Apps Script
  */
 async function fetchSheetData() {
@@ -1471,6 +1513,7 @@ function calculateSmokeDetectors(productData) {
 window.DataManager = {
     // Data fetching
     fetchSheetData,
+    fetchGovernanceData,
     
     // Data filtering
     applyFilters,

@@ -46,12 +46,8 @@
         }
         
         // Load tab-specific content
-        if (tabName === 'insights-analytics') {
-            window.UIManager.Insights.render();
-        }
-        
-        if (tabName === 'planning-view') {
-            window.UIManager.Planning.render();
+        if (tabName === 'governance-dashboard') {
+            window.UIManager.Governance.render();
         }
         
         if (tabName === 'analytics-dashboard') {

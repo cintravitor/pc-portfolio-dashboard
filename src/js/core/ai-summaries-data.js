@@ -120,10 +120,7 @@ window.AI_SUMMARIES = {
     }
   },
   "Visier": {
-    "original": "- Quick and easy access to information about our workforce
- - Analyze key data, including people's demographics, terminations, tenure, and much more
-- Data Transparency
-- Data hub for P&C data for all nubankers",
+    "original": "- Quick and easy access to information about our workforce - Analyze key data, including people's demographics, terminations, tenure, and much more - Data Transparency - Data hub for P&C data for all nubankers",
     "summary": "People Managers lack quick access to workforce data, hindering analysis of demographics and terminations, impacting informed decision-making.",
     "length": 141,
     "timestamp": "2025-10-19T16:03:16.318Z",
@@ -343,8 +340,7 @@ window.AI_SUMMARIES = {
     }
   },
   "Levelling": {
-    "original": "Complex information about what to expect from professionals at each level and decentralized governance, with more than 40 different leveling structures.
-",
+    "original": "Complex information about what to expect from professionals at each level and decentralized governance, with more than 40 different leveling structures.",
     "summary": "Complex leveling structures confuse Nubankers in their roles, leading to misalignment in expectations and hindered career progression.",
     "length": 134,
     "timestamp": "2025-10-19T16:03:39.406Z",
@@ -410,9 +406,7 @@ window.AI_SUMMARIES = {
     }
   },
   "Nubreak": {
-    "original": "Take care of Nubankers
-when they need to interrupt
-and get back to work.",
+    "original": "Take care of Nubankers when they need to interrupt and get back to work.",
     "summary": "Nubankers face interruptions that hinder their work, leading to decreased productivity and engagement in their daily tasks.",
     "length": 123,
     "timestamp": "2025-10-19T16:03:45.230Z",

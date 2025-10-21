@@ -84,11 +84,11 @@
         const url = CONFIG.WEB_APP_URL + '?action=getGovernanceData';
         
         try {
+            // Simple GET request without custom headers to avoid CORS preflight
             const response = await fetch(url, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                mode: 'cors',
+                cache: 'no-cache'
             });
             
             if (!response.ok) {

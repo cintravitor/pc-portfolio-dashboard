@@ -52,19 +52,8 @@ function getAISummary(solutionName, originalProblem) {
     if (window.AI_SUMMARIES && window.AI_SUMMARIES[solutionName]) {
         const summaryData = window.AI_SUMMARIES[solutionName];
         if (summaryData.summary) {
-            console.log(`✅ AI Summary found for: "${solutionName}"`);
             return summaryData.summary;
         }
-    }
-    
-    // Debug: Log when falling back to original
-    if (window.AI_SUMMARIES) {
-        console.warn(`⚠️ No AI summary for: "${solutionName}" - using original text`);
-        // Show available keys for debugging
-        const availableKeys = Object.keys(window.AI_SUMMARIES).slice(0, 5);
-        console.log(`Available AI summaries (first 5): ${availableKeys.join(', ')}`);
-    } else {
-        console.error('❌ AI_SUMMARIES not loaded!');
     }
     
     // Fallback to original problem (will be line-clamped by CSS)

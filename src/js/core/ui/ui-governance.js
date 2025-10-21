@@ -46,15 +46,23 @@
             // Clear and start building dashboard
             governanceContent.innerHTML = '';
             
-            // ========== SECTION 1: ACTION LAYER (TOP) ==========
+            // ========== SECTION 1: ACTION LAYER (TOP - Always Visible) ==========
             const actionLayer = await createActionLayer(governanceData);
             governanceContent.appendChild(actionLayer);
             
-            // ========== SECTION 2: ALLOCATION ANALYSIS (MID) ==========
+            // ========== SECTION 2: METRICS COVERAGE (Collapsible) ==========
+            const metricsCoverageSection = createMetricsCoverageSection(governanceData);
+            governanceContent.appendChild(metricsCoverageSection);
+            
+            // ========== SECTION 3: PORTFOLIO DISTRIBUTION (Collapsible) ==========
+            const portfolioDistSection = createPortfolioDistributionSection(governanceData);
+            governanceContent.appendChild(portfolioDistSection);
+            
+            // ========== SECTION 4: RESOURCE ALLOCATION (Collapsible) ==========
             const allocationSection = createAllocationSection(governanceData);
             governanceContent.appendChild(allocationSection);
             
-            // ========== SECTION 3: HEALTH & DISTRIBUTION (BOTTOM) ==========
+            // ========== SECTION 5: PERFORMANCE & HEALTH (Collapsible) ==========
             const healthSection = createHealthSection(governanceData);
             governanceContent.appendChild(healthSection);
             
@@ -102,6 +110,315 @@
             console.error('Error fetching governance data:', error);
             throw error;
         }
+    }
+    
+    // ==================== COLLAPSIBLE SECTION HELPER ====================
+    
+    /**
+     * Create a collapsible section container
+     */
+    function createCollapsibleSection(id, icon, title, subtitle, content, defaultExpanded = false) {
+        const section = document.createElement('div');
+        section.className = 'governance-section-collapsible';
+        section.id = `governance-section-${id}`;
+        
+        const header = document.createElement('div');
+        header.className = 'governance-section-header';
+        
+        const headerLeft = document.createElement('div');
+        headerLeft.className = 'governance-section-header-left';
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'governance-section-icon';
+        iconSpan.textContent = icon;
+        
+        const titleContainer = document.createElement('div');
+        const titleH3 = document.createElement('h3');
+        titleH3.className = 'governance-section-title';
+        titleH3.textContent = title;
+        titleContainer.appendChild(titleH3);
+        
+        if (subtitle) {
+            const subtitleP = document.createElement('p');
+            subtitleP.className = 'governance-section-subtitle';
+            subtitleP.textContent = subtitle;
+            titleContainer.appendChild(subtitleP);
+        }
+        
+        headerLeft.appendChild(iconSpan);
+        headerLeft.appendChild(titleContainer);
+        
+        const toggle = document.createElement('div');
+        toggle.className = 'governance-section-toggle';
+        toggle.innerHTML = `
+            <span>${defaultExpanded ? 'Collapse' : 'Expand'}</span>
+            <span class="governance-section-toggle-icon ${defaultExpanded ? 'expanded' : ''}">▼</span>
+        `;
+        
+        header.appendChild(headerLeft);
+        header.appendChild(toggle);
+        
+        const body = document.createElement('div');
+        body.className = `governance-section-body ${defaultExpanded ? 'expanded' : ''}`;
+        
+        const bodyContent = document.createElement('div');
+        bodyContent.className = 'governance-section-content';
+        bodyContent.appendChild(content);
+        
+        body.appendChild(bodyContent);
+        
+        // Toggle functionality
+        header.addEventListener('click', () => {
+            const isExpanded = body.classList.contains('expanded');
+            body.classList.toggle('expanded');
+            toggle.querySelector('.governance-section-toggle-icon').classList.toggle('expanded');
+            toggle.querySelector('span').textContent = isExpanded ? 'Expand' : 'Collapse';
+        });
+        
+        section.appendChild(header);
+        section.appendChild(body);
+        
+        return section;
+    }
+    
+    // ==================== SECTION 2: METRICS COVERAGE ====================
+    
+    /**
+     * Create Metrics Coverage Section
+     * Shows UX and BI metric coverage statistics
+     */
+    function createMetricsCoverageSection(data) {
+        const container = document.createElement('div');
+        
+        if (!data.metricsCoverage) {
+            container.innerHTML = '<p style="color: #64748b;">No metrics coverage data available</p>';
+            return createCollapsibleSection('metrics-coverage', '📊', 'Metrics Coverage', 
+                'Track metric definition, data freshness, and automation', container, false);
+        }
+        
+        const coverage = data.metricsCoverage;
+        
+        // UX and BI Comparison
+        const comparison = document.createElement('div');
+        comparison.className = 'metrics-comparison';
+        
+        // UX Metrics Card
+        const uxCard = document.createElement('div');
+        uxCard.innerHTML = `
+            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span>👤</span> User Experience Metrics
+            </h4>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">✅</span>
+                        <h5 class="metric-card-title">Metric Defined</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.ux.metricDefinedPercent}%</div>
+                    <p class="metric-card-label">${coverage.ux.metricDefined} of ${coverage.totalSolutions} solutions</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.ux.metricDefinedPercent >= 80 ? 'high' : coverage.ux.metricDefinedPercent >= 50 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.ux.metricDefinedPercent}%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">📅</span>
+                        <h5 class="metric-card-title">Current Month Data</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.ux.currentMonthFilledPercent}%</div>
+                    <p class="metric-card-label">${coverage.ux.currentMonthFilled} solutions updated</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.ux.currentMonthFilledPercent >= 80 ? 'high' : coverage.ux.currentMonthFilledPercent >= 50 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.ux.currentMonthFilledPercent}%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">🎯</span>
+                        <h5 class="metric-card-title">Reaching Target</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.ux.reachedTargetPercent}%</div>
+                    <p class="metric-card-label">${coverage.ux.reachedTarget} above target</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.ux.reachedTargetPercent >= 70 ? 'high' : coverage.ux.reachedTargetPercent >= 40 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.ux.reachedTargetPercent}%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">🤖</span>
+                        <h5 class="metric-card-title">Automated Extraction</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.ux.automatedPercent}%</div>
+                    <p class="metric-card-label">${coverage.ux.automated} automated</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.ux.automatedPercent >= 50 ? 'high' : coverage.ux.automatedPercent >= 25 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.ux.automatedPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // BI Metrics Card
+        const biCard = document.createElement('div');
+        biCard.innerHTML = `
+            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span>💼</span> Business Impact Metrics
+            </h4>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">✅</span>
+                        <h5 class="metric-card-title">Metric Defined</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.bi.metricDefinedPercent}%</div>
+                    <p class="metric-card-label">${coverage.bi.metricDefined} of ${coverage.totalSolutions} solutions</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.bi.metricDefinedPercent >= 80 ? 'high' : coverage.bi.metricDefinedPercent >= 50 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.bi.metricDefinedPercent}%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">📅</span>
+                        <h5 class="metric-card-title">Current Month Data</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.bi.currentMonthFilledPercent}%</div>
+                    <p class="metric-card-label">${coverage.bi.currentMonthFilled} solutions tracked</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.bi.currentMonthFilledPercent >= 80 ? 'high' : coverage.bi.currentMonthFilledPercent >= 50 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.bi.currentMonthFilledPercent}%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-header">
+                        <span class="metric-card-icon">🤖</span>
+                        <h5 class="metric-card-title">Automated Extraction</h5>
+                    </div>
+                    <div class="metric-card-value">${coverage.bi.automatedPercent}%</div>
+                    <p class="metric-card-label">${coverage.bi.automated} automated</p>
+                    <div class="metric-progress-bar">
+                        <div class="metric-progress-fill ${coverage.bi.automatedPercent >= 50 ? 'high' : coverage.bi.automatedPercent >= 25 ? 'medium' : 'low'}" 
+                             style="width: ${coverage.bi.automatedPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        comparison.appendChild(uxCard);
+        comparison.appendChild(biCard);
+        container.appendChild(comparison);
+        
+        return createCollapsibleSection('metrics-coverage', '📊', 'Metrics Coverage', 
+            `${coverage.ux.metricDefinedPercent}% UX metrics, ${coverage.bi.metricDefinedPercent}% BI metrics defined`, 
+            container, true); // Default expanded
+    }
+    
+    // ==================== SECTION 3: PORTFOLIO DISTRIBUTION ====================
+    
+    /**
+     * Create Portfolio Distribution Section
+     * Shows distribution by Journey, Target User, Platform, Regulatory
+     */
+    function createPortfolioDistributionSection(data) {
+        const container = document.createElement('div');
+        
+        if (!data.portfolioDistribution) {
+            container.innerHTML = '<p style="color: #64748b;">No portfolio distribution data available</p>';
+            return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
+                'View solutions by journey, user, platform, and compliance', container, false);
+        }
+        
+        const dist = data.portfolioDistribution;
+        const grid = document.createElement('div');
+        grid.className = 'distribution-grid';
+        
+        // Journey Stage Distribution
+        const journeyCard = document.createElement('div');
+        journeyCard.className = 'distribution-card';
+        journeyCard.innerHTML = `
+            <h4 class="distribution-card-title">🗺️ Journey Stage Coverage</h4>
+            <ul class="distribution-list">
+                ${dist.byJourney.map(item => `
+                    <li class="distribution-item">
+                        <span class="distribution-item-label">${escapeHtml(item.name)}</span>
+                        <span class="distribution-item-value">${item.count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+        
+        // Target User Distribution
+        const userCard = document.createElement('div');
+        userCard.className = 'distribution-card';
+        userCard.innerHTML = `
+            <h4 class="distribution-card-title">👥 Target User Groups</h4>
+            <ul class="distribution-list">
+                ${dist.byTargetUser.slice(0, 8).map(item => `
+                    <li class="distribution-item">
+                        <span class="distribution-item-label">${escapeHtml(item.name)}</span>
+                        <span class="distribution-item-value">${item.count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+        
+        // Platform Distribution
+        const platformCard = document.createElement('div');
+        platformCard.className = 'distribution-card';
+        platformCard.innerHTML = `
+            <h4 class="distribution-card-title">💻 Solution Platforms</h4>
+            <ul class="distribution-list">
+                ${dist.byPlatform.slice(0, 8).map(item => `
+                    <li class="distribution-item">
+                        <span class="distribution-item-label">${escapeHtml(item.name)}</span>
+                        <span class="distribution-item-value">${item.count}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+        
+        // Regulatory Requirement
+        const regulatoryCard = document.createElement('div');
+        regulatoryCard.className = 'distribution-card';
+        regulatoryCard.innerHTML = `
+            <h4 class="distribution-card-title">⚖️ Regulatory Requirements</h4>
+            <div style="margin-top: 1rem;">
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.875rem; color: #475569;">Regulatory</span>
+                        <span style="font-size: 0.875rem; font-weight: 600;">${dist.regulatory.yes} (${dist.regulatory.yesPercent}%)</span>
+                    </div>
+                    <div class="distribution-bar">
+                        <div class="distribution-bar-fill" style="width: ${dist.regulatory.yesPercent}%; background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);">
+                            ${dist.regulatory.yesPercent}%
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.875rem; color: #475569;">Non-Regulatory</span>
+                        <span style="font-size: 0.875rem; font-weight: 600;">${dist.regulatory.no} (${dist.regulatory.noPercent}%)</span>
+                    </div>
+                    <div class="distribution-bar">
+                        <div class="distribution-bar-fill" style="width: ${dist.regulatory.noPercent}%;">
+                            ${dist.regulatory.noPercent}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        grid.appendChild(journeyCard);
+        grid.appendChild(userCard);
+        grid.appendChild(platformCard);
+        grid.appendChild(regulatoryCard);
+        container.appendChild(grid);
+        
+        return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
+            `${dist.byJourney.length} journey stages, ${dist.byTargetUser.length} user groups`, 
+            container, false);
     }
     
     // ==================== SECTION 1: ACTION LAYER ====================
@@ -325,15 +642,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
      * BAU Anomaly Chart, PTech Involvement, Team Consumption
      */
     function createAllocationSection(data) {
-        const section = document.createElement('div');
-        section.className = 'governance-section';
-        
-        section.innerHTML = `
-            <h2 class="governance-section-title">
-                <span>📈</span>
-                <span>Resource Allocation & Anomalies</span>
-            </h2>
-        `;
+        const container = document.createElement('div');
         
         const grid = document.createElement('div');
         grid.className = 'governance-allocation-section';
@@ -346,11 +655,63 @@ Provide concise, actionable recommendations prioritizing the most critical issue
         const teamList = createTeamConsumptionList(data.teamConsumption);
         grid.appendChild(teamList);
         
-        section.appendChild(grid);
+        container.appendChild(grid);
         
         // PTech Involvement Chart (full width below)
         const ptechChart = createPTechInvolvementChart(data.ptechInvolvement);
-        section.appendChild(ptechChart);
+        container.appendChild(ptechChart);
+        
+        // PTech by Area (if available)
+        if (data.ptechByArea && data.ptechByArea.length > 0) {
+            const ptechByAreaCard = document.createElement('div');
+            ptechByAreaCard.className = 'distribution-card';
+            ptechByAreaCard.style.marginTop = '1.5rem';
+            ptechByAreaCard.innerHTML = `
+                <h4 class="distribution-card-title">🔧 PTech Involvement by P&C Area</h4>
+                <ul class="distribution-list">
+                    ${data.ptechByArea.map(item => `
+                        <li class="distribution-item">
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                    <span class="distribution-item-label">${escapeHtml(item.area)}</span>
+                                    <span class="distribution-item-value">${item.withPTech}/${item.total} (${item.percentWithPTech}%)</span>
+                                </div>
+                                <div class="distribution-bar" style="height: 24px;">
+                                    <div class="distribution-bar-fill" style="width: ${item.percentWithPTech}%; font-size: 0.7rem;">
+                                        ${item.percentWithPTech}%
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            container.appendChild(ptechByAreaCard);
+        }
+        
+        // BAU Dedication Details (if available)
+        if (data.bauDedication && data.bauDedication.topSolutions) {
+            const bauDedicationCard = document.createElement('div');
+            bauDedicationCard.className = 'distribution-card';
+            bauDedicationCard.style.marginTop = '1.5rem';
+            bauDedicationCard.innerHTML = `
+                <h4 class="distribution-card-title">⏱️ Top Solutions by BAU Dedication</h4>
+                <p style="font-size: 0.875rem; color: #64748b; margin: 0 0 1rem 0;">
+                    Total: ${data.bauDedication.totalHours.toLocaleString()} hrs/year (${data.bauDedication.totalHC.toFixed(1)} FTE)
+                </p>
+                <ul class="distribution-list">
+                    ${data.bauDedication.topSolutions.slice(0, 10).map((item, idx) => `
+                        <li class="distribution-item" style="flex-direction: column; align-items: flex-start;">
+                            <div style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span class="distribution-item-label">${idx + 1}. ${escapeHtml(item.name)}</span>
+                                <span class="distribution-item-value">${item.hoursPerYear.toLocaleString()} hrs (${item.fullyDedicatedHC} HC)</span>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            container.appendChild(bauDedicationCard);
+        }
         
         // Initialize charts after DOM is ready
         setTimeout(() => {
@@ -358,7 +719,12 @@ Provide concise, actionable recommendations prioritizing the most critical issue
             initializePTechChart(data.ptechInvolvement);
         }, 100);
         
-        return section;
+        const highCount = data.bauAnomalies?.summary?.highCount || 0;
+        const flaggedCount = data.bauAnomalies?.summary?.flaggedCount || 0;
+        
+        return createCollapsibleSection('resource-allocation', '📈', 'Resource Allocation & Anomalies', 
+            `${highCount} high, ${flaggedCount} flagged BAU allocations`, 
+            container, false);
     }
     
     /**
@@ -573,15 +939,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
      * Performance Metrics, Strategic Gaps
      */
     function createHealthSection(data) {
-        const section = document.createElement('div');
-        section.className = 'governance-section';
-        
-        section.innerHTML = `
-            <h2 class="governance-section-title">
-                <span>💪</span>
-                <span>Portfolio Health & Distribution</span>
-            </h2>
-        `;
+        const container = document.createElement('div');
         
         const grid = document.createElement('div');
         grid.className = 'governance-health-section';
@@ -594,7 +952,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
         const strategicCard = createStrategicGapsCard(data.strategicGaps);
         grid.appendChild(strategicCard);
         
-        section.appendChild(grid);
+        container.appendChild(grid);
         
         // Initialize charts
         setTimeout(() => {
@@ -602,7 +960,12 @@ Provide concise, actionable recommendations prioritizing the most critical issue
             initializeStrategicGapsCharts(data.strategicGaps);
         }, 100);
         
-        return section;
+        const uxRate = data.performanceMetrics?.ux?.achievementRate || 0;
+        const biCoverage = data.performanceMetrics?.bi?.withData || 0;
+        
+        return createCollapsibleSection('performance-health', '💪', 'Performance & Portfolio Health', 
+            `${uxRate}% UX achievement, ${biCoverage} solutions with BI data`, 
+            container, false);
     }
     
     /**

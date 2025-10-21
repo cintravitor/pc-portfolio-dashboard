@@ -5502,6 +5502,266 @@ select:focus {
 
 /* ==================== GOVERNANCE DASHBOARD STYLES ==================== */
 
+/* Collapsible Section Styles */
+.governance-section-collapsible {
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.governance-section-collapsible:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.governance-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.governance-section-header:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+.governance-section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.governance-section-icon {
+    font-size: 1.5rem;
+}
+
+.governance-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.governance-section-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0.25rem 0 0 0;
+}
+
+.governance-section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.governance-section-toggle-icon {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.governance-section-toggle-icon.expanded {
+    transform: rotate(180deg);
+}
+
+.governance-section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.governance-section-body.expanded {
+    max-height: 5000px;
+    transition: max-height 0.5s ease-in;
+}
+
+.governance-section-content {
+    padding: 1.5rem;
+}
+
+/* Metrics Grid Layout */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.metric-card-icon {
+    font-size: 1.75rem;
+}
+
+.metric-card-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.metric-card-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0.5rem 0;
+    line-height: 1;
+}
+
+.metric-card-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0.25rem 0 0 0;
+}
+
+.metric-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.metric-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.metric-progress-fill.high {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.metric-progress-fill.medium {
+    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.metric-progress-fill.low {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Side-by-side comparison layout */
+.metrics-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .metrics-comparison {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* Distribution Charts */
+.distribution-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.distribution-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.distribution-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.distribution-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.distribution-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.distribution-item:last-child {
+    border-bottom: none;
+}
+
+.distribution-item-label {
+    font-size: 0.875rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.distribution-item-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.distribution-bar {
+    width: 100%;
+    height: 32px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+    position: relative;
+}
+
+.distribution-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: width 0.6s ease;
+}
+
+/* ==================== GOVERNANCE DASHBOARD STYLES ==================== */
+
 .governance-container {
     padding: 2rem;
     max-width: 1600px;

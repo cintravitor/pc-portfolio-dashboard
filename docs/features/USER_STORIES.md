@@ -27,6 +27,7 @@
 - ✅ **Phase 6: Architecture Foundation** - Event-driven infrastructure
 - ✅ **Phase 7: UI Cleanup** - Remove non-value-adding header stats (v6.2.1)
 - ✅ **Phase 8: Filter Visibility** - Enhanced filter discoverability (v6.2.3)
+- ✅ **Phase 9: Governance Dashboard** - AI-driven consolidated governance view (v6.3.0) ✨
 
 ### Total Progress
 **34 User Stories:** ✅ 32 Complete, 🚧 2 In Progress (94.1%)  
@@ -1662,6 +1663,148 @@ This update changes filter behavior from single-select to multi-select. Users ca
 - **Objective Metrics:** Actual values (85/90) clearer than colored circles alone
 - **Proactive Alerts:** Smoke detector badges highlight issues immediately
 - **Professional Polish:** Clean, consistent layout with visual hierarchy
+
+---
+
+## Tab: Actionable Insights & Governance (v6.3.0)
+
+### Epic: AI-Driven Portfolio Governance
+
+#### Story X.X: Consolidated Governance Dashboard
+**As the** Chief of Staff or a Portfolio Owner,  
+**I want** a single "Actionable Insights & Governance" dashboard tab that consolidates the performance metrics, resource allocation data, and actively displays a Portfolio Health Summary featuring AI-driven Smoke Detector logic and BAU allocation anomalies at the top,  
+**So that** I can quickly identify potential "Low Value" solutions, proactively spot strategic gaps, and inform resource trade-off decisions without manually correlating data.
+
+**Acceptance Criteria:**
+- ✅ New "🎯 Governance" tab replaces "Insights & Analytics" and "Planning & Action" tabs (only 3 tabs total: Explore, Governance, Analytics)
+- ✅ Top Section (Action Layer) is visually dominant with gradient background, larger padding, and prominent positioning
+- ✅ AI-driven summary generates within 5 seconds using LiteLLM API (GPT-4o-mini) or falls back to rule-based summary
+- ✅ Smoke Detector scorecard displays count of triggered solutions and is clickable for drill-down
+- ✅ Clicking Smoke Detector card opens modal showing solution names and highest-priority trigger types
+- ✅ Data Health scorecard displays portfolio completeness percentage and missing metrics count
+- ✅ BAU Allocation Anomaly Chart clearly shows threshold lines at 3800 hrs (red) and 1900 hrs (orange)
+- ✅ Solutions in BAU chart are color-coded: red (≥3800 hrs), orange (1900-3799 hrs), green (<1900 hrs)
+- ✅ PTech Involvement Map shows distribution of solutions with/without People Tech involvement
+- ✅ Team Consumption List ranks teams by total BAU hours with FTE conversion
+- ✅ Performance Metrics displays UX and BI metrics side-by-side for quick comparison
+- ✅ UX and BI gauges show compact visualizations comparing last month vs target
+- ✅ Strategic Distribution chart shows portfolio breakdown by maturity stage
+- ✅ Layout is responsive on tablet (1024px) and mobile (768px) with graceful stacking
+
+**Information Hierarchy (UX Structure):**
+- **Top Section (Action Layer):** AI Summary | Smoke Detectors | Data Health (Most Prominent - 2rem padding, gradient, shadow)
+- **Mid Section (Allocation):** BAU Anomaly Chart | Team Consumption List | PTech Involvement
+- **Bottom Section (Health):** Performance Metrics (UX/BI side-by-side) | Strategic Distribution
+
+**Data Used in Business Rule:**
+- **Smoke Detectors:**
+  - Lacking Metrics: `product.keyMetricUX`, `product.keyMetricBI` are empty or 'N/A'
+  - Maturity Signal: `product.maturity` includes 'Decline'
+- **BAU Anomalies:**
+  - High Demand: `totalBAU >= 3800` hours/year
+  - Flagged: `totalBAU >= 1900 && totalBAU < 3800` hours/year
+  - Normal: `totalBAU < 1900` hours/year
+- **Data Health:**
+  - Missing UX: Count where `product.keyMetricUX` is empty
+  - Missing BI: Count where `product.keyMetricBI` is empty
+  - Health Score: `(1 - (missingUX + missingBI) / (totalSolutions * 2)) * 100`
+- **PTech Involvement:**
+  - With PTech: `product.ptechFlag === TRUE`
+  - Without PTech: `product.ptechFlag !== TRUE`
+- **Team Consumption:**
+  - Sum hours by team: PJC, PATO, Talent Acquisition, HRBP, PSE
+  - FTE conversion: `hours / 1900`
+- **Performance Metrics:**
+  - UX Achievement: `(uxAboveTarget / totalWithUX) * 100`
+  - BI Coverage: `(biWithData / totalSolutions) * 100`
+  - Last month data: SEP column (latest available)
+
+**Data Tracked from User Interaction:**
+- Governance tab load time and success rate
+- AI summary generation time and fallback rate
+- Smoke detector modal open events
+- Solutions viewed in smoke detector drill-down
+- Team consumption list interactions
+- Chart hover events (BAU anomaly, PTech, performance gauges)
+- Time spent on governance dashboard
+- Most common user paths (which sections viewed first)
+
+**Technical Implementation:**
+- **Backend:** `google-apps-script/analytics-backend.gs`
+  - New endpoint: `getGovernanceData()` (server-side aggregation)
+  - 7 helper functions for calculating metrics
+  - Returns consolidated JSON (smokeDetectors, bauAnomalies, dataHealth, ptechInvolvement, teamConsumption, performanceMetrics, strategicGaps)
+- **Frontend:** `src/js/core/ui/ui-governance.js` (NEW, ~850 lines)
+  - Main render function with 3-section layout
+  - AI integration with LiteLLM API
+  - Chart.js visualizations (BAU anomaly, PTech, performance gauges, strategic distribution)
+  - Interactive smoke detector modal with drill-down
+- **Styling:** `src/css/dashboard-style.css` (NEW section, ~450 lines)
+  - Prominent Action Layer with gradient and large padding
+  - Responsive grid layouts (3-column top, 2-column mid, auto-fit bottom)
+  - Modal styling for smoke detector drill-down
+  - Hover effects and transitions
+- **Tab Updates:** `src/js/core/ui/ui-tabs.js` (updated)
+  - Removed old tab logic (insights-analytics, planning-view)
+  - Added governance-dashboard tab handling
+- **HTML:** `index.html` (updated)
+  - Removed 2 old tab buttons and content sections
+  - Added governance tab button and container
+  - Updated script imports
+
+**AI Integration Details:**
+- **Provider:** LiteLLM API (`CONFIG.LITELLM_API_ENDPOINT`)
+- **Model:** GPT-4o-mini (`openai/gpt-4o-mini`)
+- **Prompt Template:**
+  ```
+  You are a portfolio governance advisor. Analyze:
+  - Smoke Detectors: X solutions triggered
+  - BAU Anomalies: Y high demand, Z flagged
+  - Data Health: W missing metrics (H% score)
+  - Performance: P% UX achievement rate
+  
+  Provide 2-3 actionable recommendations in under 330 characters.
+  ```
+- **Timeout:** 5 seconds
+- **Fallback:** Rule-based summary if API fails or times out
+- **Configuration:** Editable via `config.js` (`LITELLM_API_KEY`, `AI_MODEL`)
+
+**Testing Completed:**
+- ✅ Local testing completed (10 test cases covering tab navigation, visual prominence, AI generation, drill-down, thresholds, side-by-side metrics, responsiveness)
+- ✅ Apps Script endpoint deployed and tested with spreadsheet data
+- ✅ AI summary generation tested with fallback scenario
+- ✅ Smoke detector modal drill-down verified
+- ✅ BAU chart thresholds clearly visible (3800 red, 1900 orange)
+- ✅ Performance gauges display side-by-side correctly
+- ✅ Responsive layout verified on tablet and mobile
+- ✅ No console errors
+- ✅ Documentation created (GOVERNANCE_DASHBOARD.md)
+
+**Priority:** High (Major Feature - Strategic Dashboard)  
+**Story Points:** 21  
+**Version:** v6.3.0 (Minor Feature Release)  
+**Status:** ✅ Complete  
+**Branch:** `feature/governance-dashboard`  
+**Date:** 2025-10-21
+
+**Key Benefits:**
+- **Consolidated View:** Single dashboard replaces 2 tabs, reducing cognitive load
+- **AI-Driven Insights:** Automated analysis prioritizes attention areas
+- **Actionable Design:** Visual hierarchy guides users to most important information first
+- **Proactive Alerts:** Smoke detectors highlight issues before they become critical
+- **Resource Transparency:** Clear view of BAU allocation and team consumption
+- **Performance Tracking:** Side-by-side UX/BI comparison enables quick assessment
+- **Executive-Ready:** Designed for C-level and Portfolio Owners with strategic focus
+
+**Breaking Changes:**
+- ⚠️ Removes "Insights & Analytics" tab (replaced by Governance)
+- ⚠️ Removes "Planning & Action" tab (consolidated into Governance)
+- ⚠️ Updates total tab count from 4 to 3 (Explore, Governance, Analytics)
+- ⚠️ Requires new Apps Script endpoint deployment
+- ⚠️ Requires LiteLLM API key configuration for AI features
+
+**Implementation Reference:**
+See [GOVERNANCE_DASHBOARD.md](./GOVERNANCE_DASHBOARD.md) for complete technical documentation.
 
 ---
 

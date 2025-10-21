@@ -109,21 +109,36 @@ function doPost(e) {
 }
 
 /**
- * Handle GET requests (for testing/health check)
+ * Handle GET requests (for testing/health check and governance data)
  * 
  * @param {Object} e - Event object
  * @return {ContentService.TextOutput} JSON response
  */
 function doGet(e) {
-  const response = {
-    status: 'online',
-    service: 'P&C Portfolio Analytics Backend',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    message: 'Use POST to /exec with JSON payload to submit analytics events'
-  };
-  
-  return createResponse(true, 'Service is online', response);
+  try {
+    // Check if this is a governance data request
+    const action = e.parameter.action;
+    
+    if (action === 'getGovernanceData') {
+      Logger.log('🎯 Governance data request received');
+      const governanceData = getGovernanceData();
+      return createResponse(true, 'Governance data retrieved successfully', governanceData);
+    }
+    
+    // Default health check response
+    const response = {
+      status: 'online',
+      service: 'P&C Portfolio Analytics Backend',
+      version: '2.0.0',
+      timestamp: new Date().toISOString(),
+      message: 'Use POST to /exec with JSON payload to submit analytics events. Use ?action=getGovernanceData for governance dashboard data.'
+    };
+    
+    return createResponse(true, 'Service is online', response);
+  } catch (error) {
+    Logger.log('ERROR in doGet: ' + error.toString());
+    return createResponse(false, 'Error: ' + error.message);
+  }
 }
 
 // ==================== PAYLOAD VALIDATION ====================
@@ -480,5 +495,419 @@ function clearAnalyticsData() {
       ui.alert('Error', 'Failed to clear data: ' + error.message, ui.ButtonSet.OK);
     }
   }
+}
+
+// ==================== GOVERNANCE DASHBOARD ENDPOINT ====================
+
+/**
+ * Get consolidated governance data for the dashboard
+ * This endpoint aggregates all portfolio metrics needed for the governance view
+ * 
+ * @return {Object} Consolidated governance data
+ */
+function getGovernanceData() {
+  try {
+    Logger.log('📊 Starting governance data calculation...');
+    
+    // Open the P&C Portfolio spreadsheet
+    const sheet = SpreadsheetApp.openById('10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI')
+      .getSheetByName('[2025] P&C Portfolio');
+    
+    if (!sheet) {
+      throw new Error('Sheet "[2025] P&C Portfolio" not found');
+    }
+    
+    // Read all data
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(2); // Skip header rows (row 1 and 2)
+    
+    Logger.log(`Processing ${rows.length} solutions...`);
+    
+    // Process and return consolidated metrics
+    const governanceData = {
+      smokeDetectors: calculateSmokeDetectorsSummary(rows, headers),
+      bauAnomalies: calculateBAUAnomalies(rows, headers),
+      dataHealth: calculateDataHealth(rows, headers),
+      ptechInvolvement: calculatePTechInvolvement(rows, headers),
+      teamConsumption: calculateTeamConsumption(rows, headers),
+      performanceMetrics: calculatePerformanceMetrics(rows, headers),
+      strategicGaps: calculateStrategicGaps(rows, headers),
+      timestamp: new Date().toISOString()
+    };
+    
+    Logger.log('✅ Governance data calculation complete');
+    return governanceData;
+    
+  } catch (error) {
+    Logger.log('ERROR in getGovernanceData: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Calculate Smoke Detectors Summary
+ * Identifies solutions that trigger warning signals
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} Smoke detector summary with count and details
+ */
+function calculateSmokeDetectorsSummary(rows, headers) {
+  const triggered = [];
+  let totalCount = 0;
+  
+  // Helper to get column index
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  // Column indices
+  const nameIdx = getColIdx('Solution name');
+  const uxMetricIdx = getColIdx('Key Metric\nUser Experience');
+  const biMetricIdx = getColIdx('Key Metric\nBusiness Impact');
+  const maturityIdx = getColIdx('Maturity Stage');
+  const janUXIdx = getColIdx('JAN');
+  
+  rows.forEach((row, idx) => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    const detectorTypes = [];
+    
+    // Detector 1: Missing Key Metrics
+    const uxMetric = row[uxMetricIdx];
+    const biMetric = row[biMetricIdx];
+    if (!uxMetric || uxMetric === '' || uxMetric === 'N/A' || !biMetric || biMetric === '' || biMetric === 'N/A') {
+      detectorTypes.push('Lacking Metrics');
+    }
+    
+    // Detector 2: Decline Stage
+    const maturity = row[maturityIdx];
+    if (maturity && maturity.includes('Decline')) {
+      detectorTypes.push('Maturity: Decline Stage');
+    }
+    
+    // If any detector triggered, add to list
+    if (detectorTypes.length > 0) {
+      triggered.push({
+        name: solutionName,
+        triggers: detectorTypes,
+        primaryTrigger: detectorTypes[0]
+      });
+      totalCount++;
+    }
+  });
+  
+  return {
+    count: totalCount,
+    triggered: triggered.slice(0, 20) // Limit to top 20 for performance
+  };
+}
+
+/**
+ * Calculate BAU Allocation Anomalies
+ * Identifies solutions with high BAU hour allocations
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} BAU anomalies categorized by severity
+ */
+function calculateBAUAnomalies(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const nameIdx = getColIdx('Solution name');
+  const totalBAUIdx = getColIdx('Total\nHeadcount Allocation (BAU) in hours \n(Formula)');
+  
+  const high = []; // >=3800 hrs
+  const flagged = []; // 1900-3799 hrs
+  const normal = []; // <1900 hrs
+  
+  rows.forEach(row => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    const totalHours = parseFloat(row[totalBAUIdx]) || 0;
+    
+    const item = {
+      name: solutionName,
+      hours: totalHours
+    };
+    
+    if (totalHours >= 3800) {
+      high.push(item);
+    } else if (totalHours >= 1900) {
+      flagged.push(item);
+    } else if (totalHours > 0) {
+      normal.push(item);
+    }
+  });
+  
+  // Sort by hours descending
+  high.sort((a, b) => b.hours - a.hours);
+  flagged.sort((a, b) => b.hours - a.hours);
+  
+  return {
+    high: high.slice(0, 15),
+    flagged: flagged.slice(0, 15),
+    normal: normal.slice(0, 10),
+    summary: {
+      highCount: high.length,
+      flaggedCount: flagged.length,
+      normalCount: normal.length
+    }
+  };
+}
+
+/**
+ * Calculate Data Health Metrics
+ * Counts solutions with missing or incomplete data
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} Data health statistics
+ */
+function calculateDataHealth(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const nameIdx = getColIdx('Solution name');
+  const uxMetricIdx = getColIdx('Key Metric\nUser Experience');
+  const biMetricIdx = getColIdx('Key Metric\nBusiness Impact');
+  const ownerIdx = getColIdx('Owner\'s Name');
+  
+  let missingUX = 0;
+  let missingBI = 0;
+  let missingOwner = 0;
+  let totalSolutions = 0;
+  
+  rows.forEach(row => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    totalSolutions++;
+    
+    const uxMetric = row[uxMetricIdx];
+    const biMetric = row[biMetricIdx];
+    const owner = row[ownerIdx];
+    
+    if (!uxMetric || uxMetric === '' || uxMetric === 'N/A') missingUX++;
+    if (!biMetric || biMetric === '' || biMetric === 'N/A') missingBI++;
+    if (!owner || owner === '' || owner === 'N/A') missingOwner++;
+  });
+  
+  const healthScore = Math.round((1 - ((missingUX + missingBI) / (totalSolutions * 2))) * 100);
+  
+  return {
+    totalSolutions,
+    missingUX,
+    missingBI,
+    missingOwner,
+    missingMetrics: missingUX + missingBI,
+    healthScore
+  };
+}
+
+/**
+ * Calculate PTech Involvement Distribution
+ * Groups solutions by People Tech team involvement
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} PTech involvement statistics
+ */
+function calculatePTechInvolvement(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const nameIdx = getColIdx('Solution name');
+  const ptechIdx = getColIdx('[ONLY For PTech] \nPeople Tech Involvement Flag');
+  
+  let withPTech = 0;
+  let withoutPTech = 0;
+  const ptechSolutions = [];
+  
+  rows.forEach(row => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    const ptechFlag = row[ptechIdx];
+    
+    if (ptechFlag === true || ptechFlag === 'TRUE' || ptechFlag === 'YES') {
+      withPTech++;
+      ptechSolutions.push(solutionName);
+    } else {
+      withoutPTech++;
+    }
+  });
+  
+  return {
+    withPTech,
+    withoutPTech,
+    ptechSolutions: ptechSolutions.slice(0, 20),
+    percentage: Math.round((withPTech / (withPTech + withoutPTech)) * 100)
+  };
+}
+
+/**
+ * Calculate Team Consumption by BAU Hours
+ * Sums hours allocated to each team (PJC, PATO, TA, HRBP, PSE)
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Array} Team consumption ranked by hours
+ */
+function calculateTeamConsumption(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const pjcIdx = getColIdx('PJC \nHeadcount Allocation (BAU) in hours in a year \n*only input numbers');
+  const patoIdx = getColIdx('PATO\nHeadcount Allocation (BAU) in hours in a year \n*only input numbers');
+  const taIdx = getColIdx('Talent Acquisition\nHeadcount Allocation (BAU) in hours in a year \n*only input numbers');
+  const hrbpIdx = getColIdx('HRBP\nHeadcount Allocation (BAU) in hours in a year \n*only input numbers');
+  const pseIdx = getColIdx('PSE\nHeadcount Allocation (BAU) in hours in a year \n*only input numbers');
+  
+  const teams = {
+    'PJC': 0,
+    'PATO': 0,
+    'Talent Acquisition': 0,
+    'HRBP': 0,
+    'PSE': 0
+  };
+  
+  rows.forEach(row => {
+    teams['PJC'] += parseFloat(row[pjcIdx]) || 0;
+    teams['PATO'] += parseFloat(row[patoIdx]) || 0;
+    teams['Talent Acquisition'] += parseFloat(row[taIdx]) || 0;
+    teams['HRBP'] += parseFloat(row[hrbpIdx]) || 0;
+    teams['PSE'] += parseFloat(row[pseIdx]) || 0;
+  });
+  
+  // Convert to array and sort by hours descending
+  const teamArray = Object.entries(teams).map(([name, hours]) => ({
+    team: name,
+    hours: Math.round(hours),
+    fte: (hours / 1900).toFixed(2)
+  }));
+  
+  teamArray.sort((a, b) => b.hours - a.hours);
+  
+  return teamArray;
+}
+
+/**
+ * Calculate Performance Metrics
+ * Gets last month UX and BI metrics vs targets
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} Performance metrics summary
+ */
+function calculatePerformanceMetrics(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const nameIdx = getColIdx('Solution name');
+  const uxMetricIdx = getColIdx('Key Metric\nUser Experience');
+  const uxTargetIdx = getColIdx('TARGET');
+  const biMetricIdx = getColIdx('Key Metric\nBusiness Impact');
+  
+  // Find the latest month column (SEP is latest in the data)
+  const sepUXIdx = headers.indexOf('SEP');
+  
+  let uxAboveTarget = 0;
+  let uxBelowTarget = 0;
+  let uxNoData = 0;
+  let biWithData = 0;
+  let biNoData = 0;
+  
+  const uxSamples = [];
+  const biSamples = [];
+  
+  rows.forEach(row => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    // UX Metrics
+    const uxMetric = row[uxMetricIdx];
+    const uxTarget = parseFloat(row[uxTargetIdx]);
+    const lastMonthUX = parseFloat(row[sepUXIdx]);
+    
+    if (uxMetric && uxMetric !== 'N/A' && !isNaN(lastMonthUX) && !isNaN(uxTarget)) {
+      if (lastMonthUX >= uxTarget) {
+        uxAboveTarget++;
+        uxSamples.push({ name: solutionName, value: lastMonthUX, target: uxTarget, status: 'above' });
+      } else {
+        uxBelowTarget++;
+        uxSamples.push({ name: solutionName, value: lastMonthUX, target: uxTarget, status: 'below' });
+      }
+    } else {
+      uxNoData++;
+    }
+    
+    // BI Metrics
+    const biMetric = row[biMetricIdx];
+    if (biMetric && biMetric !== 'N/A') {
+      biWithData++;
+      biSamples.push({ name: solutionName, metric: biMetric });
+    } else {
+      biNoData++;
+    }
+  });
+  
+  const totalWithUX = uxAboveTarget + uxBelowTarget;
+  const uxAchievementRate = totalWithUX > 0 ? Math.round((uxAboveTarget / totalWithUX) * 100) : 0;
+  
+  return {
+    ux: {
+      aboveTarget: uxAboveTarget,
+      belowTarget: uxBelowTarget,
+      noData: uxNoData,
+      achievementRate: uxAchievementRate,
+      samples: uxSamples.slice(0, 10)
+    },
+    bi: {
+      withData: biWithData,
+      noData: biNoData,
+      samples: biSamples.slice(0, 10)
+    }
+  };
+}
+
+/**
+ * Calculate Strategic Gaps and Distribution
+ * Analyzes portfolio distribution by area and maturity
+ * 
+ * @param {Array} rows - Data rows
+ * @param {Array} headers - Column headers
+ * @return {Object} Strategic distribution data
+ */
+function calculateStrategicGaps(rows, headers) {
+  const getColIdx = (name) => headers.indexOf(name);
+  
+  const nameIdx = getColIdx('Solution name');
+  const areaIdx = getColIdx('P\'n\'C Area');
+  const maturityIdx = getColIdx('Maturity Stage');
+  
+  const byArea = {};
+  const byMaturity = {};
+  
+  rows.forEach(row => {
+    const solutionName = row[nameIdx];
+    if (!solutionName || solutionName.trim() === '') return;
+    
+    const area = row[areaIdx] || 'Unspecified';
+    const maturity = row[maturityIdx] || 'Unspecified';
+    
+    byArea[area] = (byArea[area] || 0) + 1;
+    byMaturity[maturity] = (byMaturity[maturity] || 0) + 1;
+  });
+  
+  // Convert to arrays
+  const areaDistribution = Object.entries(byArea).map(([name, count]) => ({ name, count }));
+  const maturityDistribution = Object.entries(byMaturity).map(([name, count]) => ({ name, count }));
+  
+  // Sort by count
+  areaDistribution.sort((a, b) => b.count - a.count);
+  maturityDistribution.sort((a, b) => b.count - a.count);
+  
+  return {
+    byArea: areaDistribution,
+    byMaturity: maturityDistribution
+  };
 }
 

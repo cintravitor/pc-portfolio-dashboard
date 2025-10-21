@@ -24,8 +24,7 @@
             <!-- Tab Navigation -->
             <div class="tab-navigation">
                 <button class="tab-btn active" data-tab="portfolio-overview">Explore</button>
-                <button class="tab-btn" data-tab="insights-analytics">Insights & Analytics</button>
-                <button class="tab-btn" data-tab="planning-view">Planning & Action</button>
+                <button class="tab-btn" data-tab="governance-dashboard">🎯 Governance</button>
                 <button class="tab-btn" data-tab="analytics-dashboard">📊 Analytics</button>
             </div>
             <div class="filters-section" id="filters-section">
@@ -107,24 +106,16 @@
             </div>
             <div id="detail-panel" class="detail-panel hidden"></div>
         </div>
-        <!-- Insights & Analytics Tab Content (Merged from Descriptive Analysis + Strategic View) -->
-        <div class="tab-content" id="tab-insights-analytics">
-            <div class="insights-analytics-container">
-                <div id="insights-loading" class="loading hidden">
+        <!-- Governance Dashboard Tab Content -->
+        <div class="tab-content" id="tab-governance-dashboard">
+            <div class="governance-container">
+                <div id="governance-loading" class="loading hidden">
                     <div class="spinner"></div>
-                    <h2>Loading Insights & Analytics...</h2>
-                    <p style="color: #6b7280; margin-top: 0.5rem;">Analyzing portfolio data and calculating metrics</p>
+                    <h2>Loading Governance Dashboard...</h2>
+                    <p style="color: #6b7280; margin-top: 0.5rem;">Fetching consolidated portfolio metrics</p>
                 </div>
-                <div id="insights-content" class="insights-content">
-                    <!-- Insights & Analytics content will be dynamically rendered here -->
-                </div>
-            </div>
-        </div>
-        <!-- Planning & Action Tab Content -->
-        <div class="tab-content" id="tab-planning-view">
-            <div class="planning-container">
-                <div id="planning-content" class="planning-content">
-                    <!-- Planning & Action content will be dynamically rendered here -->
+                <div id="governance-content" class="governance-content">
+                    <!-- Dynamically rendered by ui-governance.js -->
                 </div>
             </div>
         </div>
@@ -155,8 +146,7 @@
     <script src="src/js/core/ui/ui-cards.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-filters.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-detail-panel.js?v=7.2.0"></script>
-    <script src="src/js/core/ui/ui-insights.js?v=7.2.0"></script>
-    <script src="src/js/core/ui/ui-planning.js?v=7.2.0"></script>
+    <script src="src/js/core/ui/ui-governance.js?v=6.3.0"></script>
     <script src="src/js/core/ui/ui-drill-down.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-tabs.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-analytics.js?v=7.2.0"></script>

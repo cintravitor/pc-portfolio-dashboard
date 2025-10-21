@@ -193,6 +193,44 @@
         }
         
         const coverage = data.metricsCoverage;
+        const perf = data.performanceMetrics;
+        
+        // ========== ACHIEVEMENT GAUGES (TOP) ==========
+        const achievementSection = document.createElement('div');
+        achievementSection.innerHTML = `
+            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🎯</span> Current Month Achievement
+            </h4>
+        `;
+        
+        const achievementGrid = document.createElement('div');
+        achievementGrid.className = 'metric-comparison';
+        achievementGrid.innerHTML = `
+            <div class="metric-gauge-container">
+                <div class="performance-metric-gauge">
+                    <canvas id="ux-performance-gauge"></canvas>
+                </div>
+                <div class="metric-label">UX Achievement</div>
+                <div class="metric-value">${perf.ux.achievementRate}%</div>
+                <p class="metric-detail">${perf.ux.aboveTarget} of ${coverage.totalSolutions} solutions on target</p>
+            </div>
+            <div class="metric-gauge-container">
+                <div class="performance-metric-gauge">
+                    <canvas id="bi-performance-gauge"></canvas>
+                </div>
+                <div class="metric-label">BI Achievement</div>
+                <div class="metric-value">${Math.round((perf.bi.withData / (perf.bi.withData + perf.bi.noData)) * 100)}%</div>
+                <p class="metric-detail">${perf.bi.withData} of ${coverage.totalSolutions} solutions with data</p>
+            </div>
+        `;
+        achievementSection.appendChild(achievementGrid);
+        container.appendChild(achievementSection);
+        
+        // ========== METRICS COVERAGE CARDS ==========
+        const coverageTitle = document.createElement('h4');
+        coverageTitle.style.cssText = 'font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;';
+        coverageTitle.innerHTML = '<span>📊</span> Metrics Coverage';
+        container.appendChild(coverageTitle);
         
         // UX and BI Comparison
         const comparison = document.createElement('div');
@@ -231,30 +269,18 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-card-header">
-                        <span class="metric-card-icon">🎯</span>
-                        <h5 class="metric-card-title">Reaching Target</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.ux.reachedTargetPercent}%</div>
-                    <p class="metric-card-label">${coverage.ux.reachedTarget} above target</p>
-                    <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.ux.reachedTargetPercent >= 70 ? 'high' : coverage.ux.reachedTargetPercent >= 40 ? 'medium' : 'low'}" 
-                             style="width: ${coverage.ux.reachedTargetPercent}%"></div>
-                    </div>
-                </div>
-                ${coverage.ux.automatedPercent !== null ? `
-                <div class="metric-card">
-                    <div class="metric-card-header">
                         <span class="metric-card-icon">🤖</span>
                         <h5 class="metric-card-title">Automated Extraction</h5>
                     </div>
-                    <div class="metric-card-value">${coverage.ux.automatedPercent}%</div>
-                    <p class="metric-card-label">${coverage.ux.automated} automated</p>
+                    <div class="metric-card-value">${coverage.ux.automatedPercent !== null ? coverage.ux.automatedPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.ux.automatedPercent !== null ? coverage.ux.automated + ' automated' : 'Data not available'}</p>
+                    ${coverage.ux.automatedPercent !== null ? `
                     <div class="metric-progress-bar">
                         <div class="metric-progress-fill ${coverage.ux.automatedPercent >= 50 ? 'high' : coverage.ux.automatedPercent >= 25 ? 'medium' : 'low'}" 
                              style="width: ${coverage.ux.automatedPercent}%"></div>
                     </div>
+                    ` : ''}
                 </div>
-                ` : ''}
             </div>
         `;
         
@@ -277,34 +303,34 @@
                              style="width: ${coverage.bi.metricDefinedPercent}%"></div>
                     </div>
                 </div>
-                ${coverage.bi.currentMonthFilledPercent !== null ? `
                 <div class="metric-card">
                     <div class="metric-card-header">
                         <span class="metric-card-icon">📅</span>
                         <h5 class="metric-card-title">Current Month Data</h5>
                     </div>
-                    <div class="metric-card-value">${coverage.bi.currentMonthFilledPercent}%</div>
-                    <p class="metric-card-label">${coverage.bi.currentMonthFilled} solutions tracked</p>
+                    <div class="metric-card-value">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilledPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilled + ' solutions tracked' : 'Data not available'}</p>
+                    ${coverage.bi.currentMonthFilledPercent !== null ? `
                     <div class="metric-progress-bar">
                         <div class="metric-progress-fill ${coverage.bi.currentMonthFilledPercent >= 80 ? 'high' : coverage.bi.currentMonthFilledPercent >= 50 ? 'medium' : 'low'}" 
                              style="width: ${coverage.bi.currentMonthFilledPercent}%"></div>
                     </div>
+                    ` : ''}
                 </div>
-                ` : ''}
-                ${coverage.bi.automatedPercent !== null ? `
                 <div class="metric-card">
                     <div class="metric-card-header">
                         <span class="metric-card-icon">🤖</span>
                         <h5 class="metric-card-title">Automated Extraction</h5>
                     </div>
-                    <div class="metric-card-value">${coverage.bi.automatedPercent}%</div>
-                    <p class="metric-card-label">${coverage.bi.automated} automated</p>
+                    <div class="metric-card-value">${coverage.bi.automatedPercent !== null ? coverage.bi.automatedPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.bi.automatedPercent !== null ? coverage.bi.automated + ' automated' : 'Data not available'}</p>
+                    ${coverage.bi.automatedPercent !== null ? `
                     <div class="metric-progress-bar">
                         <div class="metric-progress-fill ${coverage.bi.automatedPercent >= 50 ? 'high' : coverage.bi.automatedPercent >= 25 ? 'medium' : 'low'}" 
                              style="width: ${coverage.bi.automatedPercent}%"></div>
                     </div>
+                    ` : ''}
                 </div>
-                ` : ''}
             </div>
         `;
         
@@ -312,8 +338,13 @@
         comparison.appendChild(biCard);
         container.appendChild(comparison);
         
+        // Initialize achievement gauges
+        setTimeout(() => {
+            initializePerformanceGauges(perf);
+        }, 100);
+        
         return createCollapsibleSection('metrics-coverage', '📊', 'Metrics Coverage', 
-            `${coverage.ux.metricDefinedPercent}% UX metrics, ${coverage.bi.metricDefinedPercent}% BI metrics defined`, 
+            `${perf.ux.achievementRate}% UX, ${Math.round((perf.bi.withData / coverage.totalSolutions) * 100)}% BI achievement`, 
             container, true); // Default expanded
     }
     
@@ -333,98 +364,28 @@
         }
         
         const dist = data.portfolioDistribution;
-        const perf = data.performanceMetrics;
         const gaps = data.strategicGaps;
-        
-        // ========== PERFORMANCE METRICS (TOP) ==========
-        const perfSection = document.createElement('div');
-        perfSection.innerHTML = `
-            <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span>🎯</span> Performance Metrics - Current Month
-            </h3>
-        `;
-        
-        const perfGrid = document.createElement('div');
-        perfGrid.className = 'metric-comparison';
-        perfGrid.innerHTML = `
-            <div class="metric-gauge-container">
-                <div class="performance-metric-gauge">
-                    <canvas id="ux-performance-gauge"></canvas>
-                </div>
-                <div class="metric-label">UX Achievement</div>
-                <div class="metric-value">${perf.ux.achievementRate}%</div>
-                <p class="metric-detail">${perf.ux.aboveTarget} of ${perf.ux.aboveTarget + perf.ux.belowTarget} on target</p>
-            </div>
-            <div class="metric-gauge-container">
-                <div class="performance-metric-gauge">
-                    <canvas id="bi-performance-gauge"></canvas>
-                </div>
-                <div class="metric-label">BI Coverage</div>
-                <div class="metric-value">${Math.round((perf.bi.withData / (perf.bi.withData + perf.bi.noData)) * 100)}%</div>
-                <p class="metric-detail">${perf.bi.withData} solutions with data</p>
-            </div>
-        `;
-        perfSection.appendChild(perfGrid);
-        container.appendChild(perfSection);
-        
-        // ========== DISTRIBUTION GRID ==========
-        const distributionTitle = document.createElement('h3');
-        distributionTitle.style.cssText = 'font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;';
-        distributionTitle.innerHTML = '<span>📊</span> Portfolio Distribution';
-        container.appendChild(distributionTitle);
         
         const grid = document.createElement('div');
         grid.className = 'distribution-grid';
         
-        // Journey Stage as Bar Chart (like Strategic Distribution)
+        // Journey Stage Column Chart
         const journeyCard = document.createElement('div');
         journeyCard.className = 'distribution-card';
-        const maxJourneyCount = Math.max(...dist.byJourney.map(item => item.count));
         journeyCard.innerHTML = `
             <h4 class="distribution-card-title">🗺️ Journey Stage Coverage</h4>
-            <div style="margin-top: 1rem;">
-                ${dist.byJourney.map(item => {
-                    const percentage = Math.round((item.count / maxJourneyCount) * 100);
-                    return `
-                        <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
-                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
-                            </div>
-                            <div class="distribution-bar">
-                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
-                                    ${percentage}%
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="height: 280px; margin-top: 1rem;">
+                <canvas id="journey-stage-chart"></canvas>
             </div>
         `;
         
-        // Maturity Stage as Bar Chart
+        // Maturity Distribution Column Chart
         const maturityCard = document.createElement('div');
         maturityCard.className = 'distribution-card';
-        const maxMaturityCount = Math.max(...gaps.byMaturity.map(item => item.count));
         maturityCard.innerHTML = `
             <h4 class="distribution-card-title">📈 Maturity Distribution</h4>
-            <div style="margin-top: 1rem;">
-                ${gaps.byMaturity.map(item => {
-                    const percentage = Math.round((item.count / maxMaturityCount) * 100);
-                    return `
-                        <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
-                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
-                            </div>
-                            <div class="distribution-bar">
-                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
-                                    ${percentage}%
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="height: 280px; margin-top: 1rem;">
+                <canvas id="maturity-distribution-chart"></canvas>
             </div>
         `;
         
@@ -489,29 +450,13 @@
             </div>
         `;
         
-        // P&C Area Distribution
+        // P&C Area Distribution Column Chart
         const areaCard = document.createElement('div');
         areaCard.className = 'distribution-card';
-        const maxAreaCount = Math.max(...gaps.byArea.map(item => item.count));
         areaCard.innerHTML = `
             <h4 class="distribution-card-title">🏢 P&C Area Distribution</h4>
-            <div style="margin-top: 1rem;">
-                ${gaps.byArea.map(item => {
-                    const percentage = Math.round((item.count / maxAreaCount) * 100);
-                    return `
-                        <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
-                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
-                            </div>
-                            <div class="distribution-bar">
-                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
-                                    ${percentage}%
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="height: 280px; margin-top: 1rem;">
+                <canvas id="area-distribution-chart"></canvas>
             </div>
         `;
         
@@ -523,14 +468,141 @@
         grid.appendChild(areaCard);
         container.appendChild(grid);
         
-        // Initialize performance gauges
+        // Initialize column charts
         setTimeout(() => {
-            initializePerformanceGauges(perf);
+            initializeDistributionColumnCharts(dist, gaps);
         }, 100);
         
         return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
-            `${perf.ux.achievementRate}% UX achievement, ${dist.byJourney.length} journey stages covered`, 
+            `${dist.byJourney.length} journey stages, ${gaps.byMaturity.length} maturity levels`, 
             container, false);
+    }
+    
+    /**
+     * Initialize Distribution Column Charts
+     */
+    function initializeDistributionColumnCharts(dist, gaps) {
+        // Journey Stage Column Chart
+        const journeyCtx = document.getElementById('journey-stage-chart');
+        if (journeyCtx) {
+            new Chart(journeyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dist.byJourney.map(item => item.name),
+                    datasets: [{
+                        label: 'Solutions',
+                        data: dist.byJourney.map(item => item.count),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y} solutions`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Maturity Distribution Column Chart
+        const maturityCtx = document.getElementById('maturity-distribution-chart');
+        if (maturityCtx) {
+            new Chart(maturityCtx, {
+                type: 'bar',
+                data: {
+                    labels: gaps.byMaturity.map(item => item.name),
+                    datasets: [{
+                        label: 'Solutions',
+                        data: gaps.byMaturity.map(item => item.count),
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y} solutions`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // P&C Area Distribution Column Chart
+        const areaCtx = document.getElementById('area-distribution-chart');
+        if (areaCtx) {
+            new Chart(areaCtx, {
+                type: 'bar',
+                data: {
+                    labels: gaps.byArea.map(item => item.name),
+                    datasets: [{
+                        label: 'Solutions',
+                        data: gaps.byArea.map(item => item.count),
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y} solutions`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
     
     // ==================== SECTION 1: ACTION LAYER ====================

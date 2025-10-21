@@ -54,25 +54,6 @@
             console.warn('DetailPanel module not loaded');
         },
         
-        // From ui-insights.js
-        renderInsightsAnalytics: window.UIManager.Insights?.render || function() {
-            console.warn('Insights module not loaded');
-        },
-        renderStrategicView: window.UIManager.Insights?.renderExecutiveView || function() {
-            console.warn('Insights module not loaded');
-        },
-        renderExecutiveView: window.UIManager.Insights?.renderExecutiveView || function() {
-            console.warn('Insights module not loaded');
-        },
-        loadDescriptiveAnalysis: window.UIManager.Insights?.loadLegacyAnalysis || function() {
-            console.warn('Insights module not loaded');
-        },
-        
-        // From ui-planning.js
-        renderPlanningView: window.UIManager.Planning?.render || function() {
-            console.warn('Planning module not loaded');
-        },
-        
         // UI State helpers (moved from old ui-manager.js)
         showLoading: function(show) {
             const loading = document.getElementById('loading');
@@ -119,10 +100,6 @@
         }
     };
     
-    window.clearPlanningFilters = function() {
-        console.warn('clearPlanningFilters is deprecated - planning charts removed');
-    };
-    
     // Global tab switching function
     window.switchTab = function(tabName) {
         if (window.UIManager.switchTab) {
@@ -144,14 +121,14 @@
     };
     
     console.log('✅ UI Manager compatibility wrapper loaded');
-    console.log('📊 Module architecture active:', {
+    console.log('📊 Active UI Modules:', {
         Tabs: !!window.UIManager.Tabs,
         Filters: !!window.UIManager.Filters,
         Cards: !!window.UIManager.Cards,
         DetailPanel: !!window.UIManager.DetailPanel,
         Charts: !!window.UIManager.Charts,
-        Insights: !!window.UIManager.Insights,
-        Planning: !!window.UIManager.Planning,
+        Governance: !!window.UIManager.Governance,
+        Analytics: !!window.UIManager.Analytics,
         DrillDown: !!window.UIManager.DrillDown
     });
 })();

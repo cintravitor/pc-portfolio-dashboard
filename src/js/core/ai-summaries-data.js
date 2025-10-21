@@ -43,9 +43,7 @@ window.AI_SUMMARIES = {
     }
   },
   "Talent Assessment": {
-    "original": "Implementing a structured evaluation system for senior leadership development at Nubank ensures consistent evaluations and provides clear documentation to expedite strategic discussions. This system supports conversations about organizational ideation and structure, addresses retention challenges and mitigates risks of misalignment and underprepared leadership to enhance both individual and organizational success.
-
-",
+    "original": "Implementing a structured evaluation system for senior leadership development at Nubank ensures consistent evaluations and provides clear documentation to expedite strategic discussions. This system supports conversations about organizational ideation and structure, addresses retention challenges and mitigates risks of misalignment and underprepared leadership to enhance both individual and organizational success.",
     "summary": "Inconsistent evaluations for senior leaders hinder development, risking misalignment and underprepared leadership at Nubank.",
     "length": 124,
     "timestamp": "2025-10-19T16:03:08.747Z",

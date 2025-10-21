@@ -62,10 +62,6 @@
             const allocationSection = createAllocationSection(governanceData);
             governanceContent.appendChild(allocationSection);
             
-            // ========== SECTION 5: PERFORMANCE & HEALTH (Collapsible) ==========
-            const healthSection = createHealthSection(governanceData);
-            governanceContent.appendChild(healthSection);
-            
             console.log('✅ Governance Dashboard rendered successfully');
             
         } catch (error) {
@@ -245,6 +241,7 @@
                              style="width: ${coverage.ux.reachedTargetPercent}%"></div>
                     </div>
                 </div>
+                ${coverage.ux.automatedPercent !== null ? `
                 <div class="metric-card">
                     <div class="metric-card-header">
                         <span class="metric-card-icon">🤖</span>
@@ -257,6 +254,7 @@
                              style="width: ${coverage.ux.automatedPercent}%"></div>
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
         
@@ -279,6 +277,7 @@
                              style="width: ${coverage.bi.metricDefinedPercent}%"></div>
                     </div>
                 </div>
+                ${coverage.bi.currentMonthFilledPercent !== null ? `
                 <div class="metric-card">
                     <div class="metric-card-header">
                         <span class="metric-card-icon">📅</span>
@@ -291,6 +290,8 @@
                              style="width: ${coverage.bi.currentMonthFilledPercent}%"></div>
                     </div>
                 </div>
+                ` : ''}
+                ${coverage.bi.automatedPercent !== null ? `
                 <div class="metric-card">
                     <div class="metric-card-header">
                         <span class="metric-card-icon">🤖</span>
@@ -303,6 +304,7 @@
                              style="width: ${coverage.bi.automatedPercent}%"></div>
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
         
@@ -319,34 +321,111 @@
     
     /**
      * Create Portfolio Distribution Section
-     * Shows distribution by Journey, Target User, Platform, Regulatory
+     * Shows performance metrics, distribution by Journey, Target User, Platform, Regulatory, Maturity
      */
     function createPortfolioDistributionSection(data) {
         const container = document.createElement('div');
         
-        if (!data.portfolioDistribution) {
-            container.innerHTML = '<p style="color: #64748b;">No portfolio distribution data available</p>';
+        if (!data.portfolioDistribution || !data.performanceMetrics) {
+            container.innerHTML = '<p style="color: #64748b;">No distribution data available</p>';
             return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
-                'View solutions by journey, user, platform, and compliance', container, false);
+                'View portfolio metrics and distribution', container, false);
         }
         
         const dist = data.portfolioDistribution;
+        const perf = data.performanceMetrics;
+        const gaps = data.strategicGaps;
+        
+        // ========== PERFORMANCE METRICS (TOP) ==========
+        const perfSection = document.createElement('div');
+        perfSection.innerHTML = `
+            <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🎯</span> Performance Metrics - Current Month
+            </h3>
+        `;
+        
+        const perfGrid = document.createElement('div');
+        perfGrid.className = 'metric-comparison';
+        perfGrid.innerHTML = `
+            <div class="metric-gauge-container">
+                <div class="performance-metric-gauge">
+                    <canvas id="ux-performance-gauge"></canvas>
+                </div>
+                <div class="metric-label">UX Achievement</div>
+                <div class="metric-value">${perf.ux.achievementRate}%</div>
+                <p class="metric-detail">${perf.ux.aboveTarget} of ${perf.ux.aboveTarget + perf.ux.belowTarget} on target</p>
+            </div>
+            <div class="metric-gauge-container">
+                <div class="performance-metric-gauge">
+                    <canvas id="bi-performance-gauge"></canvas>
+                </div>
+                <div class="metric-label">BI Coverage</div>
+                <div class="metric-value">${Math.round((perf.bi.withData / (perf.bi.withData + perf.bi.noData)) * 100)}%</div>
+                <p class="metric-detail">${perf.bi.withData} solutions with data</p>
+            </div>
+        `;
+        perfSection.appendChild(perfGrid);
+        container.appendChild(perfSection);
+        
+        // ========== DISTRIBUTION GRID ==========
+        const distributionTitle = document.createElement('h3');
+        distributionTitle.style.cssText = 'font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;';
+        distributionTitle.innerHTML = '<span>📊</span> Portfolio Distribution';
+        container.appendChild(distributionTitle);
+        
         const grid = document.createElement('div');
         grid.className = 'distribution-grid';
         
-        // Journey Stage Distribution
+        // Journey Stage as Bar Chart (like Strategic Distribution)
         const journeyCard = document.createElement('div');
         journeyCard.className = 'distribution-card';
+        const maxJourneyCount = Math.max(...dist.byJourney.map(item => item.count));
         journeyCard.innerHTML = `
             <h4 class="distribution-card-title">🗺️ Journey Stage Coverage</h4>
-            <ul class="distribution-list">
-                ${dist.byJourney.map(item => `
-                    <li class="distribution-item">
-                        <span class="distribution-item-label">${escapeHtml(item.name)}</span>
-                        <span class="distribution-item-value">${item.count}</span>
-                    </li>
-                `).join('')}
-            </ul>
+            <div style="margin-top: 1rem;">
+                ${dist.byJourney.map(item => {
+                    const percentage = Math.round((item.count / maxJourneyCount) * 100);
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
+                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
+                            </div>
+                            <div class="distribution-bar">
+                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        // Maturity Stage as Bar Chart
+        const maturityCard = document.createElement('div');
+        maturityCard.className = 'distribution-card';
+        const maxMaturityCount = Math.max(...gaps.byMaturity.map(item => item.count));
+        maturityCard.innerHTML = `
+            <h4 class="distribution-card-title">📈 Maturity Distribution</h4>
+            <div style="margin-top: 1rem;">
+                ${gaps.byMaturity.map(item => {
+                    const percentage = Math.round((item.count / maxMaturityCount) * 100);
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
+                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
+                            </div>
+                            <div class="distribution-bar">
+                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
         `;
         
         // Target User Distribution
@@ -410,14 +489,47 @@
             </div>
         `;
         
+        // P&C Area Distribution
+        const areaCard = document.createElement('div');
+        areaCard.className = 'distribution-card';
+        const maxAreaCount = Math.max(...gaps.byArea.map(item => item.count));
+        areaCard.innerHTML = `
+            <h4 class="distribution-card-title">🏢 P&C Area Distribution</h4>
+            <div style="margin-top: 1rem;">
+                ${gaps.byArea.map(item => {
+                    const percentage = Math.round((item.count / maxAreaCount) * 100);
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: #475569;">${escapeHtml(item.name)}</span>
+                                <span style="font-size: 0.875rem; font-weight: 600;">${item.count}</span>
+                            </div>
+                            <div class="distribution-bar">
+                                <div class="distribution-bar-fill" style="width: ${percentage}%;">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
         grid.appendChild(journeyCard);
+        grid.appendChild(maturityCard);
         grid.appendChild(userCard);
         grid.appendChild(platformCard);
         grid.appendChild(regulatoryCard);
+        grid.appendChild(areaCard);
         container.appendChild(grid);
         
+        // Initialize performance gauges
+        setTimeout(() => {
+            initializePerformanceGauges(perf);
+        }, 100);
+        
         return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
-            `${dist.byJourney.length} journey stages, ${dist.byTargetUser.length} user groups`, 
+            `${perf.ux.achievementRate}% UX achievement, ${dist.byJourney.length} journey stages covered`, 
             container, false);
     }
     
@@ -689,29 +801,6 @@ Provide concise, actionable recommendations prioritizing the most critical issue
             container.appendChild(ptechByAreaCard);
         }
         
-        // BAU Dedication Details (if available)
-        if (data.bauDedication && data.bauDedication.topSolutions) {
-            const bauDedicationCard = document.createElement('div');
-            bauDedicationCard.className = 'distribution-card';
-            bauDedicationCard.style.marginTop = '1.5rem';
-            bauDedicationCard.innerHTML = `
-                <h4 class="distribution-card-title">⏱️ Top Solutions by BAU Dedication</h4>
-                <p style="font-size: 0.875rem; color: #64748b; margin: 0 0 1rem 0;">
-                    Total: ${data.bauDedication.totalHours.toLocaleString()} hrs/year (${data.bauDedication.totalHC.toFixed(1)} FTE)
-                </p>
-                <ul class="distribution-list">
-                    ${data.bauDedication.topSolutions.slice(0, 10).map((item, idx) => `
-                        <li class="distribution-item" style="flex-direction: column; align-items: flex-start;">
-                            <div style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                                <span class="distribution-item-label">${idx + 1}. ${escapeHtml(item.name)}</span>
-                                <span class="distribution-item-value">${item.hoursPerYear.toLocaleString()} hrs (${item.fullyDedicatedHC} HC)</span>
-                            </div>
-                        </li>
-                    `).join('')}
-                </ul>
-            `;
-            container.appendChild(bauDedicationCard);
-        }
         
         // Initialize charts after DOM is ready
         setTimeout(() => {

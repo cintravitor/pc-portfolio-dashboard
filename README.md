@@ -1,10 +1,13 @@
 # P&C Portfolio Dashboard
 
-An interactive dashboard for managing and visualizing the People & Culture (P&C) portfolio solutions.
+![Version](https://img.shields.io/badge/version-6.3.0-blue.svg)
+![Status](https://img.shields.io/badge/status-production-green.svg)
+
+An interactive dashboard for managing and visualizing the People & Culture (P&C) portfolio solutions with AI-powered insights and strategic governance features.
 
 ## 🚀 Live Demo
 
-Visit: [GitHub Pages URL]
+Visit: https://cintravitor.github.io/pc-portfolio-dashboard/
 
 ## 📁 Project Structure
 
@@ -29,12 +32,14 @@ Visit: [GitHub Pages URL]
 │   │   └── dashboard-style.css
 │   └── assets/             # Images and other assets
 ├── docs/                   # Documentation
-│   ├── architecture/       # Architecture documentation
-│   ├── deployment/         # Deployment guides
+│   ├── getting-started/    # Setup and deployment guides
+│   ├── architecture/       # System design documentation
+│   ├── api/                # API reference
 │   ├── features/           # Feature documentation
-│   ├── guides/             # User and developer guides
-│   ├── implementation/     # Implementation summaries
-│   └── testing/            # Test documentation
+│   ├── contributing/       # Contributor guidelines
+│   ├── guides/             # Additional guides
+│   ├── testing/            # Test documentation
+│   └── archive/            # Historical documentation
 ├── tests/                  # Test files
 ├── scripts/                # Utility scripts
 ├── data/                   # Data files
@@ -54,19 +59,36 @@ The dashboard follows a modern, modular architecture:
 
 ## 🎯 Features
 
-### Core Dashboards
-- **Strategic View**: Executive KPIs with interactive drill-down
-- **Portfolio Overview**: Filterable cards with at-a-glance metrics
-- **Descriptive Analysis**: Statistical insights and charts
-- **Planning View**: Proactive anomaly detection and planning workspace
+### Three Main Dashboards
+
+#### 📋 Explore Tab
+- **AI-Powered Cards**: Solution cards with AI-generated summaries (120-147 chars)
+- **Smart Filtering**: Multi-select filters by area, maturity, and owner
+- **Smoke Detectors**: Automated issue detection with visual indicators
+- **Detail Panels**: Comprehensive solution details with metric charts
+- **Search**: Fast text search across solutions
+
+#### 🎯 Governance Tab (NEW in v6.3.0)
+- **Action Layer**: AI-driven insights and recommendations
+- **Smoke Detector Scorecard**: Interactive drill-down for issues
+- **Metrics Coverage**: UX/BI achievement tracking with gauges
+- **Portfolio Distribution**: Column charts for Journey, Maturity, P&C Area
+- **Resource Allocation**: BAU anomaly detection and team consumption
+- **Collapsible Sections**: Organized, scannable layout
+
+#### 📊 Analytics Tab
+- **Executive Metrics**: High-level portfolio KPIs
+- **Performance Tracking**: Monitor UX and BI metrics
+- **Portfolio Breakdowns**: Analysis by maturity, area, and owner
+- **Risk Matrix**: Identify high-priority solutions
 
 ### Key Capabilities
-- **Automated Anomaly Detection**: Owner over-allocation and data quality issues
-- **Interactive Drill-Down**: Click KPIs to filter tactical view
-- **Visual Filter Pills**: Easy filter management and removal
-- **Progressive Disclosure**: Optimized detail panels with collapsible sections
-- **Real-time Updates**: Auto-refresh from Google Sheets
-- **Offline Support**: Local caching for offline access
+- 🤖 **AI Integration**: LiteLLM-powered summaries and recommendations
+- 🔥 **Smoke Detectors**: Automated quality and health monitoring
+- 📊 **Advanced Visualizations**: Column charts, gauges, and interactive graphs
+- 🔄 **Real-time Updates**: Live data from Google Sheets
+- 💾 **Offline Support**: Local caching for offline access
+- 📱 **Responsive Design**: Works on desktop, tablet, and mobile
 
 ## 🛠️ Technology Stack
 
@@ -78,36 +100,45 @@ The dashboard follows a modern, modular architecture:
 
 ## 📖 Documentation
 
-Full documentation is available in the [`docs/`](./docs/) folder. See [docs/README.md](./docs/README.md) for a complete index.
+Comprehensive documentation is available in the [`docs/`](./docs/) folder.
+
+**📚 [Documentation Index](./docs/README.md)** - Start here for all documentation
 
 ### Quick Links
 
-#### User Documentation
-- **[User Stories](./docs/features/USER_STORIES.md)** - Complete feature list (34 stories, all ✅ complete)
-- **[User Journeys](./docs/features/user-journeys.md)** - Real-world use cases and workflows
-- **[User Guide](./docs/guides/USER_GUIDE_TABS.md)** - How to use the dashboard
-- **[Product Roadmap](./docs/features/PRODUCT_ROADMAP.md)** - Future enhancements and timeline
+#### Getting Started
+- **[Quick Start Guide](./docs/getting-started/quick-start.md)** - Get up and running in 5 minutes
+- **[Local Development](./docs/getting-started/local-development.md)** - Set up your dev environment
+- **[Deployment Guide](./docs/getting-started/deployment.md)** - Deploy to production
+
+#### Features & User Guides
+- **[Governance Dashboard](./docs/features/GOVERNANCE_DASHBOARD.md)** - Strategic insights (v6.3.0)
+- **[AI Features](./docs/features/AI_FEATURES_USER_STORIES.md)** - AI-powered capabilities
+- **[Smoke Detectors](./docs/features/SMOKE_DETECTORS_README.md)** - Automated issue detection
+- **[User Stories](./docs/features/USER_STORIES.md)** - Complete feature list
 
 #### Technical Documentation
-- **[Architecture](./docs/architecture/)** - System architecture and design decisions
-- **[Developer Guide](./docs/guides/DEVELOPER_GUIDE.md)** - Technical documentation for contributors
-- **[AI Features](./docs/features/AI_RECOMMENDATIONS_IMPLEMENTATION_GUIDE.md)** - AI-powered recommendations 🆕
+- **[Architecture Overview](./docs/architecture/overview.md)** - System design and patterns
+- **[Data Flow](./docs/architecture/data-flow.md)** - How data moves through the system
+- **[Module Structure](./docs/architecture/module-structure.md)** - Code organization
+- **[Data Manager API](./docs/api/data-manager.md)** - Data operations API
+- **[UI Modules API](./docs/api/ui-modules.md)** - UI components API
+- **[Apps Script API](./docs/api/apps-script.md)** - Backend API reference
 
-#### Deployment & Setup
-- **[Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md)** - How to deploy
-- **[Local Testing](./docs/guides/LOCAL_TESTING_GUIDE.md)** - Getting started locally
-- **[Setup Instructions](./docs/deployment/SETUP_COMPLETE.md)** - Initial configuration
+#### Contributing
+- **[Code Standards](./docs/contributing/code-standards.md)** - Style guide and best practices
+- **[Testing Guide](./docs/contributing/testing.md)** - Testing procedures
 
 ## 🚦 Getting Started
 
 ### For Users
 
-1. Visit the live dashboard: [GitHub Pages URL]
-2. Explore the 4 main views:
-   - **Strategic View** - Executive KPIs
-   - **Portfolio Overview** - Product cards and filters
-   - **Descriptive Analysis** - Statistics and insights
-   - **Planning View** - Anomaly detection and planning
+1. **Visit the live dashboard**: https://cintravitor.github.io/pc-portfolio-dashboard/
+2. **Explore the 3 main tabs**:
+   - **Explore** - Browse solutions with AI summaries and filters
+   - **Governance** - Strategic insights and portfolio health
+   - **Analytics** - Executive metrics and performance tracking
+3. **Read the** [Quick Start Guide](./docs/getting-started/quick-start.md) for detailed usage
 
 ### For Developers
 
@@ -216,8 +247,8 @@ Want to see your name here? Check out [CONTRIBUTING.md](./CONTRIBUTING.md) to ge
 
 ---
 
-**Last Updated**: October 19, 2025  
-**Version**: 7.1.0  
+**Version**: 6.3.0  
+**Last Updated**: October 21, 2025  
 **Status**: ✅ Production Ready
 
 Made with ❤️ by the P&C team

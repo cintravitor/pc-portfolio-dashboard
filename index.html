@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&C Portfolio Dashboard - 2025</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/dashboard-style.css?v=7.0.2">
+    <link rel="stylesheet" href="src/css/dashboard-style.css?v=7.2.3">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -122,7 +122,9 @@
                 </div>
                 <div id="cards-container" class="cards-grid hidden"></div>
             </div>
-            <div id="detail-panel" class="detail-panel hidden"></div>
+            <div id="detail-panel-overlay" class="detail-panel-overlay hidden">
+                <div id="detail-panel" class="detail-panel"></div>
+            </div>
         </div>
         <!-- Governance Dashboard Tab Content -->
         <div class="tab-content" id="tab-governance-dashboard">
@@ -166,10 +168,10 @@
     <script src="src/js/core/ai-recommendations.js?v=7.2.0"></script>
     
     <!-- UI Modules (Modular Architecture) -->
-    <script src="src/js/core/ui/ui-charts.js?v=7.2.0"></script>
+    <script src="src/js/core/ui/ui-charts.js?v=7.3.1"></script>
     <script src="src/js/core/ui/ui-cards.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-filters.js?v=7.2.0"></script>
-    <script src="src/js/core/ui/ui-detail-panel.js?v=7.2.0"></script>
+    <script src="src/js/core/ui/ui-detail-panel.js?v=7.4.3"></script>
     <script src="src/js/core/ui/ui-governance.js?v=6.3.0"></script>
     <script src="src/js/core/ui/ui-drill-down.js?v=7.2.0"></script>
     <script src="src/js/core/ui/ui-tabs.js?v=7.2.0"></script>

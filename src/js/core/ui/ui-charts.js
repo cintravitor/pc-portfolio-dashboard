@@ -74,6 +74,43 @@
             return;
         }
         
+        // Register custom plugin for data labels
+        const dataLabelsPlugin = {
+            id: 'customDataLabels',
+            afterDatasetsDraw(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, i) => {
+                    // Only show labels for actual data (first dataset)
+                    if (i !== 0) return;
+                    
+                    const meta = chart.getDatasetMeta(i);
+                    if (!meta.hidden) {
+                        meta.data.forEach((element, index) => {
+                            const value = dataset.data[index];
+                            if (value === null || value === undefined) return;
+                            
+                            // Format value
+                            let label;
+                            if (value >= 0 && value <= 1) {
+                                label = Math.round(value * 100);
+                            } else {
+                                label = Math.round(value);
+                            }
+                            
+                            // Draw label
+                            ctx.save();
+                            ctx.fillStyle = '#667eea';
+                            ctx.font = '600 11px Inter';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(label, element.x, element.y - 10);
+                            ctx.restore();
+                        });
+                    }
+                });
+            }
+        };
+        
         // Create chart and store in State
         const chart = new Chart(ctx, {
             type: 'line',
@@ -199,7 +236,8 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [dataLabelsPlugin]
         });
             
             // Store chart instance in State

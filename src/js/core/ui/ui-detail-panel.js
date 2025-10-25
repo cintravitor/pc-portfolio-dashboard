@@ -1,8 +1,15 @@
 /**
  * UI Detail Panel Module
- * Handles product detail panel display and interactions
+ * Handles full-screen modal overlay for solution details with liquid glass styling
  * 
- * Part of the modular UI architecture refactor
+ * Features:
+ * - Full-screen centered modal with backdrop blur
+ * - Tab-based navigation (Metrics | Core Details)
+ * - Single view at a time prevents overlap issues
+ * - Smooth tab switching with animations
+ * - Multiple close methods: X button, backdrop click, ESC key
+ * 
+ * Part of the modular UI architecture
  * @module ui-detail-panel
  */
 
@@ -164,6 +171,231 @@
     }
     
     /**
+     * Calculate performance status based on last month's data
+     * @param {Array} monthlyData - Monthly actual values
+     * @param {Array} targetData - Monthly target values (can be array or single value)
+     * @returns {Object} { status: 'above'|'below'|'neutral', actual: number, target: number }
+     */
+    function calculateLastMonthPerformance(monthlyData, targetData) {
+        if (!Array.isArray(monthlyData)) {
+            return { status: 'neutral', actual: null, target: null };
+        }
+        
+        // Parse target - can be a single value or an array
+        let targetValue = null;
+        if (Array.isArray(targetData) && targetData.length > 0) {
+            // Use first valid target value from array
+            for (let val of targetData) {
+                const parsed = parseFloat(val);
+                if (!isNaN(parsed) && parsed > 0) {
+                    targetValue = parsed;
+                    break;
+                }
+            }
+        } else if (targetData !== null && targetData !== undefined && targetData !== '' && targetData !== '-') {
+            targetValue = parseFloat(targetData);
+            if (isNaN(targetValue)) targetValue = null;
+        }
+        
+        // Find the last valid actual data point
+        for (let i = monthlyData.length - 1; i >= 0; i--) {
+            const val = monthlyData[i];
+            if (val === null || val === undefined || val === '' || val === '-' || val === 'N/A') continue;
+            
+            const actual = parseFloat(val);
+            if (!isNaN(actual) && actual >= 0) {
+                // If no target, just show the value
+                if (targetValue === null || targetValue <= 0) {
+                    return { status: 'neutral', actual, target: null };
+                }
+                
+                const status = actual >= targetValue ? 'above' : 'below';
+                return { status, actual, target: targetValue };
+            }
+        }
+        
+        return { status: 'neutral', actual: null, target: null };
+    }
+    
+    /**
+     * Generate performance indicator HTML
+     * @param {Object} performance - { status, actual, target }
+     * @returns {string} HTML string
+     */
+    function generatePerformanceIndicator(performance) {
+        const { status, actual, target } = performance;
+        
+        if (status === 'neutral' || actual === null || target === null) {
+            return `
+                <div class="metric-performance-indicator neutral">
+                    <span>○</span>
+                    <span>No Recent Data</span>
+                </div>
+            `;
+        }
+        
+        const percentage = Math.round((actual / target) * 100);
+        const diff = Math.abs(percentage - 100);
+        
+        if (status === 'above') {
+            return `
+                <div class="metric-performance-indicator above">
+                    <span>✓</span>
+                    <span>Last Month: ${percentage}% of Target (+${diff}%)</span>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="metric-performance-indicator below">
+                    <span>⚠</span>
+                    <span>Last Month: ${percentage}% of Target (-${diff}%)</span>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Generate metrics section HTML content
+     * @param {Object} product - Product data
+     * @returns {string} HTML string
+     */
+    function generateMetricsContent(product) {
+        const uxPerformance = calculateLastMonthPerformance(product.monthlyUX, product.targetUX);
+        const biPerformance = calculateLastMonthPerformance(product.monthlyBI, product.targetBI);
+        
+        return `
+            <div class="metrics-grid">
+                <div class="metric-card ${uxPerformance.status === 'below' ? 'below-target' : uxPerformance.status === 'above' ? 'above-target' : ''}">
+                    <div class="metric-card-title">User Experience</div>
+                    ${generatePerformanceIndicator(uxPerformance)}
+                    <div class="detail-field">
+                        <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricUX) || 'Metric'}</div>
+                        <div class="chart-container">
+                            <canvas id="chart-ux"></canvas>
+                        </div>
+                    </div>
+                    <div id="ux-recommendation" class="recommendation-placeholder">
+                        <div class="automation-recommendation info">
+                            <div class="recommendation-icon">🤖</div>
+                            <div class="recommendation-text">Generating AI recommendation...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric-card ${biPerformance.status === 'below' ? 'below-target' : biPerformance.status === 'above' ? 'above-target' : ''}">
+                    <div class="metric-card-title">Business Impact</div>
+                    ${generatePerformanceIndicator(biPerformance)}
+                    <div class="detail-field">
+                        <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricBI) || 'Metric'}</div>
+                        <div class="chart-container">
+                            <canvas id="chart-bi"></canvas>
+                        </div>
+                    </div>
+                    <div id="bi-recommendation" class="recommendation-placeholder">
+                        <div class="automation-recommendation info">
+                            <div class="recommendation-icon">🤖</div>
+                            <div class="recommendation-text">Generating AI recommendation...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Generate core details section HTML content
+     * @param {Object} product - Product data
+     * @returns {string} HTML string
+     */
+    function generateCoreDetailsContent(product) {
+        return `
+            <div class="core-details-grid">
+                <!-- Owner -->
+                <div class="detail-field">
+                    <div class="detail-field-label">Owner</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.owner) || 'Not assigned'}</div>
+                </div>
+                
+                <!-- Maturity Stage -->
+                <div class="detail-field">
+                    <div class="detail-field-label">Maturity Stage</div>
+                    <div class="detail-field-value">
+                        <span class="status-badge ${window.Utils.getStatusClass(product.maturity)}">
+                            ${window.Utils.escapeHtml(product.maturity) || 'Not specified'}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Target User -->
+                ${product.targetUser ? `
+                <div class="detail-field">
+                    <div class="detail-field-label">Target User</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.targetUser)}</div>
+                </div>
+                ` : ''}
+                
+                <!-- Platform -->
+                <div class="detail-field">
+                    <div class="detail-field-label">Platform</div>
+                    <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
+                        ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
+                    </div>
+                </div>
+                
+                <!-- Journey Stage Impacted -->
+                ${product.journeyMain ? `
+                <div class="detail-field ${!product.targetUser && !product.regulatory ? 'full-width' : ''}">
+                    <div class="detail-field-label">Journey Stage Impacted</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.journeyMain)}</div>
+                </div>
+                ` : ''}
+                
+                <!-- Regulatory Demand -->
+                ${product.regulatory ? `
+                <div class="detail-field ${!product.targetUser ? 'full-width' : ''}">
+                    <div class="detail-field-label">Regulatory Demand</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.regulatory)}</div>
+                </div>
+                ` : ''}
+                
+                <!-- Problem (Full Width) -->
+                ${product.problem ? `
+                <div class="detail-field full-width">
+                    <div class="detail-field-label">Problem</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.problem)}</div>
+                </div>
+                ` : ''}
+                
+                <!-- Solution (Full Width) -->
+                ${product.solution ? `
+                <div class="detail-field full-width">
+                    <div class="detail-field-label">Solution</div>
+                    <div class="detail-field-value">${window.Utils.escapeHtml(product.solution)}</div>
+                </div>
+                ` : ''}
+                
+                <!-- Platform Contextual Note (Full Width) -->
+                ${product.platform ? `
+                <div class="detail-field-note platform-note">
+                    <div class="field-note-icon">💡</div>
+                    <div class="field-note-text">
+                        This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
+                        Understanding the platform helps in resource allocation and technical decision-making.
+                    </div>
+                </div>
+                ` : `
+                <div class="detail-field-note warning platform-note">
+                    <div class="field-note-icon">⚠️</div>
+                    <div class="field-note-text">
+                        Platform information is not specified. Consider documenting the technical platform for better resource planning.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+    
+    /**
      * Show detail panel for a product with streamlined attribute display
      * Displays essential ownership and context information in scannable format
      * @param {number} productId - Product ID to display
@@ -191,163 +423,54 @@
 
         panel.innerHTML = `
             <div class="detail-header">
-                <button class="detail-close">×</button>
+                <button class="detail-close" aria-label="Close detail panel">×</button>
                 <div class="detail-title">${window.Utils.escapeHtml(product.name)}</div>
                 <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
             </div>
             <div class="detail-body">
-                <!-- SECTION 1: Metrics (Collapsible, Collapsed by Default) -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header collapsed" data-section="metrics">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">📊</span>
-                            <h3 class="collapsible-title">Metrics</h3>
-                            <span class="collapsible-subtitle">Track performance and take action</span>
+                <!-- Tab Navigation -->
+                <div class="detail-tabs">
+                    <button class="detail-tab active" data-tab="metrics">
+                        <span class="detail-tab-icon">📊</span>
+                        <div class="detail-tab-label">
+                            <span class="detail-tab-title">Metrics</span>
+                            <span class="detail-tab-subtitle">Track performance and take action</span>
                         </div>
-                        <span class="collapsible-toggle">+</span>
-                    </div>
-                    <div class="detail-collapsible-content collapsed" id="section-metrics">
-                        <!-- Key Metrics - UX -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Key Metrics - User Experience</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricUX) || 'Metric'}</div>
-                                <div class="chart-container">
-                                    <canvas id="chart-ux"></canvas>
-                                </div>
-                            </div>
-                            <!-- UX Performance Recommendation -->
-                            <div id="ux-recommendation" class="recommendation-placeholder">
-                                <div class="automation-recommendation info">
-                                    <div class="recommendation-icon">🤖</div>
-                                    <div class="recommendation-text">Generating AI recommendation...</div>
-                                </div>
-                            </div>
+                    </button>
+                    <button class="detail-tab" data-tab="core-details">
+                        <span class="detail-tab-icon">📋</span>
+                        <div class="detail-tab-label">
+                            <span class="detail-tab-title">Core Details</span>
+                            <span class="detail-tab-subtitle">Essential product information</span>
                         </div>
-
-                        <!-- Key Metrics - BI -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Key Metrics - Business Impact</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricBI) || 'Metric'}</div>
-                                <div class="chart-container">
-                                    <canvas id="chart-bi"></canvas>
-                                </div>
-                            </div>
-                            <!-- BI Performance Recommendation -->
-                            <div id="bi-recommendation" class="recommendation-placeholder">
-                                <div class="automation-recommendation info">
-                                    <div class="recommendation-icon">🤖</div>
-                                    <div class="recommendation-text">Generating AI recommendation...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </button>
                 </div>
-
-                <!-- SECTION 2: Core Details (Collapsible, Collapsed by Default) -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header collapsed" data-section="core">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">📋</span>
-                            <h3 class="collapsible-title">Core Details</h3>
-                            <span class="collapsible-subtitle">Essential product information</span>
-                        </div>
-                        <span class="collapsible-toggle">+</span>
-                    </div>
-                    <div class="detail-collapsible-content collapsed" id="section-core">
-                        <!-- Owner (Highest Priority) -->
-                        <div class="detail-field">
-                            <div class="detail-field-label">Owner</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.owner) || 'Not assigned'}</div>
-                        </div>
-                        
-                        <!-- Problem -->
-                        ${product.problem ? `
-                        <div class="detail-field">
-                            <div class="detail-field-label">Problem</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.problem)}</div>
-                        </div>
-                        ` : ''}
-                        
-                        <!-- Solution -->
-                        ${product.solution ? `
-                        <div class="detail-field">
-                            <div class="detail-field-label">Solution</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.solution)}</div>
-                        </div>
-                        ` : ''}
-                        
-                        <!-- Target User -->
-                        ${product.targetUser ? `
-                        <div class="detail-field">
-                            <div class="detail-field-label">Target User</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.targetUser)}</div>
-                        </div>
-                        ` : ''}
-                        
-                        <!-- Journey Stage Impacted -->
-                        ${product.journeyMain ? `
-                        <div class="detail-field">
-                            <div class="detail-field-label">Journey Stage Impacted</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.journeyMain)}</div>
-                        </div>
-                        ` : ''}
-                        
-                        <!-- Platform -->
-                        <div class="detail-field">
-                            <div class="detail-field-label">Platform</div>
-                            <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
-                                ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
-                            </div>
-                        </div>
-                        
-                        <!-- Platform Contextual Note (with improved spacing) -->
-                        ${product.platform ? `
-                        <div class="detail-field-note platform-note">
-                            <div class="field-note-icon">💡</div>
-                            <div class="field-note-text">
-                                This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
-                                Understanding the platform helps in resource allocation and technical decision-making.
-                            </div>
-                        </div>
-                        ` : `
-                        <div class="detail-field-note warning platform-note">
-                            <div class="field-note-icon">⚠️</div>
-                            <div class="field-note-text">
-                                Platform information is not specified. Consider documenting the technical platform for better resource planning.
-                            </div>
-                        </div>
-                        `}
-                        
-                        <!-- Maturity Stage -->
-                        <div class="detail-field">
-                            <div class="detail-field-label">Maturity Stage</div>
-                            <div class="detail-field-value">
-                                <span class="status-badge ${window.Utils.getStatusClass(product.maturity)}">
-                                    ${window.Utils.escapeHtml(product.maturity) || 'Not specified'}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- Regulatory Demand -->
-                        ${product.regulatory ? `
-                        <div class="detail-field">
-                            <div class="detail-field-label">Regulatory Demand</div>
-                            <div class="detail-field-value">${window.Utils.escapeHtml(product.regulatory)}</div>
-                        </div>
-                        ` : ''}
-                    </div>
+                
+                <!-- Tab Content: Metrics -->
+                <div class="detail-tab-content active" id="tab-metrics">
+                    ${generateMetricsContent(product)}
+                </div>
+                
+                <!-- Tab Content: Core Details -->
+                <div class="detail-tab-content" id="tab-core-details">
+                    ${generateCoreDetailsContent(product)}
                 </div>
             </div>
         `;
 
+        // Show overlay and panel
+        const overlay = document.getElementById('detail-panel-overlay');
+        overlay.classList.remove('hidden');
         panel.classList.remove('hidden');
-        mainContent.classList.add('detail-open');
-        contentLeft.classList.add('shrink');
         
-        // Setup collapsible section event listeners
-        setupCollapsibleSections();
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+        
+        // Setup tab navigation
+        setupTabNavigation();
+        
+        // Setup modal close handlers
+        setupModalCloseHandlers();
         
         // Load Chart.js and render charts after panel is visible
         setTimeout(() => {
@@ -413,92 +536,108 @@
     }
     
     /**
-     * Setup event listeners for collapsible sections in detail panel
+     * Setup tab navigation in detail panel
      */
-    function setupCollapsibleSections() {
-        const headers = document.querySelectorAll('.detail-collapsible-header');
+    function setupTabNavigation() {
+        const tabs = document.querySelectorAll('.detail-tab');
         
-        headers.forEach(header => {
-            header.addEventListener('click', () => {
-                toggleCollapsibleSection(header);
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchTab(tab);
             });
         });
     }
     
     /**
-     * Toggle a collapsible section's expanded/collapsed state
+     * Switch active tab in detail panel
+     * @param {HTMLElement} clickedTab - The tab button that was clicked
      */
-    function toggleCollapsibleSection(header) {
-        const sectionId = header.getAttribute('data-section');
-        const content = document.getElementById(`section-${sectionId}`);
-        const toggle = header.querySelector('.collapsible-toggle');
+    function switchTab(clickedTab) {
+        const tabName = clickedTab.getAttribute('data-tab');
         
-        if (!content || !toggle) return;
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.detail-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.detail-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
         
-        // Check current state
-        const isCollapsed = header.classList.contains('collapsed');
-        
-        if (isCollapsed) {
-            // Expand
-            header.classList.remove('collapsed');
-            content.classList.remove('collapsed');
-            content.classList.add('expanded');
-            toggle.textContent = '–';
-            
-            // If expanding metrics section, load charts if not already loaded
-            if (sectionId === 'metrics') {
-                setTimeout(() => {
-                    const uxChart = document.getElementById('chart-ux');
-                    const biChart = document.getElementById('chart-bi');
-                    
-                    // Check if charts need to be rendered
-                    if (uxChart && !uxChart.chart) {
-                        const product = window.State.getPortfolioData().find(p => {
-                            const selectedCard = document.querySelector('.product-card.selected');
-                            return selectedCard && p.id === parseInt(selectedCard.getAttribute('data-product-id'));
-                        });
-                        
-                        if (product) {
-                            window.UIManager.Charts.loadChartJs().then(() => {
-                                window.UIManager.Charts.renderMetricChart('chart-ux', product.monthlyUX, product.targetUX, product.keyMetricUX);
-                                window.UIManager.Charts.renderMetricChart('chart-bi', product.monthlyBI, product.targetBI, product.keyMetricBI);
-                            });
-                        }
-                    }
-                }, 300); // Wait for expand animation
-            }
-        } else {
-            // Collapse
-            header.classList.add('collapsed');
-            content.classList.remove('expanded');
-            content.classList.add('collapsed');
-            toggle.textContent = '+';
+        // Add active class to clicked tab and corresponding content
+        clickedTab.classList.add('active');
+        const targetContent = document.getElementById(`tab-${tabName}`);
+        if (targetContent) {
+            targetContent.classList.add('active');
         }
+        
+        // Track analytics event
+        if (window.Analytics) {
+            window.Analytics.trackEvent('detail_panel', 'tab_switch', tabName);
+        }
+    }
+    
+    /**
+     * Setup event handlers for closing the modal
+     * Handles backdrop click, ESC key, and close button
+     */
+    function setupModalCloseHandlers() {
+        const overlay = document.getElementById('detail-panel-overlay');
+        const panel = document.getElementById('detail-panel');
+        const closeBtn = panel.querySelector('.detail-close');
+        
+        // Close button click
+        closeBtn.addEventListener('click', hideDetailPanel);
+        
+        // Backdrop click (clicking outside modal)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                hideDetailPanel();
+            }
+        });
+        
+        // ESC key press
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                hideDetailPanel();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+        // Store handler reference for cleanup
+        overlay._escHandler = escHandler;
     }
     
     /**
      * Hide detail panel
      */
     function hideDetailPanel() {
-        // Destroy all chart instances to prevent memory leaks
+        // Destroy chart instances
         const chartInstances = window.State.getChartInstances();
         Object.values(chartInstances).forEach(chart => {
             if (chart && chart.destroy) {
                 chart.destroy();
             }
         });
-        // Clear all chart instances in State
         window.State.clearAllChartInstances();
         
+        const overlay = document.getElementById('detail-panel-overlay');
         const panel = document.getElementById('detail-panel');
-        const mainContent = document.getElementById('main-content');
-        const contentLeft = document.getElementById('content-left');
-
-        panel.classList.add('hidden');
-        mainContent.classList.remove('detail-open');
-        contentLeft.classList.remove('shrink');
-
-        // Remove selected class from all cards
+        
+        // Clean up ESC key listener
+        if (overlay && overlay._escHandler) {
+            document.removeEventListener('keydown', overlay._escHandler);
+            overlay._escHandler = null;
+        }
+        
+        // Hide overlay and panel
+        if (overlay) overlay.classList.add('hidden');
+        if (panel) panel.classList.add('hidden');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+        
+        // Remove selected class from cards
         document.querySelectorAll('.product-card').forEach(card => {
             card.classList.remove('selected');
         });

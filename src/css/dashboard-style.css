@@ -774,14 +774,32 @@ body::before {
 
 .filters-container {
     display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Filter Rows - Grid-based layout for better visual hierarchy */
+.filters-row-search {
+    width: 100%;
+}
+
+.filters-row-main {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
-    flex-wrap: wrap;
+    width: 100%;
+}
+
+.filters-row-actions {
+    display: flex;
+    gap: 1rem;
     align-items: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(139, 92, 246, 0.15);
 }
 
 .search-box {
-    flex: 1;
-    min-width: 300px;
+    width: 100%;
     position: relative;
 }
 
@@ -845,14 +863,17 @@ select {
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    text-align: center;
+    min-width: 160px;
 }
 
 select:hover {
     background: rgba(255, 255, 255, 0.95);
     border-color: rgba(139, 92, 246, 0.6);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 
         0 4px 12px rgba(139, 92, 246, 0.15),
+        0 0 0 3px rgba(139, 92, 246, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
@@ -867,10 +888,11 @@ select:focus {
     transform: translateY(-1px);
 }
 
-/* Custom Multi-Select Dropdowns */
+/* Custom Multi-Select Dropdowns - Enhanced with Mercury Light Design */
 .custom-multiselect {
     position: relative;
     min-width: 160px;
+    transition: all 0.3s ease;
 }
 
 .multiselect-header {
@@ -895,9 +917,10 @@ select:focus {
 .multiselect-header:hover {
     background: rgba(255, 255, 255, 0.95);
     border-color: rgba(139, 92, 246, 0.6);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 
         0 4px 12px rgba(139, 92, 246, 0.15),
+        0 0 0 3px rgba(139, 92, 246, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
@@ -996,6 +1019,7 @@ select:focus {
 .filter-checkbox {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.625rem;
     padding: 1rem 1.25rem;
     background: rgba(255, 255, 255, 0.85);
@@ -1013,14 +1037,16 @@ select:focus {
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    min-width: 200px;
 }
 
 .filter-checkbox:hover {
     background: rgba(255, 255, 255, 0.95);
     border-color: rgba(139, 92, 246, 0.6);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 
         0 4px 12px rgba(139, 92, 246, 0.15),
+        0 0 0 3px rgba(139, 92, 246, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
@@ -1041,21 +1067,26 @@ select:focus {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.7));
     color: white;
     border: none;
-    border-left: 2px solid rgba(139, 92, 246, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border-radius: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
     letter-spacing: 0.01em;
     cursor: pointer;
     transition: all 0.3s;
     margin-left: auto;
+    box-shadow: 
+        0 2px 8px rgba(102, 126, 234, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .clear-filters:hover {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85));
-    transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 4px 12px rgba(102, 126, 234, 0.3),
+        0 0 0 3px rgba(102, 126, 234, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Tab Content */
@@ -2170,6 +2201,12 @@ select:focus {
 
 /* Responsive adjustments for data quality cards */
 @media (max-width: 1024px) {
+    /* Tablet-friendly filter layout */
+    .filters-row-main {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.875rem;
+    }
+    
     .stat-card-warning {
         min-width: 180px;
     }
@@ -2636,10 +2673,10 @@ select:focus {
 .detail-panel {
     /* STICKY positioning - panel and header move together as one unit */
     position: sticky;
-    top: 380px; /* Optimal position - entire header fully visible, no cutting */
+    top: 480px; /* Adjusted for new 3-row filter layout - entire header fully visible, no cutting */
     flex: 0 0 45%;
     align-self: flex-start; 
-    max-height: calc(100vh - 400px);
+    max-height: calc(100vh - 500px);
     background: rgba(255, 255, 255, 0.95);
     border-radius: 1.5rem;
     border: 1px solid var(--glass-border);
@@ -2848,7 +2885,20 @@ select:focus {
 @media (max-width: 768px) {
     .header-top { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .filters-container { flex-direction: column; }
-    .search-box { min-width: 100%; }
+    .filters-row-main { 
+        grid-template-columns: 1fr; 
+        gap: 0.75rem;
+    }
+    .filters-row-actions { 
+        flex-direction: column; 
+        align-items: stretch;
+    }
+    .filters-row-actions select,
+    .filters-row-actions .filter-checkbox,
+    .filters-row-actions .clear-filters {
+        width: 100%;
+    }
+    .search-box { width: 100%; }
     .cards-grid { grid-template-columns: 1fr; }
     
     /* Tab navigation on mobile */

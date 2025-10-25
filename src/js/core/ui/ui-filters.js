@@ -192,7 +192,9 @@
      */
     const multiSelectState = {
         area: new Set(),
+        journey: new Set(),
         maturity: new Set(),
+        targetUser: new Set(),
         owner: new Set()
     };
     
@@ -256,7 +258,7 @@
      * Update visual state of filter headers based on selections
      */
     function updateFilterHeaderStates() {
-        ['area', 'maturity', 'owner'].forEach(filterType => {
+        ['area', 'journey', 'maturity', 'targetUser', 'owner'].forEach(filterType => {
             const header = document.querySelector(`.multiselect-header[data-filter="${filterType}"]`);
             const hasSelections = multiSelectState[filterType].size > 0;
             
@@ -279,7 +281,7 @@
         console.log('📋 Populating filters:', filterOptions);
         
         // Guard clause: Skip if no data available yet
-        if (!filterOptions || !filterOptions.areas || !filterOptions.maturities || !filterOptions.owners) {
+        if (!filterOptions || !filterOptions.areas || !filterOptions.journeys || !filterOptions.maturities || !filterOptions.targetUsers || !filterOptions.owners) {
             console.warn('⚠️ Filter options not available yet - skipping filter population');
             return;
         }
@@ -306,6 +308,28 @@
             });
         }
         
+        // Populate journey dropdown
+        const journeyDropdown = document.querySelector('.multiselect-dropdown[data-filter="journey"]');
+        if (journeyDropdown) {
+            journeyDropdown.innerHTML = filterOptions.journeys.map(journey => `
+                <div class="multiselect-option" data-value="${window.Utils.escapeHtml(journey)}">
+                    <input type="checkbox" id="journey-${window.Utils.escapeHtml(journey).replace(/\s+/g, '-')}" />
+                    <label for="journey-${window.Utils.escapeHtml(journey).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(journey)}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            journeyDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleMultiselectChange('journey', this);
+                });
+            });
+        }
+        
         // Populate maturity dropdown
         const maturityDropdown = document.querySelector('.multiselect-dropdown[data-filter="maturity"]');
         if (maturityDropdown) {
@@ -324,6 +348,28 @@
                         checkbox.checked = !checkbox.checked;
                     }
                     handleMultiselectChange('maturity', this);
+                });
+            });
+        }
+        
+        // Populate target user dropdown
+        const targetUserDropdown = document.querySelector('.multiselect-dropdown[data-filter="targetUser"]');
+        if (targetUserDropdown) {
+            targetUserDropdown.innerHTML = filterOptions.targetUsers.map(targetUser => `
+                <div class="multiselect-option" data-value="${window.Utils.escapeHtml(targetUser)}">
+                    <input type="checkbox" id="targetUser-${window.Utils.escapeHtml(targetUser).replace(/\s+/g, '-')}" />
+                    <label for="targetUser-${window.Utils.escapeHtml(targetUser).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(targetUser)}</label>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            targetUserDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleMultiselectChange('targetUser', this);
                 });
             });
         }
@@ -385,7 +431,9 @@
     function applyFiltersFromUI() {
         const searchTerm = document.getElementById('search-input').value;
         const areaFilters = getSelectedValues('area');
+        const journeyFilters = getSelectedValues('journey');
         const maturityFilters = getSelectedValues('maturity');
+        const targetUserFilters = getSelectedValues('targetUser');
         const ownerFilters = getSelectedValues('owner');
         const sortBy = document.getElementById('sort-by').value;
         const belowTargetOnly = document.getElementById('filter-below-target').checked;
@@ -393,7 +441,9 @@
         // Debug logging
         console.log('🔍 Applying filters:', {
             areas: areaFilters,
+            journeys: journeyFilters,
             maturity: maturityFilters,
+            targetUsers: targetUserFilters,
             owners: ownerFilters,
             search: searchTerm
         });
@@ -401,13 +451,15 @@
         console.log('📤 Sending to DataManager:', {
             searchTerm,
             areaFilters,
+            journeyFilters,
             maturityFilters,
+            targetUserFilters,
             ownerFilters,
             sortBy,
             belowTargetOnly
         });
 
-        window.DataManager.applyFilters(searchTerm, areaFilters, maturityFilters, ownerFilters, sortBy, belowTargetOnly);
+        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
@@ -415,7 +467,7 @@
         console.log('📥 Filtered data count:', filteredData.length);
         
         // Check if any filters are active (arrays need length check)
-        const hasActiveFilters = searchTerm || areaFilters.length > 0 || maturityFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data
@@ -445,7 +497,9 @@
         
         // Clear custom multi-select state
         multiSelectState.area.clear();
+        multiSelectState.journey.clear();
         multiSelectState.maturity.clear();
+        multiSelectState.targetUser.clear();
         multiSelectState.owner.clear();
         
         // Uncheck all checkboxes and remove selected class
@@ -485,7 +539,9 @@
         // Get current filter values (custom multi-select arrays)
         const searchTerm = document.getElementById('search-input')?.value || '';
         const areaFilters = getSelectedValues('area');
+        const journeyFilters = getSelectedValues('journey');
         const maturityFilters = getSelectedValues('maturity');
+        const targetUserFilters = getSelectedValues('targetUser');
         const ownerFilters = getSelectedValues('owner');
         const sortBy = document.getElementById('sort-by')?.value || '';
         const belowTargetOnly = document.getElementById('filter-below-target')?.checked || false;
@@ -514,14 +570,38 @@
             });
         }
         
+        // Handle multiple journey selections
+        if (journeyFilters && journeyFilters.length > 0) {
+            journeyFilters.forEach(journey => {
+                activeFilters.push({
+                    type: 'journey',
+                    label: 'Journey Stage',
+                    value: journey,
+                    icon: '🗺️'
+                });
+            });
+        }
+        
         // Handle multiple maturity selections
         if (maturityFilters && maturityFilters.length > 0) {
             maturityFilters.forEach(maturity => {
                 activeFilters.push({
                     type: 'maturity',
-                    label: 'Journey Stage',
+                    label: 'Maturity Stage',
                     value: maturity,
                     icon: '🔄'
+                });
+            });
+        }
+        
+        // Handle multiple target user selections
+        if (targetUserFilters && targetUserFilters.length > 0) {
+            targetUserFilters.forEach(targetUser => {
+                activeFilters.push({
+                    type: 'targetUser',
+                    label: 'Target User',
+                    value: targetUser,
+                    icon: '👥'
                 });
             });
         }
@@ -612,12 +692,32 @@
                 }
                 break;
                 
+            case 'journey':
+                multiSelectState.journey.delete(filterValue);
+                const journeyOption = document.querySelector(`.multiselect-dropdown[data-filter="journey"] .multiselect-option[data-value="${filterValue}"]`);
+                if (journeyOption) {
+                    journeyOption.classList.remove('selected');
+                    const checkbox = journeyOption.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
+                break;
+                
             case 'maturity':
                 multiSelectState.maturity.delete(filterValue);
                 const maturityOption = document.querySelector(`.multiselect-dropdown[data-filter="maturity"] .multiselect-option[data-value="${filterValue}"]`);
                 if (maturityOption) {
                     maturityOption.classList.remove('selected');
                     const checkbox = maturityOption.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                }
+                break;
+                
+            case 'targetUser':
+                multiSelectState.targetUser.delete(filterValue);
+                const targetUserOption = document.querySelector(`.multiselect-dropdown[data-filter="targetUser"] .multiselect-option[data-value="${filterValue}"]`);
+                if (targetUserOption) {
+                    targetUserOption.classList.remove('selected');
+                    const checkbox = targetUserOption.querySelector('input[type="checkbox"]');
                     if (checkbox) checkbox.checked = false;
                 }
                 break;

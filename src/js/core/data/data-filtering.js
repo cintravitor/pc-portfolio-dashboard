@@ -14,22 +14,26 @@
      * Apply filters to the data
      * @param {string} searchTerm - Search query string
      * @param {Array<string>} areaFilters - Array of selected P&C areas (multi-select)
+     * @param {Array<string>} journeyFilters - Array of selected journey stages (multi-select)
      * @param {Array<string>} maturityFilters - Array of selected maturity stages (multi-select)
+     * @param {Array<string>} targetUserFilters - Array of selected target users (multi-select)
      * @param {Array<string>} ownerFilters - Array of selected owners (multi-select)
      * @param {string} sortBy - Sort option
      * @param {boolean} belowTargetOnly - Filter for below-target products only
      * 
      * Multi-select logic: OR within same filter type, AND across different filter types
-     * Example: (Area1 OR Area2) AND (Stage1 OR Stage2) AND (Owner1)
+     * Example: (Area1 OR Area2) AND (Journey1 OR Journey2) AND (Maturity1 OR Maturity2) AND (TargetUser1 OR TargetUser2) AND (Owner1)
      */
-    function applyFilters(searchTerm = '', areaFilters = [], maturityFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false) {
+    function applyFilters(searchTerm = '', areaFilters = [], journeyFilters = [], maturityFilters = [], targetUserFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false) {
         // Get portfolio data from State
         const portfolioData = window.State.getPortfolioData();
         
         console.log('🔧 DataManager.applyFilters called:', {
             portfolioDataCount: portfolioData.length,
             areaFilters,
+            journeyFilters,
             maturityFilters,
+            targetUserFilters,
             ownerFilters,
             searchTerm
         });
@@ -68,11 +72,27 @@
             });
         }
         
+        // Apply Journey Stage filters (multi-select OR logic)
+        if (journeyFilters && journeyFilters.length > 0) {
+            filtered = filtered.filter(product => {
+                const productJourney = (product.journeyMain || '').trim();
+                return journeyFilters.includes(productJourney);
+            });
+        }
+        
         // Apply Maturity filters (multi-select OR logic)
         if (maturityFilters && maturityFilters.length > 0) {
             filtered = filtered.filter(product => {
                 const productMaturity = (product.maturity || '').trim();
                 return maturityFilters.includes(productMaturity);
+            });
+        }
+        
+        // Apply Target User filters (multi-select OR logic)
+        if (targetUserFilters && targetUserFilters.length > 0) {
+            filtered = filtered.filter(product => {
+                const productTargetUser = (product.targetUser || '').trim();
+                return targetUserFilters.includes(productTargetUser);
             });
         }
         
@@ -157,14 +177,16 @@
         const portfolioData = window.State.getPortfolioData();
         
         if (!portfolioData || portfolioData.length === 0) {
-            return { areas: [], maturities: [], owners: [] };
+            return { areas: [], journeys: [], maturities: [], targetUsers: [], owners: [] };
         }
         
         const areas = [...new Set(portfolioData.map(p => p.area).filter(Boolean))].sort();
+        const journeys = [...new Set(portfolioData.map(p => p.journeyMain).filter(Boolean))].sort();
         const maturities = [...new Set(portfolioData.map(p => p.maturity).filter(Boolean))].sort();
+        const targetUsers = [...new Set(portfolioData.map(p => p.targetUser).filter(Boolean))].sort();
         const owners = [...new Set(portfolioData.map(p => p.owner).filter(Boolean))].sort();
         
-        return { areas, maturities, owners };
+        return { areas, journeys, maturities, targetUsers, owners };
     }
     
     // ==================== EXPORTS ====================

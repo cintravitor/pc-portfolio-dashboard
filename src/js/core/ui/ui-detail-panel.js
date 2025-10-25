@@ -164,7 +164,9 @@
     }
     
     /**
-     * Show detail panel for a product
+     * Show detail panel for a product with streamlined attribute display
+     * Displays essential ownership and context information in scannable format
+     * @param {number} productId - Product ID to display
      */
     function showDetailPanel(productId) {
         const product = window.DataManager.getProductById(productId);
@@ -185,13 +187,7 @@
             clickedCard.classList.add('selected');
         }
 
-        // Build solution scope list
-        const scopeItems = [
-            product.problem && `<li><strong>Problem:</strong> ${window.Utils.escapeHtml(product.problem)}</li>`,
-            product.solution && `<li><strong>Solution:</strong> ${window.Utils.escapeHtml(product.solution)}</li>`,
-            product.targetUser && `<li><strong>Target User:</strong> ${window.Utils.escapeHtml(product.targetUser)}</li>`,
-            product.indirectUser && `<li><strong>Indirect Impact:</strong> ${window.Utils.escapeHtml(product.indirectUser)}</li>`
-        ].filter(Boolean).join('');
+        // No preprocessing needed - attributes rendered directly in template
 
         panel.innerHTML = `
             <div class="detail-header">
@@ -200,78 +196,7 @@
                 <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
             </div>
             <div class="detail-body">
-                <!-- SECTION 1: Core Details (Always Visible) -->
-                <div class="detail-collapsible-section">
-                    <div class="detail-collapsible-header" data-section="core">
-                        <div class="collapsible-header-content">
-                            <span class="collapsible-icon">📋</span>
-                            <h3 class="collapsible-title">Core Details</h3>
-                            <span class="collapsible-subtitle">Essential product information</span>
-                        </div>
-                        <span class="collapsible-toggle">–</span>
-                    </div>
-                    <div class="detail-collapsible-content expanded" id="section-core">
-                        <!-- Solution Scope -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Solution Scope</div>
-                            <ul class="scope-list">
-                                ${scopeItems}
-                            </ul>
-                        </div>
-                        
-                        <!-- Ownership & Compliance -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Ownership & Compliance</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">Owner</div>
-                                <div class="detail-field-value">${window.Utils.escapeHtml(product.owner) || 'Not assigned'}</div>
-                            </div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">Maturity Stage</div>
-                                <div class="detail-field-value">
-                                    <span class="status-badge ${window.Utils.getStatusClass(product.maturity)}">
-                                        ${window.Utils.escapeHtml(product.maturity) || 'Not specified'}
-                                    </span>
-                                </div>
-                            </div>
-                            ${product.regulatory ? `
-                            <div class="detail-field">
-                                <div class="detail-field-label">Regulatory Demand</div>
-                                <div class="detail-field-value">${window.Utils.escapeHtml(product.regulatory)}</div>
-                            </div>
-                            ` : ''}
-                        </div>
-                        
-                        <!-- Platform Information -->
-                        <div class="detail-section">
-                            <div class="detail-section-title">Platform Details</div>
-                            <div class="detail-field">
-                                <div class="detail-field-label">Primary Platform</div>
-                                <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
-                                    ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
-                                </div>
-                            </div>
-                            ${product.platform ? `
-                            <div class="detail-field-note">
-                                <div class="field-note-icon">💡</div>
-                                <div class="field-note-text">
-                                    This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
-                                    Understanding the platform helps in resource allocation and technical decision-making.
-                                </div>
-                            </div>
-                            ` : `
-                            <div class="detail-field-note warning">
-                                <div class="field-note-icon">⚠️</div>
-                                <div class="field-note-text">
-                                    Platform information is not specified. Consider documenting the technical platform for better resource planning.
-                                </div>
-                            </div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 2: Metrics (Collapsible, Collapsed by Default) -->
+                <!-- SECTION 1: Metrics (Collapsible, Collapsed by Default) -->
                 <div class="detail-collapsible-section">
                     <div class="detail-collapsible-header collapsed" data-section="metrics">
                         <div class="collapsible-header-content">
@@ -317,6 +242,101 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Core Details (Collapsible, Collapsed by Default) -->
+                <div class="detail-collapsible-section">
+                    <div class="detail-collapsible-header collapsed" data-section="core">
+                        <div class="collapsible-header-content">
+                            <span class="collapsible-icon">📋</span>
+                            <h3 class="collapsible-title">Core Details</h3>
+                            <span class="collapsible-subtitle">Essential product information</span>
+                        </div>
+                        <span class="collapsible-toggle">+</span>
+                    </div>
+                    <div class="detail-collapsible-content collapsed" id="section-core">
+                        <!-- Owner (Highest Priority) -->
+                        <div class="detail-field">
+                            <div class="detail-field-label">Owner</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.owner) || 'Not assigned'}</div>
+                        </div>
+                        
+                        <!-- Problem -->
+                        ${product.problem ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Problem</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.problem)}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Solution -->
+                        ${product.solution ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Solution</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.solution)}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Target User -->
+                        ${product.targetUser ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Target User</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.targetUser)}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Journey Stage Impacted -->
+                        ${product.journeyMain ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Journey Stage Impacted</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.journeyMain)}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Platform -->
+                        <div class="detail-field">
+                            <div class="detail-field-label">Platform</div>
+                            <div class="detail-field-value ${!product.platform ? 'empty' : ''}">
+                                ${window.Utils.escapeHtml(product.platform) || 'Not specified'}
+                            </div>
+                        </div>
+                        
+                        <!-- Platform Contextual Note (with improved spacing) -->
+                        ${product.platform ? `
+                        <div class="detail-field-note platform-note">
+                            <div class="field-note-icon">💡</div>
+                            <div class="field-note-text">
+                                This solution is delivered through <strong>${window.Utils.escapeHtml(product.platform)}</strong>. 
+                                Understanding the platform helps in resource allocation and technical decision-making.
+                            </div>
+                        </div>
+                        ` : `
+                        <div class="detail-field-note warning platform-note">
+                            <div class="field-note-icon">⚠️</div>
+                            <div class="field-note-text">
+                                Platform information is not specified. Consider documenting the technical platform for better resource planning.
+                            </div>
+                        </div>
+                        `}
+                        
+                        <!-- Maturity Stage -->
+                        <div class="detail-field">
+                            <div class="detail-field-label">Maturity Stage</div>
+                            <div class="detail-field-value">
+                                <span class="status-badge ${window.Utils.getStatusClass(product.maturity)}">
+                                    ${window.Utils.escapeHtml(product.maturity) || 'Not specified'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Regulatory Demand -->
+                        ${product.regulatory ? `
+                        <div class="detail-field">
+                            <div class="detail-field-label">Regulatory Demand</div>
+                            <div class="detail-field-value">${window.Utils.escapeHtml(product.regulatory)}</div>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>

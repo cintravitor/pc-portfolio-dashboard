@@ -278,6 +278,12 @@
         
         console.log('📋 Populating filters:', filterOptions);
         
+        // Guard clause: Skip if no data available yet
+        if (!filterOptions || !filterOptions.areas || !filterOptions.maturities || !filterOptions.owners) {
+            console.warn('⚠️ Filter options not available yet - skipping filter population');
+            return;
+        }
+        
         // Populate area dropdown
         const areaDropdown = document.querySelector('.multiselect-dropdown[data-filter="area"]');
         if (areaDropdown) {

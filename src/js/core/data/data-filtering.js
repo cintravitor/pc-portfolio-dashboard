@@ -157,14 +157,14 @@
         const portfolioData = window.State.getPortfolioData();
         
         if (!portfolioData || portfolioData.length === 0) {
-            return { areas: [], maturity: [], owners: [] };
+            return { areas: [], maturities: [], owners: [] };
         }
         
         const areas = [...new Set(portfolioData.map(p => p.area).filter(Boolean))].sort();
-        const maturity = [...new Set(portfolioData.map(p => p.maturity).filter(Boolean))].sort();
+        const maturities = [...new Set(portfolioData.map(p => p.maturity).filter(Boolean))].sort();
         const owners = [...new Set(portfolioData.map(p => p.owner).filter(Boolean))].sort();
         
-        return { areas, maturity, owners };
+        return { areas, maturities, owners };
     }
     
     // ==================== EXPORTS ====================

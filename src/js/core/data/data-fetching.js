@@ -48,6 +48,12 @@
 
         } catch (error) {
             console.error('Error fetching governance data:', error);
+            
+            // Provide user-friendly error messages
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Google Sheets may be slow to respond. Please try again.');
+            }
+            
             throw error; // Re-throw to let caller handle
         }
     }
@@ -65,7 +71,7 @@
             console.log('URL:', CONFIG.WEB_APP_URL);
             
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout (increased)
             
             const response = await fetch(CONFIG.WEB_APP_URL, { 
                 signal: controller.signal,
@@ -183,6 +189,12 @@
 
         } catch (error) {
             console.error('Error fetching data:', error);
+            
+            // Provide user-friendly error messages
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out after 45 seconds. Google Sheets may be slow to respond. Please try again or check your internet connection.');
+            }
+            
             throw error; // Re-throw to let caller handle
         }
     }

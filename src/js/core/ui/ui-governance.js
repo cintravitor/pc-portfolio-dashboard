@@ -669,6 +669,20 @@
     
     /**
      * Generate AI Summary using LiteLLM
+     * Fetches AI-powered insights for the governance dashboard
+     * Outputs structured HTML with hierarchy: Summary → Findings → Recommendations
+     * 
+     * @param {Object} data - Governance data object containing metrics and alerts
+     * @returns {Promise<void>} Updates DOM with formatted insights
+     * 
+     * @description
+     * Structured output format ensures scannability for senior leadership:
+     * - Bold, larger headings for main sections
+     * - Numbered/bulleted lists for discrete items
+     * - Color-coded severity badges ([HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED])
+     * - Three-part hierarchy for clear information flow
+     * 
+     * @see parseStructuredAIOutput for HTML parsing logic
      */
     async function generateAISummary(data) {
         const contentEl = document.getElementById('ai-summary-content');
@@ -687,7 +701,7 @@ Filters Applied:
 
 ` : 'COMPLETE PORTFOLIO VIEW\n\n';
             
-            const prompt = `You are a portfolio governance advisor. ${filterInfo}Analyze this ${isUsingFilteredData ? 'filtered subset' : 'portfolio'} and provide 2-3 actionable insights in under 330 characters:
+            const prompt = `You are a portfolio governance advisor. ${filterInfo}Analyze this ${isUsingFilteredData ? 'filtered subset' : 'portfolio'} and provide structured, actionable insights.
 
 Portfolio Metrics:
 - Smoke Detectors: ${data.smokeDetectors.count} solutions triggered warning signals
@@ -695,7 +709,18 @@ Portfolio Metrics:
 - Data Health: ${data.dataHealth.missingMetrics} solutions missing key metrics (${data.dataHealth.healthScore}% health score)
 - Performance: ${data.performanceMetrics.ux.achievementRate}% UX target achievement
 
-Provide concise, actionable recommendations prioritizing the most critical issues${isUsingFilteredData ? ' FOR THIS FILTERED SUBSET' : ''}.`;
+FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS:
+
+**STRATEGIC PRIORITY**
+[One concise high-level strategic recommendation in 1-2 sentences]
+
+**KEY FINDINGS**
+• [Finding 1 with specific numbers - use • for bullets]
+• [Finding 2 with specific numbers]
+• [Finding 3 with specific numbers]
+• [Finding 4 if needed]
+
+Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appropriate${isUsingFilteredData ? ' FOR THIS FILTERED SUBSET' : ''}.`;
             
             console.log('Generating AI summary with prompt...');
             
@@ -730,7 +755,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
             const result = await response.json();
             const aiText = result.choices[0].message.content.trim();
             
-            contentEl.innerHTML = `<p>${escapeHtml(aiText)}</p>`;
+            contentEl.innerHTML = parseStructuredAIOutput(aiText);
             console.log('✅ AI summary generated');
             
         } catch (error) {
@@ -825,7 +850,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
             <div class="scorecard-icon">📊</div>
             <div class="scorecard-value ${statusClass}">${healthScore}%</div>
             <div class="scorecard-label">Data Health Score</div>
-            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;">
+            <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.2;">
                 ${dataHealth.missingMetrics} missing metrics
             </div>
         `;
@@ -1320,6 +1345,99 @@ Provide concise, actionable recommendations prioritizing the most critical issue
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    /**
+     * Parse structured AI text into formatted HTML
+     * Converts AI output with markdown-style formatting into semantic HTML
+     * with proper heading hierarchy, lists, and color-coded severity markers
+     * 
+     * @param {string} aiText - Raw AI text with markdown-style formatting
+     * @returns {string} Formatted HTML string
+     * 
+     * @example
+     * const html = parseStructuredAIOutput("**STRATEGIC PRIORITY**\nFocus on...");
+     * // Returns: '<div class="ai-section ai-summary">...</div>'
+     */
+    function parseStructuredAIOutput(aiText) {
+        if (!aiText) return '<p class="ai-empty">No insights available</p>';
+        
+        // Split into sections by **SECTION_NAME**
+        const sections = aiText.split(/\*\*([A-Z\s]+)\*\*/g).filter(s => s.trim());
+        
+        let html = '<div class="ai-insights-structured">';
+        
+        for (let i = 0; i < sections.length; i += 2) {
+            const sectionName = sections[i]?.trim();
+            const sectionContent = sections[i + 1]?.trim();
+            
+            if (!sectionName || !sectionContent) continue;
+            
+            // Determine section type and CSS class
+            const sectionId = sectionName.toLowerCase().replace(/\s+/g, '-');
+            let sectionClass = 'ai-section';
+            
+            if (sectionName.includes('STRATEGIC') || sectionName.includes('PRIORITY')) {
+                sectionClass += ' ai-summary';
+            } else if (sectionName.includes('FINDING')) {
+                sectionClass += ' ai-findings';
+            } else if (sectionName.includes('ACTION') || sectionName.includes('RECOMMEND')) {
+                sectionClass += ' ai-recommendations';
+            }
+            
+            html += `<div class="${sectionClass}">`;
+            html += `<h4 class="ai-section-heading">${escapeHtml(sectionName)}</h4>`;
+            
+            // Parse content based on list markers
+            if (sectionContent.includes('•')) {
+                // Bullet list
+                const items = sectionContent.split('•').filter(item => item.trim());
+                html += '<ul class="ai-list ai-list-bulleted">';
+                items.forEach(item => {
+                    html += `<li class="ai-list-item">${parseInlineFormatting(item.trim())}</li>`;
+                });
+                html += '</ul>';
+            } else if (/^\d+\./.test(sectionContent)) {
+                // Numbered list
+                const items = sectionContent.split(/\d+\./).filter(item => item.trim());
+                html += '<ol class="ai-list ai-list-numbered">';
+                items.forEach(item => {
+                    html += `<li class="ai-list-item">${parseInlineFormatting(item.trim())}</li>`;
+                });
+                html += '</ol>';
+            } else {
+                // Plain paragraph (for strategic summary)
+                html += `<p class="ai-paragraph">${parseInlineFormatting(sectionContent)}</p>`;
+            }
+            
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        return html;
+    }
+    
+    /**
+     * Parse inline formatting and severity markers
+     * Converts [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] into color-coded badges
+     * 
+     * @param {string} text - Text with potential severity markers
+     * @returns {string} HTML with formatted severity badges
+     */
+    function parseInlineFormatting(text) {
+        if (!text) return '';
+        
+        // Replace severity markers with color-coded badges
+        let formatted = escapeHtml(text);
+        
+        formatted = formatted.replace(/\[HIGH RISK\]/gi, 
+            '<span class="ai-severity-badge ai-severity-high">HIGH RISK</span>');
+        formatted = formatted.replace(/\[MEDIUM RISK\]/gi, 
+            '<span class="ai-severity-badge ai-severity-medium">MEDIUM RISK</span>');
+        formatted = formatted.replace(/\[ATTENTION NEEDED\]/gi, 
+            '<span class="ai-severity-badge ai-severity-attention">ATTENTION NEEDED</span>');
+        
+        return formatted;
     }
     
     // ==================== DYNAMIC FILTERING SUPPORT ====================

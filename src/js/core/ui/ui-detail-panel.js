@@ -269,7 +269,10 @@
                     <div class="metric-card-title">User Experience</div>
                     ${generatePerformanceIndicator(uxPerformance)}
                     <div class="detail-field">
-                        <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricUX) || 'Metric'}</div>
+                        <div class="detail-field-label">
+                            ${window.Utils.escapeHtml(product.keyMetricUX) || 'Metric'}
+                            ${product.trackingFrequencyUX ? `<span class="metric-tracking-frequency">Tracked ${window.Utils.escapeHtml(product.trackingFrequencyUX)}</span>` : ''}
+                        </div>
                         <div class="chart-container">
                             <canvas id="chart-ux"></canvas>
                         </div>
@@ -286,7 +289,10 @@
                     <div class="metric-card-title">Business Impact</div>
                     ${generatePerformanceIndicator(biPerformance)}
                     <div class="detail-field">
-                        <div class="detail-field-label">${window.Utils.escapeHtml(product.keyMetricBI) || 'Metric'}</div>
+                        <div class="detail-field-label">
+                            ${window.Utils.escapeHtml(product.keyMetricBI) || 'Metric'}
+                            ${product.trackingFrequencyBI ? `<span class="metric-tracking-frequency">Tracked ${window.Utils.escapeHtml(product.trackingFrequencyBI)}</span>` : ''}
+                        </div>
                         <div class="chart-container">
                             <canvas id="chart-bi"></canvas>
                         </div>

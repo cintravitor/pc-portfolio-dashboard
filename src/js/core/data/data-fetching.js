@@ -123,6 +123,10 @@
                 keyMetricBI: headers.indexOf("Key Metric\nBusiness Impact")
             };
             
+            // Find first "Tracking Frequency" column (for UX metrics)
+            const uxMetricStartIdx = columnMapping.keyMetricUX !== -1 ? columnMapping.keyMetricUX : 0;
+            columnMapping.trackingFrequencyUX = headers.indexOf("Tracking Frequency", uxMetricStartIdx);
+            
             // Find monthly columns (JAN, FEB, MAR, etc.)
             const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
             
@@ -137,6 +141,8 @@
             let keyMetricBIIdx = headers.indexOf("Key Metric\nBusiness Impact");
             if (keyMetricBIIdx !== -1) {
                 columnMapping.monthsBI = months.map(month => headers.indexOf(month, keyMetricBIIdx));
+                // Find second "Tracking Frequency" column (for BI metrics)
+                columnMapping.trackingFrequencyBI = headers.indexOf("Tracking Frequency", keyMetricBIIdx);
             }
             
             // Store column mapping in State
@@ -170,9 +176,11 @@
                     keyMetricUX: (row[columnMapping.keyMetricUX] || '').toString().trim(),
                     targetUX: row[columnMapping.targetUX] || '',
                     monthlyUX: columnMapping.monthsUX ? columnMapping.monthsUX.map(idx => row[idx] || '') : [],
+                    trackingFrequencyUX: columnMapping.trackingFrequencyUX !== -1 ? (row[columnMapping.trackingFrequencyUX] || '').toString().trim() : '',
                     keyMetricBI: (row[columnMapping.keyMetricBI] || '').toString().trim(),
                     targetBI: row[columnMapping.targetBI] || '',
                     monthlyBI: columnMapping.monthsBI ? columnMapping.monthsBI.map(idx => row[idx] || '') : [],
+                    trackingFrequencyBI: columnMapping.trackingFrequencyBI !== -1 ? (row[columnMapping.trackingFrequencyBI] || '').toString().trim() : '',
                     rawRow: row // Keep raw row for accessing other columns if needed
                 }));
             

@@ -28,7 +28,6 @@
     ];
     
     const optionalDependencies = [
-        { name: 'Analytics', description: 'Analytics tracking', path: 'window.Analytics' },
         { name: 'AIRecommendations', description: 'AI features', path: 'window.AIRecommendations' }
     ];
     
@@ -153,11 +152,6 @@ function testAnomalyDetection() {
  */
 async function initialize() {
     console.log('Portfolio Dashboard initialized');
-    
-    // Initialize analytics tracking
-    if (window.Analytics && typeof window.Analytics.init === 'function') {
-        window.Analytics.init();
-    }
     
     // Setup UI event listeners
     setupEventListeners();

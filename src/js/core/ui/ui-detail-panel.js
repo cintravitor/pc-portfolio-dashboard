@@ -575,11 +575,6 @@
         if (targetContent) {
             targetContent.classList.add('active');
         }
-        
-        // Track analytics event
-        if (window.Analytics) {
-            window.Analytics.trackEvent('detail_panel', 'tab_switch', tabName);
-        }
     }
     
     /**

@@ -466,6 +466,23 @@
         
         console.log('📥 Filtered data count:', filteredData.length);
         
+        // Publish filter change event for Insights tab to subscribe
+        window.Utils.publish('filters:changed', {
+            filteredData: filteredData,
+            filterContext: {
+                areaFilters,
+                journeyFilters,
+                maturityFilters,
+                targetUserFilters,
+                ownerFilters,
+                searchTerm,
+                sortBy,
+                belowTargetOnly,
+                totalCount: window.DataManager.getPortfolioData().length,
+                filteredCount: filteredData.length
+            }
+        });
+        
         // Check if any filters are active (arrays need length check)
         const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
         

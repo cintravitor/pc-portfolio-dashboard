@@ -12,6 +12,10 @@
     // Global state for modal
     let currentModalData = null;
     
+    // Filter state tracking
+    let currentFilterContext = null;
+    let isUsingFilteredData = false;
+    
     /**
      * Main render function for Governance Dashboard
      * Entry point for the Governance tab
@@ -672,8 +676,18 @@
         if (!contentEl) return;
         
         try {
-            // Build prompt from governance data
-            const prompt = `You are a portfolio governance advisor. Analyze this portfolio and provide 2-3 actionable insights in under 330 characters:
+            // Build prompt from governance data with filter context
+            const filterInfo = isUsingFilteredData ? 
+                `FILTERED VIEW: Analyzing ${currentFilterContext.filteredCount} of ${currentFilterContext.totalCount} solutions
+Filters Applied:
+- P&C Areas: ${currentFilterContext.areaFilters.length > 0 ? currentFilterContext.areaFilters.join(', ') : 'All'}
+- Journey Stages: ${currentFilterContext.journeyFilters.length > 0 ? currentFilterContext.journeyFilters.join(', ') : 'All'}
+- Maturity Stages: ${currentFilterContext.maturityFilters.length > 0 ? currentFilterContext.maturityFilters.join(', ') : 'All'}
+- Target Users: ${currentFilterContext.targetUserFilters.length > 0 ? currentFilterContext.targetUserFilters.join(', ') : 'All'}
+
+` : 'COMPLETE PORTFOLIO VIEW\n\n';
+            
+            const prompt = `You are a portfolio governance advisor. ${filterInfo}Analyze this ${isUsingFilteredData ? 'filtered subset' : 'portfolio'} and provide 2-3 actionable insights in under 330 characters:
 
 Portfolio Metrics:
 - Smoke Detectors: ${data.smokeDetectors.count} solutions triggered warning signals
@@ -681,7 +695,7 @@ Portfolio Metrics:
 - Data Health: ${data.dataHealth.missingMetrics} solutions missing key metrics (${data.dataHealth.healthScore}% health score)
 - Performance: ${data.performanceMetrics.ux.achievementRate}% UX target achievement
 
-Provide concise, actionable recommendations prioritizing the most critical issues.`;
+Provide concise, actionable recommendations prioritizing the most critical issues${isUsingFilteredData ? ' FOR THIS FILTERED SUBSET' : ''}.`;
             
             console.log('Generating AI summary with prompt...');
             
@@ -883,7 +897,7 @@ Provide concise, actionable recommendations prioritizing the most critical issue
         const highCount = data.bauAnomalies?.summary?.highCount || 0;
         const flaggedCount = data.bauAnomalies?.summary?.flaggedCount || 0;
         
-        return createCollapsibleSection('resource-allocation', '📈', 'Resource Allocation & Anomalies', 
+        return createCollapsibleSection('resource-allocation', '📈', 'Resource Allocation', 
             `${highCount} high, ${flaggedCount} flagged BAU allocations`, 
             container, false);
     }
@@ -1308,15 +1322,139 @@ Provide concise, actionable recommendations prioritizing the most critical issue
         return div.innerHTML;
     }
     
+    // ==================== DYNAMIC FILTERING SUPPORT ====================
+    
+    /**
+     * Update governance dashboard with filtered data
+     * This function is called when filters change on the Explore tab
+     * It recalculates all metrics client-side for instant updates
+     * 
+     * @param {Object} eventData - Event data from filters:changed event
+     */
+    async function updateGovernanceWithFilters(eventData) {
+        const startTime = performance.now();
+        
+        const { filteredData, filterContext } = eventData;
+        
+        console.log(`🔄 Updating governance with ${filteredData.length} filtered solutions...`);
+        
+        // Update filter state
+        currentFilterContext = filterContext;
+        isUsingFilteredData = filterContext.filteredCount < filterContext.totalCount;
+        
+        // Show filter status indicator
+        showFilterBadge(filterContext);
+        
+        try {
+            // Calculate governance metrics client-side (NO network call)
+            const governanceData = window.DataManager.Governance.calculateAll(filteredData);
+            
+            // Update all sections with new data (await because it's async)
+            await updateDashboardSections(governanceData);
+            
+            const endTime = performance.now();
+            const updateTime = (endTime - startTime).toFixed(2);
+            console.log(`⚡ Governance update completed in ${updateTime}ms`);
+            
+            // Performance warning if >500ms
+            if (updateTime > 500) {
+                console.warn(`⚠️ Governance update took ${updateTime}ms (target: <500ms)`);
+            }
+            
+        } catch (error) {
+            console.error('Error updating governance with filters:', error);
+        }
+    }
+    
+    /**
+     * Update all dashboard sections with new governance data
+     * @param {Object} governanceData - Recalculated governance metrics
+     */
+    async function updateDashboardSections(governanceData) {
+        const governanceContent = document.getElementById('governance-content');
+        if (!governanceContent) return;
+        
+        // Clear and rebuild (for now - can optimize later to update in place)
+        governanceContent.innerHTML = '';
+        
+        // Rebuild all sections (createActionLayer is async, must await)
+        const actionLayer = await createActionLayer(governanceData);
+        governanceContent.appendChild(actionLayer);
+        
+        const metricsCoverageSection = createMetricsCoverageSection(governanceData);
+        governanceContent.appendChild(metricsCoverageSection);
+        
+        const portfolioDistSection = createPortfolioDistributionSection(governanceData);
+        governanceContent.appendChild(portfolioDistSection);
+        
+        const allocationSection = createAllocationSection(governanceData);
+        governanceContent.appendChild(allocationSection);
+        
+        // Regenerate AI summary with filter context
+        setTimeout(() => generateAISummary(governanceData), 100);
+    }
+    
+    /**
+     * Show filter status badge on governance dashboard
+     * @param {Object} filterContext - Current filter context
+     */
+    function showFilterBadge(filterContext) {
+        // Remove existing badge
+        const existingBadge = document.querySelector('.governance-filter-badge');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+        
+        // Only show badge if filters are active
+        if (filterContext.filteredCount === filterContext.totalCount) {
+            return;
+        }
+        
+        // Create filter badge
+        const badge = document.createElement('div');
+        badge.className = 'governance-filter-badge';
+        badge.innerHTML = `
+            <div class="filter-badge-content">
+                <span class="filter-badge-icon">🔍</span>
+                <span class="filter-badge-text">
+                    <strong>Filtered View:</strong> ${filterContext.filteredCount} of ${filterContext.totalCount} solutions
+                </span>
+                <button class="filter-badge-reset" onclick="window.UIManager.Filters.clearFilters()">
+                    Reset to Full View
+                </button>
+            </div>
+        `;
+        
+        // Insert at top of governance content
+        const governanceContent = document.getElementById('governance-content');
+        if (governanceContent) {
+            governanceContent.insertBefore(badge, governanceContent.firstChild);
+        }
+    }
+    
     // ==================== EXPORTS ====================
     
     // Export to UIManager namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Governance = {
-        render: renderGovernanceDashboard
+        render: renderGovernanceDashboard,
+        updateWithFilters: updateGovernanceWithFilters
     };
     
+    // Subscribe to filter change events
+    window.Utils.subscribe('filters:changed', (eventData) => {
+        // Only update if we're on the governance dashboard tab
+        if (window.State.getCurrentTab() === 'governance-dashboard') {
+            updateGovernanceWithFilters(eventData);
+        } else {
+            // Store filter context for when user switches to governance tab
+            currentFilterContext = eventData.filterContext;
+            isUsingFilteredData = eventData.filterContext.filteredCount < eventData.filterContext.totalCount;
+        }
+    });
+    
     console.log('✅ UI Governance module loaded');
+    console.log('📡 Subscribed to filters:changed event');
     
 })();
 

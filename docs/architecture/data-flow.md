@@ -134,7 +134,88 @@ Card displays problem text
 Shows "powered by OpenAI" attribution
 ```
 
-### 6. Smoke Detector Flow
+### 6. Dynamic Strategic Filtering Flow (NEW - v7.4.0)
+
+```
+User applies filters on Explore or Insights tab
+    ↓
+ui-filters.js: applyFiltersFromUI()
+    ↓
+Collects multi-select filter values:
+    - P&C Area (OR within, AND across)
+    - Journey Stage (OR within, AND across)
+    - Maturity Stage (OR within, AND across)
+    - Target User (OR within, AND across)
+    ↓
+data-filtering.js: applyFilters()
+    1. Apply search term filter
+    2. Apply area filters (OR logic)
+    3. Apply journey filters (OR logic)
+    4. Apply maturity filters (OR logic)
+    5. Apply target user filters (OR logic)
+    6. Apply sort
+    ↓
+window.State.setFilteredData(filtered)
+    ↓
+Publish 'filters:changed' event (Pub/Sub)
+    Payload: {
+        filteredData: [...],
+        filterContext: {
+            areaFilters: [...],
+            journeyFilters: [...],
+            maturityFilters: [...],
+            targetUserFilters: [...],
+            totalCount: 84,
+            filteredCount: 25
+        }
+    }
+    ↓
+┌─────────────────────────────────┐
+│  ALL SUBSCRIBED COMPONENTS:     │
+│  • ui-cards.js (Explore tab)    │
+│  • ui-governance.js (Insights)  │
+└─────────────────────────────────┘
+    ↓
+INSIGHTS TAB (ui-governance.js):
+    ↓
+Check if active tab === 'governance-dashboard'
+    ↓
+If YES:
+    updateGovernanceWithFilters(eventData)
+        ↓
+    Show filter badge (visual indicator)
+        ↓
+    data-governance.js: calculateAll(filteredData)
+        - calculateSmokeDetectors()
+        - calculateBAUAnomalies()
+        - calculateDataHealth()
+        - calculatePerformanceMetrics()
+        - calculateMetricsCoverage()
+        - calculatePortfolioDistribution()
+        - calculateStrategicGaps()
+        - calculatePTechInvolvement()
+        - calculateTeamConsumption()
+        (ALL CLIENT-SIDE, NO NETWORK CALL)
+        ↓
+    updateDashboardSections(governanceData)
+        - Update Action Layer
+        - Update Metrics Coverage
+        - Update Portfolio Distribution
+        - Update Resource Allocation
+        ↓
+    Regenerate AI summary with filter context
+        - Include filter details in prompt
+        - Call LiteLLM API
+        - Update AI summary card
+        ↓
+    Performance logging
+        - Log update time
+        - Warn if >500ms
+    ↓
+TOTAL TIME: <300ms (target: <500ms)
+```
+
+### 7. Smoke Detector Flow
 
 ```
 Solution data processing

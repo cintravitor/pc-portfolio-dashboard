@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Panel Test - P&C Portfolio</title>
+    <link rel="stylesheet" href="src/css/dashboard-style.css">
+    <style>
+        body { padding: 2rem; }
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .test-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .test-info {
+            background: var(--glass-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-info">
+            <h1>🧪 Detail Panel Testing</h1>
+            <p><strong>Purpose:</strong> Test the streamlined detail panel with mock data</p>
+            <p><strong>What to check:</strong></p>
+            <ul>
+                <li>✅ <strong>Both sections start COLLAPSED</strong> (user chooses what to expand)</li>
+                <li>✅ <strong>Metrics section appears FIRST</strong> (above Core Details)</li>
+                <li>✅ Core Details section appears SECOND</li>
+                <li>✅ <strong>Refined typography</strong> - labels are crisp, values are readable with better letter-spacing</li>
+                <li>✅ Within Core Details: Owner → Problem → Solution → Target User → <strong>Journey Stage</strong> → Platform → Maturity → Regulatory</li>
+                <li>✅ <strong>Platform note has proper spacing</strong> (not too close to Maturity Stage)</li>
+                <li>✅ "Indirect Impact" is completely removed</li>
+                <li>✅ Maturity badges have softer colors</li>
+                <li>✅ No subsection titles (Solution Scope, Ownership & Compliance, Platform Details)</li>
+            </ul>
+        </div>
+
+        <div id="products-container" class="test-cards"></div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="main-content">
+        <div id="content-left"></div>
+        <div id="detail-panel" class="hidden"></div>
+    </div>
+
+    <script>
+        // Mock configuration
+        window.CONFIG = {
+            AI_RECOMMENDATIONS_ENABLED: false,
+            WEB_APP_URL: 'test'
+        };
+
+        // Mock data for testing
+        const mockProducts = [
+            {
+                id: 0,
+                name: "Complete Product Example",
+                area: "HRBP",
+                owner: "Jane Smith",
+                problem: "New employees struggle to complete onboarding tasks efficiently, leading to delays in productivity.",
+                solution: "A centralized onboarding portal with step-by-step guidance, document management, and progress tracking.",
+                targetUser: "All new employees joining the company",
+                indirectUser: "HR Business Partners and Hiring Managers", // Should NOT appear
+                journeyMain: "Onboarding & Integration",
+                platform: "Web Portal, Mobile App",
+                maturity: "3. Mature",
+                regulatory: "NO",
+                keyMetricUX: "CSAT Score",
+                targetUX: 85,
+                monthlyUX: [82, 84, 86, 88, 85, 87, 89, 90, 88, 86, 87, 89],
+                keyMetricBI: "Adoption Rate %",
+                targetBI: 75,
+                monthlyBI: [70, 72, 75, 78, 76, 79, 81, 80, 82, 83, 85, 84]
+            },
+            {
+                id: 1,
+                name: "Missing Platform Example",
+                area: "Tech",
+                owner: "John Doe",
+                problem: "Technical debt accumulation without proper tracking.",
+                solution: "Implement automated code quality monitoring and technical debt dashboard.",
+                targetUser: "Engineering teams",
+                journeyMain: "Development & Deployment",
+                platform: "", // Empty platform - should show warning
+                maturity: "2. Growth",
+                regulatory: "YES"
+            },
+            {
+                id: 2,
+                name: "Minimal Data Example",
+                area: "Operations",
+                owner: "Alice Johnson",
+                problem: "Manual processes slow down operational efficiency.",
+                solution: "Automation toolkit for common operational tasks.",
+                targetUser: "Operations team members",
+                journeyMain: "Operations & Maintenance",
+                platform: "Internal Tools Suite",
+                maturity: "1. Development"
+                // No regulatory field - should not appear
+            }
+        ];
+
+        // Mock State
+        window.State = {
+            getPortfolioData: () => mockProducts,
+            setChartInstance: () => {},
+            getChartInstances: () => ({}),
+            clearAllChartInstances: () => {}
+        };
+
+        // Mock DataManager
+        window.DataManager = {
+            getProductById: (id) => mockProducts.find(p => p.id === id)
+        };
+
+        // Mock Utils
+        window.Utils = {
+            escapeHtml: (text) => {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+            getStatusClass: (maturity) => {
+                if (!maturity) return 'status-unknown';
+                const m = maturity.toLowerCase();
+                if (m.includes('development')) return 'status-development';
+                if (m.includes('growth')) return 'status-growth';
+                if (m.includes('mature')) return 'status-mature';
+                if (m.includes('decline')) return 'status-decline';
+                return 'status-unknown';
+            }
+        };
+
+        // Mock UIManager.Charts
+        window.UIManager = {
+            Charts: {
+                loadChartJs: () => Promise.resolve(),
+                renderMetricChart: () => console.log('Chart rendering skipped in test')
+            }
+        };
+    </script>
+
+    <!-- Load the actual detail panel module -->
+    <script src="src/js/core/ui/ui-detail-panel.js"></script>
+
+    <script>
+        // Render test cards
+        const container = document.getElementById('products-container');
+        mockProducts.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.setAttribute('data-product-id', product.id);
+            card.style.cursor = 'pointer';
+            card.innerHTML = `
+                <h3>${product.name}</h3>
+                <p><strong>Area:</strong> ${product.area}</p>
+                <p><strong>Owner:</strong> ${product.owner}</p>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Click to test detail panel
+                </p>
+            `;
+            card.addEventListener('click', () => {
+                window.showDetailPanel(product.id);
+            });
+            container.appendChild(card);
+        });
+
+        // Setup close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('detail-close')) {
+                window.hideDetailPanel();
+            }
+        });
+
+        console.log('✅ Test page loaded - Click any card to test the detail panel');
+    </script>
+</body>
+</html>
+
+

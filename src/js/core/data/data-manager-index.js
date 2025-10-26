@@ -18,7 +18,8 @@
         'Filtering',
         'Analytics',
         'Anomalies',
-        'Accessors'
+        'Accessors',
+        'Governance'
     ];
     
     const loadedModules = {};
@@ -77,6 +78,10 @@
         getProductStats: window.DataManager.Accessors?.getProductStats,
         countMissingMetrics: window.DataManager.Accessors?.countMissingMetrics,
         getCardSummaryMetrics: window.DataManager.Accessors?.getCardSummaryMetrics,
+        
+        // ==================== Governance Module ====================
+        // Client-side governance calculations for real-time filtering
+        Governance: window.DataManager.Governance,
         
         // ==================== Legacy Compatibility ====================
         // Utility reference for backward compatibility

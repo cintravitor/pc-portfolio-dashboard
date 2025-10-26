@@ -6066,3 +6066,160 @@ select:focus {
     }
 }
 
+/* ==================== GOVERNANCE FILTER BADGE ==================== */
+
+.governance-filter-badge {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-badge-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-badge-icon {
+    font-size: 1.25rem;
+}
+
+.filter-badge-text {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    min-width: 200px;
+}
+
+.filter-badge-text strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.filter-badge-reset {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.filter-badge-reset:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.filter-badge-reset:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .filter-badge-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .filter-badge-reset {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ==================== INSIGHTS TAB: MINIMAL FILTER LAYOUT ==================== */
+
+/* When in Insights mode, create a clean single-row layout (no box, no borders) */
+.filters-container.insights-mode {
+    padding: 0.75rem 0;
+}
+
+.filters-container.insights-mode .filters-row-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+/* Make the 4 strategic filters equal width and properly sized */
+.filters-container.insights-mode .custom-multiselect {
+    flex: 1;
+    min-width: 200px;
+    max-width: 250px;
+}
+
+/* Position Clear Filters button in Insights mode (keep original styling) */
+.filters-container.insights-mode .clear-filters {
+    margin-left: auto;
+}
+
+/* Hide the actions row completely in Insights mode */
+.filters-container.insights-mode .filters-row-actions {
+    display: none;
+}
+
+/* Add subtle animation when switching to Insights mode */
+.filters-container.insights-mode .filters-row-main {
+    animation: fadeInSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments for Insights mode */
+@media (max-width: 1200px) {
+    .filters-container.insights-mode .custom-multiselect {
+        min-width: 180px;
+        max-width: 220px;
+    }
+}
+
+@media (max-width: 992px) {
+    .filters-container.insights-mode .filters-row-main {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filters-container.insights-mode .custom-multiselect {
+        max-width: 100%;
+        min-width: 100%;
+    }
+    
+    .filters-container.insights-mode .clear-filters {
+        margin-left: 0;
+    }
+}
+

@@ -123,6 +123,32 @@
                 keyMetricBI: headers.indexOf("Key Metric\nBusiness Impact")
             };
             
+            // Find BAU hours columns (these are multi-line headers, search by partial match)
+            for (let i = 0; i < headers.length; i++) {
+                const header = headers[i] ? headers[i].toString().trim() : '';
+                if (header.includes('PJC') && header.includes('Headcount Allocation (BAU)')) {
+                    columnMapping.bauPJC = i;
+                }
+                if (header.includes('PATO') && header.includes('Headcount Allocation (BAU)')) {
+                    columnMapping.bauPATO = i;
+                }
+                if (header.includes('Talent Acquisition') && header.includes('Headcount Allocation (BAU)')) {
+                    columnMapping.bauTA = i;
+                }
+                if (header.includes('HRBP') && header.includes('Headcount Allocation (BAU)')) {
+                    columnMapping.bauHRBP = i;
+                }
+                if (header.includes('PSE') && header.includes('Headcount Allocation (BAU)')) {
+                    columnMapping.bauPSE = i;
+                }
+                if (header.includes('Total') && header.includes('Headcount Allocation (BAU)') && header.includes('hours') && !header.includes('# HC')) {
+                    columnMapping.totalBAUHours = i;
+                }
+                if (header.includes('People Tech Involvement Flag')) {
+                    columnMapping.ptechFlag = i;
+                }
+            }
+            
             // Find first "Tracking Frequency" column (for UX metrics)
             const uxMetricStartIdx = columnMapping.keyMetricUX !== -1 ? columnMapping.keyMetricUX : 0;
             columnMapping.trackingFrequencyUX = headers.indexOf("Tracking Frequency", uxMetricStartIdx);
@@ -181,6 +207,15 @@
                     targetBI: row[columnMapping.targetBI] || '',
                     monthlyBI: columnMapping.monthsBI ? columnMapping.monthsBI.map(idx => row[idx] || '') : [],
                     trackingFrequencyBI: columnMapping.trackingFrequencyBI !== -1 ? (row[columnMapping.trackingFrequencyBI] || '').toString().trim() : '',
+                    // BAU Hours data
+                    bauPJC: columnMapping.bauPJC !== undefined ? (row[columnMapping.bauPJC] || '') : '',
+                    bauPATO: columnMapping.bauPATO !== undefined ? (row[columnMapping.bauPATO] || '') : '',
+                    bauTA: columnMapping.bauTA !== undefined ? (row[columnMapping.bauTA] || '') : '',
+                    bauHRBP: columnMapping.bauHRBP !== undefined ? (row[columnMapping.bauHRBP] || '') : '',
+                    bauPSE: columnMapping.bauPSE !== undefined ? (row[columnMapping.bauPSE] || '') : '',
+                    totalBAUHours: columnMapping.totalBAUHours !== undefined ? (row[columnMapping.totalBAUHours] || '') : '',
+                    // PTech Involvement
+                    ptechFlag: columnMapping.ptechFlag !== undefined ? (row[columnMapping.ptechFlag] || '').toString().trim() : '',
                     rawRow: row // Keep raw row for accessing other columns if needed
                 }));
             

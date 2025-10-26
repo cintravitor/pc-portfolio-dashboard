@@ -1,6 +1,6 @@
 # P&C Portfolio Dashboard
 
-![Version](https://img.shields.io/badge/version-6.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-7.4.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-production-green.svg)
 
 An interactive dashboard for managing and visualizing the People & Culture (P&C) portfolio solutions with AI-powered insights and strategic governance features.
@@ -69,6 +69,7 @@ The dashboard follows a modern, modular architecture:
 - **Search**: Fast text search across solutions
 
 #### 💡 Insights Tab (Consolidated Dashboard)
+- **🆕 Dynamic Strategic Filtering** (v7.4.0): Real-time multi-select filtering with <500ms updates
 - **Action Layer**: AI-driven insights and recommendations
 - **Smoke Detector Scorecard**: Interactive drill-down for issues
 - **Metrics Coverage**: UX/BI achievement tracking with gauges
@@ -107,6 +108,7 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder.
 - **[Deployment Guide](./docs/getting-started/deployment.md)** - Deploy to production
 
 #### Features & User Guides
+- **🆕 [Dynamic Strategic Filtering](./docs/features/DYNAMIC_STRATEGIC_FILTERING.md)** - Real-time filtering (v7.4.0)
 - **[Governance Dashboard](./docs/features/GOVERNANCE_DASHBOARD.md)** - Strategic insights (v6.3.0)
 - **[AI Features](./docs/features/AI_FEATURES_USER_STORIES.md)** - AI-powered capabilities
 - **[Smoke Detectors](./docs/features/SMOKE_DETECTORS_README.md)** - Automated issue detection

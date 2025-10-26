@@ -14,7 +14,6 @@ src/js/
     ├── utils.js                   # Utility functions
     ├── state.js                   # State management
     ├── data-manager.js            # Data operations (to be split)
-    ├── analytics.js               # Analytics tracking
     ├── ai-recommendations.js      # AI features
     ├── ai-summaries-data.js       # Pre-generated summaries
     ├── ui-manager-compat.js       # Compatibility wrapper
@@ -362,7 +361,6 @@ dashboard-script.js
     ├── config.js
     ├── utils.js
     ├── state.js
-    ├── analytics.js
     ├── ai-summaries-data.js
     ├── data-manager.js
     │   ├── state.js
@@ -408,7 +406,6 @@ Critical dependencies must load before dependents:
 <!-- 3. Foundation -->
 <script src="utils.js"></script>
 <script src="state.js"></script>
-<script src="analytics.js"></script>
 
 <!-- 4. Data Layer -->
 <script src="data-manager.js"></script>

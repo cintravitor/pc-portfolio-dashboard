@@ -1,7 +1,7 @@
 # P&C Portfolio Dashboard - Documentation
 
-> **Version:** 6.3.0  
-> **Last Updated:** October 21, 2025
+> **Version:** 7.4.0  
+> **Last Updated:** October 26, 2025
 
 ## 📚 Documentation Index
 
@@ -93,6 +93,12 @@ docs/
 
 ## 📖 Version History
 
+### v7.4.0 (October 26, 2025)
+- 🚀 Dynamic strategic filtering on Insights tab
+- 🎯 Navigation consolidation (2-tab interface)
+- ♻️ Analytics tab retired and code cleanup
+- ⚡ Performance optimizations
+
 ### v6.3.0 (October 21, 2025)
 - ✨ Strategic Governance Dashboard
 - 🤖 AI-powered solution summaries
@@ -103,13 +109,12 @@ docs/
 
 ### v6.2.6 (October 19, 2025)
 - 🐛 Bug fixes for metric display
-- 📊 Analytics dashboard improvements
 - 🎨 UI enhancements
 
 ### v6.0.0 (October 7, 2025)
 - 🏗️ Major architecture refactor
 - 📦 Modular UI components
-- 🎯 Three-tab navigation
+- 🎯 Multi-tab navigation
 
 ## 🆘 Getting Help
 
@@ -146,7 +151,7 @@ Help improve documentation:
 
 **Owned by**: Development Team  
 **Review Cycle**: Quarterly  
-**Last Review**: October 21, 2025  
+**Last Review**: October 26, 2025  
 **Next Review**: January 2026
 
 ### Maintenance Checklist

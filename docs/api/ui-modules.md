@@ -19,9 +19,8 @@ window.UIManager.Tabs.switchTab('governance-dashboard');
 ```
 
 **Tab IDs**:
-- `'portfolio-overview'` - Explore tab
-- `'governance-dashboard'` - Governance tab
-- `'analytics-dashboard'` - Analytics tab
+- `'portfolio-overview'` - 🔍 Explore tab
+- `'governance-dashboard'` - 💡 Insights tab
 
 ### UIManager.Filters
 
@@ -92,10 +91,10 @@ window.UIManager.Charts.destroyChart('ux-chart-canvas');
 
 ### UIManager.Governance
 
-**Purpose**: Governance dashboard
+**Purpose**: Insights dashboard (consolidated governance view)
 
 ```javascript
-// Render complete governance dashboard
+// Render complete insights dashboard
 window.UIManager.Governance.render();
 ```
 
@@ -104,15 +103,6 @@ window.UIManager.Governance.render();
 - Metrics Coverage (UX/BI achievement)
 - Portfolio Distribution
 - Resource Allocation
-
-### UIManager.Analytics
-
-**Purpose**: Analytics dashboard
-
-```javascript
-// Render analytics dashboard
-window.UIManager.Analytics.render();
-```
 
 ### UIManager.DrillDown
 
@@ -158,7 +148,6 @@ document.addEventListener('tab-switched', (e) => {
 document.getElementById('cards-container');
 document.getElementById('detail-panel');
 document.getElementById('tab-governance-dashboard');
-document.getElementById('tab-analytics-dashboard');
 
 // Filter elements
 document.getElementById('search-input');

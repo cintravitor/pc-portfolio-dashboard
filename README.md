@@ -59,28 +59,23 @@ The dashboard follows a modern, modular architecture:
 
 ## 🎯 Features
 
-### Three Main Dashboards
+### Two Main Views
 
-#### 📋 Explore Tab
+#### 🔍 Explore Tab
 - **AI-Powered Cards**: Solution cards with AI-generated summaries (120-147 chars)
 - **Smart Filtering**: Multi-select filters by area, maturity, and owner
 - **Smoke Detectors**: Automated issue detection with visual indicators
 - **Detail Panels**: Comprehensive solution details with metric charts
 - **Search**: Fast text search across solutions
 
-#### 🎯 Governance Tab (NEW in v6.3.0)
+#### 💡 Insights Tab (Consolidated Dashboard)
 - **Action Layer**: AI-driven insights and recommendations
 - **Smoke Detector Scorecard**: Interactive drill-down for issues
 - **Metrics Coverage**: UX/BI achievement tracking with gauges
 - **Portfolio Distribution**: Column charts for Journey, Maturity, P&C Area
 - **Resource Allocation**: BAU anomaly detection and team consumption
+- **Executive Metrics**: High-level portfolio KPIs and performance tracking
 - **Collapsible Sections**: Organized, scannable layout
-
-#### 📊 Analytics Tab
-- **Executive Metrics**: High-level portfolio KPIs
-- **Performance Tracking**: Monitor UX and BI metrics
-- **Portfolio Breakdowns**: Analysis by maturity, area, and owner
-- **Risk Matrix**: Identify high-priority solutions
 
 ### Key Capabilities
 - 🤖 **AI Integration**: LiteLLM-powered summaries and recommendations
@@ -134,10 +129,9 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder.
 ### For Users
 
 1. **Visit the live dashboard**: https://cintravitor.github.io/pc-portfolio-dashboard/
-2. **Explore the 3 main tabs**:
-   - **Explore** - Browse solutions with AI summaries and filters
-   - **Governance** - Strategic insights and portfolio health
-   - **Analytics** - Executive metrics and performance tracking
+2. **Navigate between two main views**:
+   - **🔍 Explore** - Browse solutions with AI summaries and filters
+   - **💡 Insights** - Strategic insights, portfolio health, and executive metrics
 3. **Read the** [Quick Start Guide](./docs/getting-started/quick-start.md) for detailed usage
 
 ### For Developers

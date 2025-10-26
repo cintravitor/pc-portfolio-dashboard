@@ -24,8 +24,7 @@ src/js/
         ├── ui-cards.js            # Card rendering
         ├── ui-detail-panel.js     # Detail view
         ├── ui-charts.js           # Chart utilities
-        ├── ui-governance.js       # Governance dashboard
-        ├── ui-analytics.js        # Analytics dashboard
+        ├── ui-governance.js       # Insights dashboard
         └── ui-drill-down.js       # Cross-tab navigation
 ```
 
@@ -322,7 +321,7 @@ window.UIManager.Charts = {
 
 ### ui-governance.js (1,322 lines)
 
-**Purpose**: Governance dashboard rendering
+**Purpose**: Insights dashboard - consolidated strategic view
 
 **Exports**: `window.UIManager.Governance`
 
@@ -338,25 +337,7 @@ window.UIManager.Governance = {
 - Metrics Coverage (UX/BI achievement)
 - Portfolio Distribution (charts & breakdowns)
 - Resource Allocation (BAU, PTech, teams)
-
-### ui-analytics.js (596 lines)
-
-**Purpose**: Analytics dashboard
-
-**Exports**: `window.UIManager.Analytics`
-
-**API**:
-```javascript
-window.UIManager.Analytics = {
-    render()
-};
-```
-
-**Sections**:
-- Executive summary
-- Portfolio breakdowns
-- Performance metrics
-- Risk analysis
+- Executive metrics and portfolio KPIs
 
 ### ui-drill-down.js (496 lines)
 
@@ -406,14 +387,11 @@ dashboard-script.js
         │   ├── config.js
         │   ├── utils.js
         │   └── data-manager.js
-        ├── ui-analytics.js
-        │   ├── utils.js
-        │   └── data-manager.js
         ├── ui-drill-down.js
         │   ├── state.js
         │   └── data-manager.js
         └── ui-tabs.js
-            └── ui-governance.js, ui-analytics.js
+            └── ui-governance.js
 ```
 
 ### Load Order (index.html)
@@ -446,7 +424,6 @@ Critical dependencies must load before dependents:
 <script src="ui/ui-governance.js"></script>
 <script src="ui/ui-drill-down.js"></script>
 <script src="ui/ui-tabs.js"></script>  <!-- Last! -->
-<script src="ui/ui-analytics.js"></script>
 
 <!-- 7. Compatibility -->
 <script src="ui-manager-compat.js"></script>

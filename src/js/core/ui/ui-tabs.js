@@ -10,8 +10,9 @@
     'use strict';
     
     /**
-     * Switch between tabs
-     * @param {string} tabName - Tab identifier
+     * Switch between dashboard tabs
+     * @param {string} tabName - Tab identifier ('portfolio-overview' or 'governance-dashboard')
+     * @description Handles navigation between 🔍 Explore and 💡 Insights views
      */
     function switchTab(tabName) {
         console.log(`Switching to tab: ${tabName}`);
@@ -48,23 +49,6 @@
         // Load tab-specific content
         if (tabName === 'governance-dashboard') {
             window.UIManager.Governance.render();
-        }
-        
-        if (tabName === 'analytics-dashboard') {
-            // Render analytics dashboard
-            if (window.UIAnalytics && typeof window.UIAnalytics.renderAnalyticsDashboard === 'function') {
-                window.UIAnalytics.renderAnalyticsDashboard();
-            } else {
-                console.error('UIAnalytics module not available');
-            }
-        }
-        
-        // LEGACY SUPPORT: Keep old tab names for backward compatibility
-        if (tabName === 'descriptive-analysis' && !window.State.isAnalysisDataLoaded()) {
-            window.UIManager.Insights.loadLegacyAnalysis();
-        }
-        if (tabName === 'strategic-view') {
-            window.UIManager.Insights.renderExecutiveView();
         }
     }
     

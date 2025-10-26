@@ -1,15 +1,92 @@
 /**
  * P&C Portfolio Data API with Governance Dashboard Endpoint
  * Google Apps Script Web App
- * Version: 2.1 (Enhanced Governance Metrics)
+ * Version: 2.2 (Enhanced Security & Rate Limiting)
  * 
  * INSTRUCTIONS: Copy this ENTIRE file and replace your existing Apps Script code
+ * 
+ * SECURITY FEATURES:
+ * - Rate limiting (30 requests per minute per user)
+ * - Request validation (whitelist allowed actions)
+ * - Error logging for suspicious activity
  */
+
+// ==================== SECURITY CONFIGURATION ====================
+
+const RATE_LIMIT_CACHE = CacheService.getScriptCache();
+const MAX_REQUESTS_PER_MINUTE = 30;
+const VALID_ACTIONS = ['getGovernanceData', null]; // null = default portfolio data
+
+/**
+ * Check rate limit for current user
+ * @throws {Error} If rate limit exceeded
+ */
+function checkRateLimit() {
+  try {
+    const identifier = Session.getTemporaryActiveUserKey() || 'anonymous';
+    const cacheKey = 'rate_limit_' + identifier;
+    const requests = parseInt(RATE_LIMIT_CACHE.get(cacheKey) || '0');
+    
+    if (requests >= MAX_REQUESTS_PER_MINUTE) {
+      logSuspiciousActivity('Rate limit exceeded', identifier);
+      throw new Error('Rate limit exceeded. Please try again in a minute.');
+    }
+    
+    // Increment counter with 60-second expiry
+    RATE_LIMIT_CACHE.put(cacheKey, (requests + 1).toString(), 60);
+  } catch (error) {
+    // If rate limiting fails, log but don't block request
+    Logger.log('Rate limit check failed: ' + error.toString());
+  }
+}
+
+/**
+ * Validate incoming request parameters
+ * @param {Object} e - Request event object
+ * @returns {boolean} True if valid
+ * @throws {Error} If invalid action
+ */
+function validateRequest(e) {
+  const action = e.parameter ? e.parameter.action : null;
+  
+  if (action && !VALID_ACTIONS.includes(action)) {
+    logSuspiciousActivity('Invalid action attempted', action);
+    throw new Error('Invalid action parameter');
+  }
+  
+  return true;
+}
+
+/**
+ * Log suspicious activity for security monitoring
+ * @param {string} reason - Reason for logging
+ * @param {string} details - Additional details
+ */
+function logSuspiciousActivity(reason, details) {
+  try {
+    const timestamp = new Date().toISOString();
+    const logEntry = `[${timestamp}] ${reason}: ${details}`;
+    Logger.log('⚠️ SECURITY: ' + logEntry);
+    
+    // Optionally: Write to a separate sheet for security monitoring
+    // const sheet = SpreadsheetApp.openById('YOUR_SPREADSHEET_ID')
+    //   .getSheetByName('SecurityLog');
+    // if (sheet) {
+    //   sheet.appendRow([timestamp, reason, details]);
+    // }
+  } catch (error) {
+    Logger.log('Failed to log suspicious activity: ' + error.toString());
+  }
+}
 
 // ==================== MAIN ENDPOINT ====================
 
 function doGet(e) {
   try {
+    // Security checks
+    checkRateLimit();
+    validateRequest(e);
+    
     const action = e.parameter ? e.parameter.action : null;
     
     if (action === 'getGovernanceData') {

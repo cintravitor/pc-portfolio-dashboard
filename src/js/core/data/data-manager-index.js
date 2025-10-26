@@ -47,6 +47,9 @@
         // ==================== Fetching Module ====================
         fetchSheetData: window.DataManager.Fetching?.fetchSheetData,
         fetchGovernanceData: window.DataManager.Fetching?.fetchGovernanceData,
+        fetchAllDataParallel: window.DataManager.Fetching?.fetchAllDataParallel,
+        prefetchGovernanceData: window.DataManager.Fetching?.prefetchGovernanceData,
+        getCachedGovernanceData: window.DataManager.Fetching?.getCachedGovernanceData,
         cacheData: window.DataManager.Fetching?.cacheData,
         loadCachedData: window.DataManager.Fetching?.loadCachedData,
         updateLastFetchTime: window.DataManager.Fetching?.updateLastFetchTime,

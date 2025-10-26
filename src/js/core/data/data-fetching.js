@@ -310,6 +310,118 @@
         return (now - lastUpdateTime) > UPDATE_INTERVAL;
     }
     
+    /**
+     * Fetch both portfolio and governance data in parallel
+     * Provides faster loading by making requests simultaneously
+     * 
+     * @returns {Promise<{portfolio: Array, governance: Object}>} Combined data
+     */
+    async function fetchAllDataParallel() {
+        try {
+            console.log('🚀 Fetching portfolio and governance data in parallel...');
+            
+            const [portfolioData, governanceData] = await Promise.allSettled([
+                fetchSheetData(),
+                fetchGovernanceData()
+            ]);
+            
+            const result = {
+                portfolio: null,
+                governance: null,
+                errors: {
+                    portfolio: null,
+                    governance: null
+                }
+            };
+            
+            // Handle portfolio data result
+            if (portfolioData.status === 'fulfilled') {
+                result.portfolio = portfolioData.value;
+                console.log('✅ Portfolio data fetched successfully');
+            } else {
+                result.errors.portfolio = portfolioData.reason;
+                console.error('❌ Portfolio data fetch failed:', portfolioData.reason);
+            }
+            
+            // Handle governance data result
+            if (governanceData.status === 'fulfilled') {
+                result.governance = governanceData.value;
+                console.log('✅ Governance data fetched successfully');
+            } else {
+                result.errors.governance = governanceData.reason;
+                console.error('❌ Governance data fetch failed:', governanceData.reason);
+            }
+            
+            // At least one should succeed
+            if (!result.portfolio && !result.governance) {
+                throw new Error('Both portfolio and governance data fetch failed');
+            }
+            
+            console.log('✅ Parallel data fetch complete');
+            return result;
+            
+        } catch (error) {
+            console.error('Error in parallel data fetch:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Prefetch governance data in the background
+     * Fire-and-forget fetch that won't block the UI
+     * Useful when user is on Explore tab and likely to switch to Insights
+     */
+    function prefetchGovernanceData() {
+        console.log('🔮 Prefetching governance data in background...');
+        
+        fetchGovernanceData()
+            .then(data => {
+                // Cache the governance data
+                try {
+                    const GOVERNANCE_CACHE_KEY = 'pnc_governance_cache';
+                    localStorage.setItem(GOVERNANCE_CACHE_KEY, JSON.stringify(data));
+                    localStorage.setItem(GOVERNANCE_CACHE_KEY + '_time', new Date().toISOString());
+                    console.log('✅ Governance data prefetched and cached');
+                } catch (error) {
+                    console.log('Governance data fetched but cache failed:', error);
+                }
+            })
+            .catch(error => {
+                console.log('Background governance prefetch failed (non-critical):', error.message);
+            });
+    }
+    
+    /**
+     * Get cached governance data if available and fresh
+     * @returns {Object|null} Cached governance data or null
+     */
+    function getCachedGovernanceData() {
+        try {
+            const GOVERNANCE_CACHE_KEY = 'pnc_governance_cache';
+            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours (same as portfolio cache)
+            
+            const cachedData = localStorage.getItem(GOVERNANCE_CACHE_KEY);
+            const cacheTime = localStorage.getItem(GOVERNANCE_CACHE_KEY + '_time');
+            
+            if (!cachedData || !cacheTime) {
+                return null;
+            }
+            
+            const cacheAge = Date.now() - new Date(cacheTime).getTime();
+            if (cacheAge > CACHE_DURATION) {
+                console.log('Governance cache expired');
+                return null;
+            }
+            
+            console.log('✅ Using cached governance data');
+            return JSON.parse(cachedData);
+            
+        } catch (error) {
+            console.error('Error reading governance cache:', error);
+            return null;
+        }
+    }
+    
     // ==================== EXPORTS ====================
     
     // Create namespace
@@ -317,6 +429,9 @@
     window.DataManager.Fetching = {
         fetchSheetData,
         fetchGovernanceData,
+        fetchAllDataParallel,
+        prefetchGovernanceData,
+        getCachedGovernanceData,
         cacheData,
         loadCachedData,
         updateLastFetchTime,

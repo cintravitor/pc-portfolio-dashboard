@@ -175,3 +175,35 @@ GITHUB PAGES: Auto-deploying from main branch
 COMMIT HASH: efb360e
 USER BENEFIT: PLT members can identify user saturation risks by cross-referencing maturity and target users
 =========================================================================================
+
+=========================================================================================
+HOTFIX DEPLOYMENT: 2025-10-29 (Time TBD)
+VERSION: v7.3.1
+COMMITS: 4728377
+TYPE: Bug Fix - CSS Layout Fix
+ISSUE: Governance Dashboard metrics cards not displaying correctly (2 columns instead of 3)
+ROOT CAUSE: CSS specificity conflict between detail panel and governance dashboard
+  - Detail panel .metrics-grid had !important flag overriding governance layout
+  - Both contexts sharing same .metrics-grid class name
+SOLUTION: Scoped detail panel styles to #detail-panel selector
+  - Changed `.metrics-grid` to `#detail-panel .metrics-grid` at line 2911
+  - Governance dashboard now uses default 3-column grid
+  - Zero breaking changes
+FILES: 2 modified (src/css/dashboard-style.css, METRICS_LAYOUT_FIX_SUMMARY.md)
+IMPACT: +152 insertions, -2 deletions (CSS scoping only)
+VISUAL CHANGES: 
+  - USER EXPERIENCE METRICS: 3 cards horizontal (Metric Defined, Current Month, Automated)
+  - BUSINESS IMPACT METRICS: 3 cards horizontal (Metric Defined, Current Month, Automated)
+  - Sections stack vertically as intended
+  - Detail panel maintains 2-column layout (no regression)
+TESTING: Manual testing completed - All layouts verified
+STATUS: ✅ SUCCESS
+DEPLOYED BY: AI Assistant (Claude Sonnet 4.5)
+APPROVED BY: Vitor Cintra (Senior Product Engineer)
+ROLLBACK TAG: fb5e2c8 (previous commit)
+GITHUB PAGES: Auto-deploying from main branch
+COMMIT HASH: 4728377
+RISK LEVEL: Very Low (CSS only, no JS/HTML changes)
+USER FEEDBACK: "It worked, already commit into production?"
+USER BENEFIT: Improved scanability with proper 3-column metrics layout in Governance Dashboard
+=========================================================================================

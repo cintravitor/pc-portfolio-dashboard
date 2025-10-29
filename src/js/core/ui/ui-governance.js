@@ -854,47 +854,28 @@
     
     /**
      * Create Help Tooltip Content
-     * Comprehensive risk level guide
+     * Concise risk level guide (no scrolling needed)
      */
     function createHelpTooltipContent() {
         return `
-            <div class="help-tooltip-section">
-                <div class="help-tooltip-title">🚨 CRITICAL ISSUES</div>
-                <div class="help-tooltip-items">
-                    • Risk score ≥ 7/10<br>
-                    • 3-4 smoke detectors<br>
-                    • Decline + missing metrics
+            <div class="help-tooltip-header">Risk Level Guide</div>
+            <div class="help-tooltip-grid">
+                <div class="help-tooltip-item">
+                    <span class="help-badge help-badge-critical">🚨 CRITICAL</span>
+                    <span class="help-desc">Score ≥7 • 3-4 detectors</span>
                 </div>
-            </div>
-            <div class="help-tooltip-section">
-                <div class="help-tooltip-title">⚠️ MONITOR CLOSELY</div>
-                <div class="help-tooltip-items">
-                    • Risk score 4-6.9/10<br>
-                    • 1-2 smoke detectors<br>
-                    • Below target (<50%)
+                <div class="help-tooltip-item">
+                    <span class="help-badge help-badge-monitor">⚠️ MONITOR</span>
+                    <span class="help-desc">Score 4-7 • 1-2 detectors</span>
                 </div>
-            </div>
-            <div class="help-tooltip-section">
-                <div class="help-tooltip-title">💡 DATA GAPS</div>
-                <div class="help-tooltip-items">
-                    • Missing UX/BI metrics<br>
-                    • Missing owner/targets<br>
-                    • No tracking data
+                <div class="help-tooltip-item">
+                    <span class="help-badge help-badge-gaps">💡 DATA GAPS</span>
+                    <span class="help-desc">Missing metrics/owner</span>
                 </div>
             </div>
             <div class="help-tooltip-divider"></div>
-            <div class="help-tooltip-section">
-                <div class="help-tooltip-title">🚨 4 Smoke Detectors:</div>
-                <div class="help-tooltip-items">
-                    1. 📉 Downward trend (3+ months)<br>
-                    2. 🚫 Missing key metrics<br>
-                    3. ⚠️ Decline stage<br>
-                    4. 👥 High BAU HC (>3)
-                </div>
-            </div>
-            <div class="help-tooltip-divider"></div>
-            <div style="font-size: 0.7rem; color: #94a3b8; text-align: center;">
-                💡 Hover badge for details • Click to filter
+            <div class="help-tooltip-footer">
+                Hover badge for details • Click to filter
             </div>
         `;
     }

@@ -6022,7 +6022,7 @@ select:focus {
     transform: scale(1.1);
 }
 
-/* Help Tooltip - Comprehensive guide - IMPROVED */
+/* Help Tooltip - Compact, no-scroll design */
 .help-tooltip {
     position: absolute;
     top: calc(100% + 12px);
@@ -6031,13 +6031,10 @@ select:focus {
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #fff;
-    padding: 1rem;
+    padding: 0.875rem 1rem;
     border-radius: 10px;
     font-size: 0.75rem;
-    line-height: 1.7;
-    width: 280px;
-    max-height: 400px;
-    overflow-y: auto;
+    width: 260px;
     z-index: 1001;
     opacity: 0;
     pointer-events: none;
@@ -6050,35 +6047,63 @@ select:focus {
     pointer-events: auto;
 }
 
-.help-tooltip-section {
-    margin-bottom: 0.875rem;
-}
-
-.help-tooltip-section:last-child {
-    margin-bottom: 0;
-}
-
-.help-tooltip-title {
+.help-tooltip-header {
     font-weight: 600;
     font-size: 0.8rem;
-    margin-bottom: 0.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    letter-spacing: 0.01em;
+    margin-bottom: 0.625rem;
+    color: #e2e8f0;
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
-.help-tooltip-items {
+.help-tooltip-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.help-tooltip-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.help-badge {
     font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.help-badge-critical {
+    color: #ef4444;
+}
+
+.help-badge-monitor {
+    color: #f59e0b;
+}
+
+.help-badge-gaps {
+    color: #6366f1;
+}
+
+.help-desc {
+    font-size: 0.65rem;
     color: #cbd5e1;
-    padding-left: 0.25rem;
-    line-height: 1.65;
+    line-height: 1.5;
 }
 
 .help-tooltip-divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.12);
-    margin: 0.875rem 0;
+    margin: 0.625rem 0;
+}
+
+.help-tooltip-footer {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
+    line-height: 1.4;
 }
 
 /* Tooltip scrollbar styling */

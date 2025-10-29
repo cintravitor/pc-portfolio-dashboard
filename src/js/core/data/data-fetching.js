@@ -147,6 +147,15 @@
                 if (header.includes('People Tech Involvement Flag')) {
                     columnMapping.ptechFlag = i;
                 }
+                // Find automation extraction columns (two occurrences: UX and BI)
+                if (header.includes('Is the extraction') && header.includes('Manual or Automated')) {
+                    // First occurrence is UX, second is BI
+                    if (!columnMapping.uxAutomation) {
+                        columnMapping.uxAutomation = i;
+                    } else if (!columnMapping.biAutomation) {
+                        columnMapping.biAutomation = i;
+                    }
+                }
             }
             
             // Find first "Tracking Frequency" column (for UX metrics)
@@ -216,6 +225,9 @@
                     totalBAUHours: columnMapping.totalBAUHours !== undefined ? (row[columnMapping.totalBAUHours] || '') : '',
                     // PTech Involvement
                     ptechFlag: columnMapping.ptechFlag !== undefined ? (row[columnMapping.ptechFlag] || '').toString().trim() : '',
+                    // Automation extraction status
+                    uxAutomation: columnMapping.uxAutomation !== undefined ? (row[columnMapping.uxAutomation] || '').toString().trim() : '',
+                    biAutomation: columnMapping.biAutomation !== undefined ? (row[columnMapping.biAutomation] || '').toString().trim() : '',
                     rawRow: row // Keep raw row for accessing other columns if needed
                 }));
             

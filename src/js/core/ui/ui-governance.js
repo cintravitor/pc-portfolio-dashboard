@@ -106,16 +106,24 @@
             }
             governanceContent.innerHTML = '';
             
-            // Fetch consolidated governance data from Apps Script
-            console.log('Fetching governance data...');
-            const data = await fetchGovernanceData(currentAbortController.signal);
+            // Use client-side calculation for real-time automation metrics
+            console.log('Calculating governance data client-side...');
+            const portfolioData = window.State.getPortfolioData();
             
-            if (!data || !data.success) {
-                throw new Error(data?.message || 'Failed to fetch governance data');
+            if (!portfolioData || portfolioData.length === 0) {
+                throw new Error('No portfolio data available. Please refresh data first.');
             }
             
-            const governanceData = data.data || data;
-            console.log('Governance data received:', governanceData);
+            // Debug: Check if automation fields are present
+            console.log('Sample solution data:', {
+                name: portfolioData[0]?.name,
+                uxAutomation: portfolioData[0]?.uxAutomation,
+                biAutomation: portfolioData[0]?.biAutomation
+            });
+            
+            // Calculate all governance metrics client-side (includes automation percentages)
+            const governanceData = window.DataManager.Governance.calculateAll(portfolioData);
+            console.log('Governance data calculated:', governanceData);
             
             // Clear and start building dashboard
             governanceContent.innerHTML = '';
@@ -289,9 +297,13 @@
         const headerLeft = document.createElement('div');
         headerLeft.className = 'governance-section-header-left';
         
-        const iconSpan = document.createElement('span');
-        iconSpan.className = 'governance-section-icon';
-        iconSpan.textContent = icon;
+        // Only add icon if provided (minimalist design: no icons)
+        if (icon && icon.trim() !== '') {
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'governance-section-icon';
+            iconSpan.textContent = icon;
+            headerLeft.appendChild(iconSpan);
+        }
         
         const titleContainer = document.createElement('div');
         const titleH3 = document.createElement('h3');
@@ -306,7 +318,6 @@
             titleContainer.appendChild(subtitleP);
         }
         
-        headerLeft.appendChild(iconSpan);
         headerLeft.appendChild(titleContainer);
         
         const toggle = document.createElement('div');
@@ -363,8 +374,8 @@
         // ========== ACHIEVEMENT GAUGES (TOP) ==========
         const achievementSection = document.createElement('div');
         achievementSection.innerHTML = `
-            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span>🎯</span> Current Month Achievement
+            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; padding-bottom: 0.75rem; border-bottom: 2px solid rgba(99, 102, 241, 0.1);">
+                Target Achievement
             </h4>
         `;
         
@@ -376,27 +387,22 @@
                     <canvas id="ux-performance-gauge"></canvas>
                 </div>
                 <div class="metric-label">UX Achievement</div>
-                <div class="metric-value">${perf.ux.achievementRate}%</div>
-                <p class="metric-detail">${perf.ux.aboveTarget} of ${coverage.totalSolutions} solutions on target</p>
+                <div class="metric-value ${perf.ux.achievementRate >= 70 ? 'metric-value-success' : 'metric-value-danger'}">${perf.ux.achievementRate}%</div>
+                <p class="metric-detail">${perf.ux.aboveTarget} of ${coverage.totalSolutions} solutions achieving target</p>
             </div>
             <div class="metric-gauge-container">
                 <div class="performance-metric-gauge">
                     <canvas id="bi-performance-gauge"></canvas>
                 </div>
                 <div class="metric-label">BI Achievement</div>
-                <div class="metric-value">${Math.round((perf.bi.withData / (perf.bi.withData + perf.bi.noData)) * 100)}%</div>
-                <p class="metric-detail">${perf.bi.withData} of ${coverage.totalSolutions} solutions with data</p>
+                <div class="metric-value ${perf.bi.achievementRate >= 70 ? 'metric-value-success' : 'metric-value-danger'}">${perf.bi.achievementRate}%</div>
+                <p class="metric-detail">${perf.bi.aboveTarget} of ${coverage.totalSolutions} solutions achieving target</p>
             </div>
         `;
         achievementSection.appendChild(achievementGrid);
         container.appendChild(achievementSection);
         
         // ========== METRICS COVERAGE CARDS ==========
-        const coverageTitle = document.createElement('h4');
-        coverageTitle.style.cssText = 'font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 2rem 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;';
-        coverageTitle.innerHTML = '<span>📊</span> Metrics Coverage';
-        container.appendChild(coverageTitle);
-        
         // UX and BI Comparison
         const comparison = document.createElement('div');
         comparison.className = 'metrics-comparison';
@@ -404,44 +410,35 @@
         // UX Metrics Card
         const uxCard = document.createElement('div');
         uxCard.innerHTML = `
-            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span>👤</span> User Experience Metrics
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid rgba(99, 102, 241, 0.1);">
+                User Experience Metrics
             </h4>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">✅</span>
-                        <h5 class="metric-card-title">Metric Defined</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.ux.metricDefinedPercent}%</div>
+                    <h5 class="metric-card-title">Metric Defined</h5>
+                    <div class="metric-card-value ${coverage.ux.metricDefinedPercent >= 90 ? 'metric-value-success' : 'metric-value-danger'}">${coverage.ux.metricDefinedPercent}%</div>
                     <p class="metric-card-label">${coverage.ux.metricDefined} of ${coverage.totalSolutions} solutions</p>
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.ux.metricDefinedPercent >= 80 ? 'high' : coverage.ux.metricDefinedPercent >= 50 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.ux.metricDefinedPercent >= 90 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.ux.metricDefinedPercent}%"></div>
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">📅</span>
-                        <h5 class="metric-card-title">Current Month Data</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.ux.currentMonthFilledPercent}%</div>
+                    <h5 class="metric-card-title">Current Month Data</h5>
+                    <div class="metric-card-value ${coverage.ux.currentMonthFilledPercent >= 80 ? 'metric-value-success' : 'metric-value-danger'}">${coverage.ux.currentMonthFilledPercent}%</div>
                     <p class="metric-card-label">${coverage.ux.currentMonthFilled} solutions updated</p>
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.ux.currentMonthFilledPercent >= 80 ? 'high' : coverage.ux.currentMonthFilledPercent >= 50 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.ux.currentMonthFilledPercent >= 80 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.ux.currentMonthFilledPercent}%"></div>
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">🤖</span>
-                        <h5 class="metric-card-title">Automated Extraction</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.ux.automatedPercent !== null ? coverage.ux.automatedPercent + '%' : 'N/A'}</div>
-                    <p class="metric-card-label">${coverage.ux.automatedPercent !== null ? coverage.ux.automated + ' automated' : 'Data not available'}</p>
+                    <h5 class="metric-card-title">Automated Extraction</h5>
+                    <div class="metric-card-value metric-automation-value ${coverage.ux.automatedPercent >= 75 ? 'automation-success' : 'automation-warning'}">${coverage.ux.automatedPercent !== null ? coverage.ux.automatedPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.ux.automatedPercent !== null ? coverage.ux.automated + ' of ' + coverage.ux.metricDefined + ' automated' : 'Data not available'}</p>
                     ${coverage.ux.automatedPercent !== null ? `
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.ux.automatedPercent >= 50 ? 'high' : coverage.ux.automatedPercent >= 25 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.ux.automatedPercent >= 75 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.ux.automatedPercent}%"></div>
                     </div>
                     ` : ''}
@@ -452,46 +449,37 @@
         // BI Metrics Card
         const biCard = document.createElement('div');
         biCard.innerHTML = `
-            <h4 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span>💼</span> Business Impact Metrics
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid rgba(99, 102, 241, 0.1);">
+                Business Impact Metrics
             </h4>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">✅</span>
-                        <h5 class="metric-card-title">Metric Defined</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.bi.metricDefinedPercent}%</div>
+                    <h5 class="metric-card-title">Metric Defined</h5>
+                    <div class="metric-card-value ${coverage.bi.metricDefinedPercent >= 90 ? 'metric-value-success' : 'metric-value-danger'}">${coverage.bi.metricDefinedPercent}%</div>
                     <p class="metric-card-label">${coverage.bi.metricDefined} of ${coverage.totalSolutions} solutions</p>
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.bi.metricDefinedPercent >= 80 ? 'high' : coverage.bi.metricDefinedPercent >= 50 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.bi.metricDefinedPercent >= 90 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.bi.metricDefinedPercent}%"></div>
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">📅</span>
-                        <h5 class="metric-card-title">Current Month Data</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilledPercent + '%' : 'N/A'}</div>
-                    <p class="metric-card-label">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilled + ' solutions tracked' : 'Data not available'}</p>
+                    <h5 class="metric-card-title">Current Month Data</h5>
+                    <div class="metric-card-value ${coverage.bi.currentMonthFilledPercent !== null && coverage.bi.currentMonthFilledPercent >= 80 ? 'metric-value-success' : 'metric-value-danger'}">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilledPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.bi.currentMonthFilledPercent !== null ? coverage.bi.currentMonthFilled + ' solutions updated' : 'Data not available'}</p>
                     ${coverage.bi.currentMonthFilledPercent !== null ? `
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.bi.currentMonthFilledPercent >= 80 ? 'high' : coverage.bi.currentMonthFilledPercent >= 50 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.bi.currentMonthFilledPercent >= 80 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.bi.currentMonthFilledPercent}%"></div>
                     </div>
                     ` : ''}
                 </div>
                 <div class="metric-card">
-                    <div class="metric-card-header">
-                        <span class="metric-card-icon">🤖</span>
-                        <h5 class="metric-card-title">Automated Extraction</h5>
-                    </div>
-                    <div class="metric-card-value">${coverage.bi.automatedPercent !== null ? coverage.bi.automatedPercent + '%' : 'N/A'}</div>
-                    <p class="metric-card-label">${coverage.bi.automatedPercent !== null ? coverage.bi.automated + ' automated' : 'Data not available'}</p>
+                    <h5 class="metric-card-title">Automated Extraction</h5>
+                    <div class="metric-card-value metric-automation-value ${coverage.bi.automatedPercent >= 75 ? 'automation-success' : 'automation-warning'}">${coverage.bi.automatedPercent !== null ? coverage.bi.automatedPercent + '%' : 'N/A'}</div>
+                    <p class="metric-card-label">${coverage.bi.automatedPercent !== null ? coverage.bi.automated + ' of ' + coverage.bi.metricDefined + ' automated' : 'Data not available'}</p>
                     ${coverage.bi.automatedPercent !== null ? `
                     <div class="metric-progress-bar">
-                        <div class="metric-progress-fill ${coverage.bi.automatedPercent >= 50 ? 'high' : coverage.bi.automatedPercent >= 25 ? 'medium' : 'low'}" 
+                        <div class="metric-progress-fill ${coverage.bi.automatedPercent >= 75 ? 'automation-success' : 'automation-warning'}" 
                              style="width: ${coverage.bi.automatedPercent}%"></div>
                     </div>
                     ` : ''}
@@ -503,13 +491,13 @@
         comparison.appendChild(biCard);
         container.appendChild(comparison);
         
-        // Initialize achievement gauges
+        // Initialize achievement gauges with color coding
         setTimeout(() => {
-            initializePerformanceGauges(perf);
+            initializePerformanceGauges(perf, coverage.totalSolutions);
         }, 100);
         
-        return createCollapsibleSection('metrics-coverage', '📊', 'Metrics Coverage', 
-            `${perf.ux.achievementRate}% UX, ${Math.round((perf.bi.withData / coverage.totalSolutions) * 100)}% BI achievement`, 
+        return createCollapsibleSection('metrics-coverage', '', 'Metrics Coverage', 
+            '', // Removed redundant subtitle
             container, true); // Default expanded
     }
     
@@ -638,8 +626,8 @@
             initializeDistributionColumnCharts(dist, gaps);
         }, 100);
         
-        return createCollapsibleSection('portfolio-distribution', '📈', 'Portfolio Distribution', 
-            `${dist.byJourney.length} journey stages, ${gaps.byMaturity.length} maturity levels`, 
+        return createCollapsibleSection('portfolio-distribution', '', 'Portfolio Distribution', 
+            '', // Removed subtitle for ultra-minimal design
             container, false);
     }
     
@@ -1090,8 +1078,8 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
         const highCount = data.bauAnomalies?.summary?.highCount || 0;
         const flaggedCount = data.bauAnomalies?.summary?.flaggedCount || 0;
         
-        return createCollapsibleSection('resource-allocation', '📈', 'Resource Allocation', 
-            `${highCount} high, ${flaggedCount} flagged BAU allocations`, 
+        return createCollapsibleSection('resource-allocation', '', 'Resource Allocation', 
+            '', // Removed subtitle for ultra-minimal design
             container, false);
     }
     
@@ -1393,7 +1381,7 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     /**
      * Initialize Performance Gauges (Doughnut Charts)
      */
-    async function initializePerformanceGauges(perfData) {
+    async function initializePerformanceGauges(perfData, totalSolutions) {
         // NEW: Wait for Chart.js to be available
         const chartJsReady = await waitForChartJs();
         if (!chartJsReady) {
@@ -1401,7 +1389,7 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
             return; // Gracefully skip chart creation
         }
         
-        // UX Gauge
+        // UX Gauge - with color coding (Green ≥70%, Red <70%)
         const uxCanvas = document.getElementById('ux-performance-gauge');
         if (uxCanvas) {
             new Chart(uxCanvas, {
@@ -1410,7 +1398,7 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
                     datasets: [{
                         data: [perfData.ux.achievementRate, 100 - perfData.ux.achievementRate],
                         backgroundColor: [
-                            perfData.ux.achievementRate >= 70 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(245, 158, 11, 0.8)',
+                            perfData.ux.achievementRate >= 70 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)',
                             'rgba(229, 231, 235, 0.3)'
                         ],
                         borderWidth: 0
@@ -1428,17 +1416,16 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
             });
         }
         
-        // BI Gauge
+        // BI Gauge - with color coding (Green ≥70%, Red <70%)
         const biCanvas = document.getElementById('bi-performance-gauge');
         if (biCanvas) {
-            const biPercentage = Math.round((perfData.bi.withData / (perfData.bi.withData + perfData.bi.noData)) * 100);
             new Chart(biCanvas, {
                 type: 'doughnut',
                 data: {
                     datasets: [{
-                        data: [biPercentage, 100 - biPercentage],
+                        data: [perfData.bi.achievementRate, 100 - perfData.bi.achievementRate],
                         backgroundColor: [
-                            biPercentage >= 70 ? 'rgba(99, 102, 241, 0.8)' : 'rgba(245, 158, 11, 0.8)',
+                            perfData.bi.achievementRate >= 70 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)',
                             'rgba(229, 231, 235, 0.3)'
                         ],
                         borderWidth: 0

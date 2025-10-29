@@ -283,6 +283,9 @@
      * Calculate Performance Metrics
      * Gets current month UX and BI metrics vs targets
      * 
+     * NEW LOGIC: Solutions without targets are considered as NOT achieving
+     * This provides realistic portfolio health visibility
+     * 
      * @param {Array} portfolioData - Portfolio solutions
      * @returns {Object} Performance metrics summary
      */
@@ -290,7 +293,8 @@
         let uxAboveTarget = 0;
         let uxBelowTarget = 0;
         let uxNoData = 0;
-        let biWithData = 0;
+        let biAboveTarget = 0;
+        let biBelowTarget = 0;
         let biNoData = 0;
         
         const uxSamples = [];
@@ -318,18 +322,30 @@
                 uxNoData++;
             }
             
-            // BI Metrics
+            // BI Metrics - NOW WITH TARGET ACHIEVEMENT CALCULATION (same logic as UX)
             const biMetric = solution.keyMetricBI;
-            if (biMetric && biMetric !== 'N/A') {
-                biWithData++;
-                biSamples.push({ name: solution.name, metric: biMetric });
+            const biTarget = parseFloat(solution.targetBI);
+            const monthlyBI = solution.monthlyBI;
+            const currentMonthBI = monthlyBI && monthlyBI[currentMonth] ? parseFloat(monthlyBI[currentMonth]) : null;
+            
+            if (biMetric && biMetric !== 'N/A' && currentMonthBI !== null && !isNaN(currentMonthBI) && !isNaN(biTarget)) {
+                if (currentMonthBI >= biTarget) {
+                    biAboveTarget++;
+                    biSamples.push({ name: solution.name, value: currentMonthBI, target: biTarget, status: 'above' });
+                } else {
+                    biBelowTarget++;
+                    biSamples.push({ name: solution.name, value: currentMonthBI, target: biTarget, status: 'below' });
+                }
             } else {
                 biNoData++;
             }
         });
         
-        const totalWithUX = uxAboveTarget + uxBelowTarget;
-        const uxAchievementRate = totalWithUX > 0 ? Math.round((uxAboveTarget / totalWithUX) * 100) : 0;
+        // NEW CALCULATION: Use total solutions (not just those with data/targets)
+        // Solutions without targets are counted as NOT achieving
+        const totalSolutions = portfolioData.length;
+        const uxAchievementRate = totalSolutions > 0 ? Math.round((uxAboveTarget / totalSolutions) * 100) : 0;
+        const biAchievementRate = totalSolutions > 0 ? Math.round((biAboveTarget / totalSolutions) * 100) : 0;
         
         return {
             ux: {
@@ -340,8 +356,10 @@
                 samples: uxSamples.slice(0, 10)
             },
             bi: {
-                withData: biWithData,
+                aboveTarget: biAboveTarget,
+                belowTarget: biBelowTarget,
                 noData: biNoData,
+                achievementRate: biAchievementRate,
                 samples: biSamples.slice(0, 10)
             }
         };
@@ -389,7 +407,16 @@
      * Tracks UX/BI metric definition, data freshness, and automation
      * 
      * @param {Array} portfolioData - Portfolio solutions
-     * @returns {Object} Metrics coverage statistics
+     * @returns {Object} Metrics coverage statistics including automation percentages
+     * 
+     * @property {Object} ux - UX metrics coverage
+     * @property {number} ux.automated - Count of solutions with automated UX extraction
+     * @property {number} ux.automatedPercent - Percentage of automated UX extraction (0-100)
+     * @property {Object} bi - BI metrics coverage  
+     * @property {number} bi.automated - Count of solutions with automated BI extraction
+     * @property {number} bi.automatedPercent - Percentage of automated BI extraction (0-100)
+     * 
+     * @performance Target: <50ms for 100 solutions
      */
     function calculateMetricsCoverage(portfolioData) {
         let totalSolutions = portfolioData.length;
@@ -439,11 +466,15 @@
                 }
             }
             
-            // Automation checks (if properties exist in future)
-            if (solution.uxAutomated === true || solution.uxAutomated === 'TRUE' || solution.uxAutomated === 'YES') {
+            // UX Automation check
+            const uxAutomationStatus = (solution.uxAutomation || '').toLowerCase();
+            if (uxAutomationStatus === 'automated') {
                 uxAutomated++;
             }
-            if (solution.biAutomated === true || solution.biAutomated === 'TRUE' || solution.biAutomated === 'YES') {
+            
+            // BI Automation check
+            const biAutomationStatus = (solution.biAutomation || '').toLowerCase();
+            if (biAutomationStatus === 'automated') {
                 biAutomated++;
             }
         });
@@ -458,7 +489,7 @@
                 reachedTarget: uxReachedTarget,
                 reachedTargetPercent: uxMetricDefined > 0 ? Math.round((uxReachedTarget / uxMetricDefined) * 100) : 0,
                 automated: uxAutomated,
-                automatedPercent: null // Not tracking automation yet
+                automatedPercent: uxMetricDefined > 0 ? Math.round((uxAutomated / uxMetricDefined) * 100) : 0
             },
             bi: {
                 metricDefined: biMetricDefined,
@@ -468,7 +499,7 @@
                 reachedTarget: biReachedTarget,
                 reachedTargetPercent: biMetricDefined > 0 ? Math.round((biReachedTarget / biMetricDefined) * 100) : 0,
                 automated: biAutomated,
-                automatedPercent: null // Not tracking automation yet
+                automatedPercent: biMetricDefined > 0 ? Math.round((biAutomated / biMetricDefined) * 100) : 0
             }
         };
     }

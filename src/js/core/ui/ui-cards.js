@@ -447,6 +447,7 @@
     
     /**
      * Update statistics display
+     * Updated to use filtered data for consistency with dynamic updates
      * Defensive: checks if elements exist before updating (handles cached old HTML)
      */
     function updateStats() {
@@ -457,19 +458,20 @@
         }
         statsBar.style.display = 'flex';
 
-        const stats = window.DataManager.getProductStats();
-        const missingMetrics = window.DataManager.countMissingMetrics();
+        // Use filtered data (ensures consistency with dynamic updates)
+        const filteredData = window.DataManager.getFilteredData();
+        const metrics = window.DataManager.calculateFilteredSummaryMetrics(filteredData);
         
         // Safely update stats if elements exist
         const statTotal = document.getElementById('stat-total');
-        if (statTotal) statTotal.textContent = stats.total;
+        if (statTotal) statTotal.textContent = metrics.total;
         
         // Update data quality cards
         const statMissingUX = document.getElementById('stat-missing-ux');
         const statMissingBI = document.getElementById('stat-missing-bi');
         
-        if (statMissingUX) statMissingUX.textContent = missingMetrics.missingUX;
-        if (statMissingBI) statMissingBI.textContent = missingMetrics.missingBI;
+        if (statMissingUX) statMissingUX.textContent = metrics.missingUX;
+        if (statMissingBI) statMissingBI.textContent = metrics.missingBI;
     }
     
     /**
@@ -482,17 +484,93 @@
         }
     }
     
+    /**
+     * Update summary cards based on filtered data (real-time updates)
+     * Subscribes to 'filters:changed' event via pub/sub pattern
+     * 
+     * This function is called automatically whenever filters are applied/removed,
+     * ensuring summary cards always reflect the current filtered subset.
+     * 
+     * @param {Object} eventData - Event data from filters:changed event
+     * @param {Array} eventData.filteredData - Current filtered dataset
+     * @param {Object} eventData.filterContext - Filter metadata (counts, active filters)
+     * 
+     * @performance Target: <50ms DOM update time (part of overall <200ms requirement)
+     * @complexity O(1) for DOM updates + O(n) for metric calculation
+     * 
+     * @example
+     * // Called automatically via event subscription:
+     * window.Utils.publish('filters:changed', { filteredData: [...] });
+     */
+    function updateFilteredSummaryCards(eventData) {
+        // Performance instrumentation: Start timer
+        const perfStart = performance.now();
+        
+        try {
+            // Extract filtered data from event
+            const filteredData = eventData?.filteredData || [];
+            
+            // Performance: Calculate all metrics in single pass
+            const metrics = window.DataManager.calculateFilteredSummaryMetrics(filteredData);
+            
+            // Performance: Batch DOM reads before writes (prevent layout thrashing)
+            // Use getElementById (fastest native API) and textContent (faster than innerHTML)
+            const statTotal = document.getElementById('stat-total');
+            const statMissingUX = document.getElementById('stat-missing-ux');
+            const statMissingBI = document.getElementById('stat-missing-bi');
+            
+            // Defensive: Check if elements exist before updating
+            if (statTotal) {
+                statTotal.textContent = metrics.total;
+            } else {
+                console.warn('stat-total element not found in DOM');
+            }
+            
+            if (statMissingUX) {
+                statMissingUX.textContent = metrics.missingUX;
+            } else {
+                console.warn('stat-missing-ux element not found in DOM');
+            }
+            
+            if (statMissingBI) {
+                statMissingBI.textContent = metrics.missingBI;
+            } else {
+                console.warn('stat-missing-bi element not found in DOM');
+            }
+            
+            // Performance instrumentation: End timer and log results
+            const perfEnd = performance.now();
+            const duration = (perfEnd - perfStart).toFixed(2);
+            console.log(`⚡ Summary cards updated in ${duration}ms (${metrics.total} products)`);
+            
+            // Performance warning if threshold exceeded
+            if (perfEnd - perfStart > 200) {
+                console.warn(`⚠️ Summary card update exceeded 200ms threshold: ${duration}ms`);
+            }
+            
+        } catch (error) {
+            console.error('Failed to update filtered summary cards:', error);
+            // Graceful degradation: Don't break the app on error
+        }
+    }
+    
     // Export to window.UIManager.Cards namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Cards = {
         render: renderCards,
         updateStats,
         updateLastUpdateDisplay,
+        updateFilteredSummaryCards,  // NEW: Real-time summary card updates
         toggleArea,
         expandAreas,
         collapseAllAreas,
         invalidateCache  // Export for external cache invalidation
     };
+    
+    // Subscribe to filter changes for real-time summary card updates
+    // This ensures cards dynamically reflect the current filtered subset
+    window.Utils.subscribe('filters:changed', updateFilteredSummaryCards);
+    console.log('✅ Summary cards subscribed to filters:changed event');
     
     console.log('✅ UI Cards module loaded (OPTIMIZED)');
 })();

@@ -81,6 +81,7 @@
         getProductStats: window.DataManager.Accessors?.getProductStats,
         countMissingMetrics: window.DataManager.Accessors?.countMissingMetrics,
         getCardSummaryMetrics: window.DataManager.Accessors?.getCardSummaryMetrics,
+        calculateFilteredSummaryMetrics: window.DataManager.Accessors?.calculateFilteredSummaryMetrics,
         
         // ==================== Governance Module ====================
         // Client-side governance calculations for real-time filtering

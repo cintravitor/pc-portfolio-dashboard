@@ -130,19 +130,103 @@
             }
         });
         
+    return {
+        missingUX: missingUX,
+        missingBI: missingBI
+    };
+}
+
+/**
+ * Calculate summary card metrics for FILTERED data in a single efficient pass
+ * This function is optimized for real-time updates (<200ms requirement)
+ * 
+ * @param {Array} filteredData - Current filtered dataset (subset of portfolio)
+ * @returns {Object} Summary metrics for dashboard cards
+ * @property {number} total - Total count of filtered solutions
+ * @property {number} missingUX - Count of products with missing/invalid UX metrics
+ * @property {number} missingBI - Count of products with missing/invalid BI metrics
+ * 
+ * @performance Target: <50ms for typical datasets (15-20 products), <200ms for full portfolio (84)
+ * @complexity O(n) - Single pass through filtered data
+ * 
+ * @example
+ * const metrics = calculateFilteredSummaryMetrics(filteredData);
+ * // Returns: { total: 15, missingUX: 3, missingBI: 2 }
+ */
+function calculateFilteredSummaryMetrics(filteredData) {
+    // Performance: Early return for empty datasets (0ms)
+    if (!filteredData || filteredData.length === 0) {
         return {
-            missingUX: missingUX,
-            missingBI: missingBI
+            total: 0,
+            missingUX: 0,
+            missingBI: 0
         };
     }
+    
+    // Performance: Calculate current month index once (not in loop)
+    const currentMonth = new Date().getMonth();
+    
+    // Single-pass aggregation: count all metrics in one iteration
+    let missingUX = 0;
+    let missingBI = 0;
+    
+    // Performance: Use for-loop (faster than forEach for large arrays)
+    for (let i = 0; i < filteredData.length; i++) {
+        const product = filteredData[i];
+        
+        // Check UX metric (inline validation for performance)
+        const uxMetricName = product.keyMetricUX;
+        const uxCurrentMonthValue = product.monthlyUX ? product.monthlyUX[currentMonth] : null;
+        
+        // Rule 1: Metric name is missing or N/A
+        const uxMetricMissing = !uxMetricName || uxMetricName.trim() === '' || uxMetricName === 'N/A';
+        
+        // Rule 2: Current month value is missing, N/A, empty, or zero
+        const uxValueMissing = !uxCurrentMonthValue || 
+                              uxCurrentMonthValue === 'N/A' || 
+                              uxCurrentMonthValue === '' || 
+                              uxCurrentMonthValue === '0' ||
+                              uxCurrentMonthValue === '-' ||
+                              parseFloat(uxCurrentMonthValue) === 0;
+        
+        if (uxMetricMissing || uxValueMissing) {
+            missingUX++;
+        }
+        
+        // Check BI metric (inline validation for performance)
+        const biMetricName = product.keyMetricBI;
+        const biCurrentMonthValue = product.monthlyBI ? product.monthlyBI[currentMonth] : null;
+        
+        // Rule 1: Metric name is missing or N/A
+        const biMetricMissing = !biMetricName || biMetricName.trim() === '' || biMetricName === 'N/A';
+        
+        // Rule 2: Current month value is missing, N/A, empty, or zero
+        const biValueMissing = !biCurrentMonthValue || 
+                              biCurrentMonthValue === 'N/A' || 
+                              biCurrentMonthValue === '' || 
+                              biCurrentMonthValue === '0' ||
+                              biCurrentMonthValue === '-' ||
+                              parseFloat(biCurrentMonthValue) === 0;
+        
+        if (biMetricMissing || biValueMissing) {
+            missingBI++;
+        }
+    }
+    
+    return {
+        total: filteredData.length,
+        missingUX: missingUX,
+        missingBI: missingBI
+    };
+}
 
-    /**
-     * Get summary metrics for a product card
-     * Returns compact metric status for at-a-glance viewing
-     * @param {Object} product - Product object
-     * @returns {Object} Summary metrics with status indicators
-     */
-    function getCardSummaryMetrics(product) {
+/**
+ * Get summary metrics for a product card
+ * Returns compact metric status for at-a-glance viewing
+ * @param {Object} product - Product object
+ * @returns {Object} Summary metrics with status indicators
+ */
+function getCardSummaryMetrics(product) {
         // Calculate UX status
         let uxStatus = 'gray';
         const mostRecentUX = getMostRecentValue(product.monthlyUX);
@@ -197,7 +281,8 @@
         getProductById,
         getProductStats,
         countMissingMetrics,
-        getCardSummaryMetrics
+        getCardSummaryMetrics,
+        calculateFilteredSummaryMetrics  // NEW: Real-time summary card metrics
     };
     
     console.log('✅ Data Accessors module loaded');

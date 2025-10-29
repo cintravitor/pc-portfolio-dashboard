@@ -166,9 +166,8 @@
         .hidden { display: none !important; }
     </style>
     
-    <!-- Chart.js: Deferred loading for non-blocking performance -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" as="script">
-    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Chart.js: Now lazy-loaded by ui-tabs.js when Insights tab is clicked -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net/npm" crossorigin>
 </head>
 <body>
     <header class="header">

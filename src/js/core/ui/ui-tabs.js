@@ -9,12 +9,78 @@
 (function() {
     'use strict';
     
+    // Track if Chart.js has been loaded
+    let chartJsLoaded = typeof Chart !== 'undefined';
+    let chartJsLoading = false;
+    
+    /**
+     * Lazy load Chart.js library
+     * Only loads when Insights tab is first visited
+     * @returns {Promise<boolean>} True if loaded successfully
+     */
+    async function loadChartJs() {
+        if (chartJsLoaded) {
+            console.log('✅ Chart.js already loaded');
+            return true;
+        }
+        
+        if (chartJsLoading) {
+            console.log('⏳ Chart.js already loading, waiting...');
+            // Wait for existing load to complete
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (chartJsLoaded || typeof Chart !== 'undefined') {
+                        clearInterval(checkInterval);
+                        chartJsLoaded = true;
+                        resolve(true);
+                    }
+                }, 100);
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    resolve(false);
+                }, 10000);
+            });
+        }
+        
+        chartJsLoading = true;
+        console.log('📊 Lazy loading Chart.js...');
+        const startTime = performance.now();
+        
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+            script.onload = () => {
+                const elapsed = (performance.now() - startTime).toFixed(0);
+                console.log(`✅ Chart.js loaded (${elapsed}ms)`);
+                chartJsLoaded = true;
+                chartJsLoading = false;
+                resolve(true);
+            };
+            script.onerror = () => {
+                console.error('❌ Failed to load Chart.js');
+                chartJsLoading = false;
+                reject(new Error('Chart.js load failed'));
+            };
+            document.head.appendChild(script);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                if (!chartJsLoaded) {
+                    console.error('❌ Chart.js load timeout');
+                    chartJsLoading = false;
+                    reject(new Error('Chart.js load timeout'));
+                }
+            }, 10000);
+        });
+    }
+    
     /**
      * Switch between dashboard tabs
      * @param {string} tabName - Tab identifier ('portfolio-overview' or 'governance-dashboard')
      * @description Handles navigation between 🔍 Explore and 💡 Insights views
      */
-    function switchTab(tabName) {
+    async function switchTab(tabName) {
         console.log(`Switching to tab: ${tabName}`);
         
         // NEW: If switching away from governance tab, cancel any in-progress render
@@ -124,6 +190,14 @@
         
         // Load tab-specific content
         if (tabName === 'governance-dashboard') {
+            // Lazy load Chart.js before rendering Insights tab
+            try {
+                await loadChartJs();
+            } catch (error) {
+                console.error('Chart.js failed to load, governance dashboard may not render charts:', error);
+                // Continue anyway - governance module has fallback handling
+            }
+            
             // Check if we have filtered data to use
             const filteredData = window.DataManager.getFilteredData();
             const portfolioData = window.DataManager.getPortfolioData();

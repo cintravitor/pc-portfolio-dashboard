@@ -900,6 +900,70 @@
     }
     
     /**
+     * Cache AI Summary for performance optimization
+     * @param {string} cacheKey - Cache key (full or filtered view)
+     * @param {string} summary - AI-generated summary text
+     * @param {Object} data - Governance data for fingerprint
+     */
+    function cacheAISummary(cacheKey, summary, data) {
+        try {
+            const cacheData = {
+                summary: summary,
+                timestamp: Date.now(),
+                dataFingerprint: generateDataFingerprint(data)
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        } catch (error) {
+            console.warn('Failed to cache AI summary:', error);
+        }
+    }
+    
+    /**
+     * Get cached AI summary if valid
+     * @param {string} cacheKey - Cache key
+     * @param {Object} data - Current governance data
+     * @returns {Object|null} Cached data or null if invalid/expired
+     */
+    function getCachedAISummary(cacheKey, data) {
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (!cached) return null;
+            
+            const cacheData = JSON.parse(cached);
+            const now = Date.now();
+            const TTL = 24 * 60 * 60 * 1000; // 24 hours
+            
+            // Check if expired
+            if (now - cacheData.timestamp > TTL) {
+                localStorage.removeItem(cacheKey);
+                return null;
+            }
+            
+            // Check if data changed (invalidate cache if metrics changed significantly)
+            const currentFingerprint = generateDataFingerprint(data);
+            if (cacheData.dataFingerprint !== currentFingerprint) {
+                console.log('Cache invalidated: data changed');
+                localStorage.removeItem(cacheKey);
+                return null;
+            }
+            
+            return cacheData;
+        } catch (error) {
+            console.warn('Failed to retrieve cached AI summary:', error);
+            return null;
+        }
+    }
+    
+    /**
+     * Generate fingerprint of governance data to detect changes
+     * @param {Object} data - Governance data
+     * @returns {string} Data fingerprint
+     */
+    function generateDataFingerprint(data) {
+        return `${data.smokeDetectors.count}-${data.bauAnomalies.summary.highCount}-${data.dataHealth.missingMetrics}-${data.performanceMetrics.ux.achievementRate}`;
+    }
+    
+    /**
      * Generate AI Summary using LiteLLM
      * Fetches AI-powered insights for the governance dashboard
      * Outputs structured HTML with hierarchy: Summary → Findings → Recommendations
@@ -913,6 +977,7 @@
      * - Numbered/bulleted lists for discrete items
      * - Color-coded severity badges ([HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED])
      * - Three-part hierarchy for clear information flow
+     * - Performance: 24hr caching to avoid unnecessary API calls
      * 
      * @see parseStructuredAIOutput for HTML parsing logic
      */
@@ -920,6 +985,17 @@
         const contentEl = document.getElementById('ai-summary-content');
         
         if (!contentEl) return;
+        
+        // Check for cached AI summary (24hr TTL)
+        const cacheKey = `ai-summary-cache-${isUsingFilteredData ? 'filtered' : 'full'}`;
+        const cached = getCachedAISummary(cacheKey, data);
+        
+        if (cached) {
+            console.log('✅ Using cached AI summary (performance optimization)');
+            contentEl.innerHTML = parseStructuredAIOutput(cached.summary);
+            attachRiskBadgeListeners();
+            return;
+        }
         
         try {
             // Build prompt from governance data with filter context
@@ -952,7 +1028,15 @@ FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS:
 • [Finding 3 with specific numbers]
 • [Finding 4 if needed]
 
-Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appropriate${isUsingFilteredData ? ' FOR THIS FILTERED SUBSET' : ''}.`;
+CRITICAL FORMATTING RULES:
+- ALWAYS use EXACT markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED]
+- Use [HIGH RISK] when mentioning critical/urgent issues, failures, or high smoke detectors (≥3)
+- Use [MEDIUM RISK] when mentioning monitoring needs, flagged items, or moderate concerns (1-2 detectors)
+- Use [ATTENTION NEEDED] when mentioning missing data, incomplete metrics, or data gaps
+- NEVER paraphrase these markers - use the EXACT brackets and text
+- Place markers IMMEDIATELY after the relevant phrase
+
+Example: "10 solutions [HIGH RISK] require immediate attention" NOT "10 solutions show critical issues"${isUsingFilteredData ? ' FOR THIS FILTERED SUBSET' : ''}.`;
             
             console.log('Generating AI summary with prompt...');
             
@@ -987,10 +1071,13 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
             const result = await response.json();
             const aiText = result.choices[0].message.content.trim();
             
+            // Cache the AI summary for performance (24hr TTL)
+            cacheAISummary(cacheKey, aiText, data);
+            
             contentEl.innerHTML = parseStructuredAIOutput(aiText);
             // Attach interactive event listeners to risk badges
             attachRiskBadgeListeners();
-            console.log('✅ AI summary generated with interactive badges');
+            console.log('✅ AI summary generated with interactive badges (cached for 24hrs)');
             
         } catch (error) {
             console.error('Error generating AI summary:', error);

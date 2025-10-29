@@ -5924,28 +5924,29 @@ select:focus {
     border-color: var(--mercury-accent);
 }
 
-/* Risk Badge Tooltip - Enhanced Option A (full details) */
+/* Risk Badge Tooltip - Enhanced Option A (full details) - IMPROVED */
 .risk-badge-tooltip {
     position: absolute;
     bottom: calc(100% + 12px);
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(30, 41, 59, 0.95);
+    background: rgba(30, 41, 59, 0.96);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #fff;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    min-width: 320px;
-    max-width: 350px;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    line-height: 1.65;
+    width: 260px;
+    max-height: 320px;
+    overflow-y: auto;
     white-space: normal;
     z-index: 1000;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .ai-severity-badge:hover .risk-badge-tooltip {
@@ -5964,32 +5965,36 @@ select:focus {
 
 .risk-tooltip-title {
     font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.625rem;
+    letter-spacing: 0.01em;
 }
 
 .risk-tooltip-criteria {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #cbd5e1;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    line-height: 1.6;
+    margin-bottom: 0.625rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    line-height: 1.7;
 }
 
 .risk-tooltip-solutions {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #e2e8f0;
-    line-height: 1.6;
+    line-height: 1.7;
+    max-height: 140px;
+    overflow-y: auto;
 }
 
 .risk-tooltip-cta {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    font-size: 0.7rem;
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.65rem;
     color: #94a3b8;
     text-align: center;
+    font-style: italic;
 }
 
 /* Help Icon for AI Insights */
@@ -6017,25 +6022,27 @@ select:focus {
     transform: scale(1.1);
 }
 
-/* Help Tooltip - Comprehensive guide */
+/* Help Tooltip - Comprehensive guide - IMPROVED */
 .help-tooltip {
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
-    background: rgba(30, 41, 59, 0.95);
+    background: rgba(30, 41, 59, 0.96);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #fff;
-    padding: 1.25rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    line-height: 1.6;
-    width: 380px;
+    padding: 1rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    width: 280px;
+    max-height: 400px;
+    overflow-y: auto;
     z-index: 1001;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .ai-help-icon:hover .help-tooltip {
@@ -6044,7 +6051,7 @@ select:focus {
 }
 
 .help-tooltip-section {
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
 }
 
 .help-tooltip-section:last-child {
@@ -6053,23 +6060,52 @@ select:focus {
 
 .help-tooltip-title {
     font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    letter-spacing: 0.01em;
 }
 
 .help-tooltip-items {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #cbd5e1;
-    padding-left: 0.5rem;
+    padding-left: 0.25rem;
+    line-height: 1.65;
 }
 
 .help-tooltip-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 1rem 0;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0.875rem 0;
+}
+
+/* Tooltip scrollbar styling */
+.risk-badge-tooltip::-webkit-scrollbar,
+.help-tooltip::-webkit-scrollbar,
+.risk-tooltip-solutions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.risk-badge-tooltip::-webkit-scrollbar-track,
+.help-tooltip::-webkit-scrollbar-track,
+.risk-tooltip-solutions::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.risk-badge-tooltip::-webkit-scrollbar-thumb,
+.help-tooltip::-webkit-scrollbar-thumb,
+.risk-tooltip-solutions::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.risk-badge-tooltip::-webkit-scrollbar-thumb:hover,
+.help-tooltip::-webkit-scrollbar-thumb:hover,
+.risk-tooltip-solutions::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Empty state */

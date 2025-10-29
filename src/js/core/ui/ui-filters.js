@@ -9,6 +9,9 @@
 (function() {
     'use strict';
     
+    // State tracking for "Not Updated" card filters
+    let activeNotUpdatedFilter = null; // null, 'UX', or 'BI'
+    
     // ==================== TACTICAL FILTERS ====================
     
     /**
@@ -53,13 +56,13 @@
         
         if (missingUXCard) {
             missingUXCard.addEventListener('click', () => {
-                filterByMissingMetric('UX');
+                toggleNotUpdatedFilter('UX');
             });
         }
         
         if (missingBICard) {
             missingBICard.addEventListener('click', () => {
-                filterByMissingMetric('BI');
+                toggleNotUpdatedFilter('BI');
             });
         }
         
@@ -68,76 +71,73 @@
     }
     
     /**
-     * Filter products by missing metrics (UX or BI)
+     * Toggle "Not Updated" filter for UX or BI metrics
+     * Uses Pub/Sub pattern and stacks with multi-select filters
      * 
-     * Business Rule: A product is counted as "missing metrics" if:
-     * 1. The key metric field itself is "N/A" or empty (no metric defined), OR
-     * 2. The CURRENT MONTH metric value is missing, N/A, empty, or zero
+     * Business Rule: A product is "Not Updated for Current Month" if:
+     * 1. The key metric field is "N/A" or empty (no metric defined), OR
+     * 2. The CURRENT MONTH value is missing, N/A, empty, zero, or dash
      * 
      * @param {string} metricType - Either 'UX' or 'BI'
      */
-    function filterByMissingMetric(metricType) {
-        const portfolioData = window.DataManager.getPortfolioData();
+    function toggleNotUpdatedFilter(metricType) {
+        console.log(`🔄 Toggling "Not Updated" filter for ${metricType}...`);
         
-        // Get current month index (0-based: Jan=0, Feb=1, ..., Oct=9, Nov=10, Dec=11)
-        const currentMonth = new Date().getMonth();
+        // If clicking the same card again, deactivate the filter
+        if (activeNotUpdatedFilter === metricType) {
+            console.log(`✖️ Deactivating ${metricType} "Not Updated" filter`);
+            activeNotUpdatedFilter = null;
+            updateCardActiveState(metricType, false);
+            
+            // Publish deactivation event
+            window.Utils.publish('notUpdatedFilter:deactivated', { metricType });
+            
+            // Reapply filters without the "Not Updated" filter
+            applyFiltersFromUI();
+            return;
+        }
         
-        // Filter products with missing metrics (definition OR current month value)
-        const filtered = portfolioData.filter(product => {
-            if (metricType === 'UX') {
-                // Rule 1: Check if key metric field is missing or N/A (no metric defined)
-                if (!product.keyMetricUX || 
-                    product.keyMetricUX.trim() === '' || 
-                    product.keyMetricUX === 'N/A') {
-                    return true;
-                }
-                
-                // Rule 2: Check if UX metric value is missing for current month
-                if (product.monthlyUX && Array.isArray(product.monthlyUX)) {
-                    const currentValue = product.monthlyUX[currentMonth];
-                    return !currentValue || 
-                           currentValue === 'N/A' || 
-                           currentValue === '' || 
-                           currentValue === '0' ||
-                           parseFloat(currentValue) === 0;
-                }
-                return true; // No monthlyUX array
-            } else {
-                // Rule 1: Check if key metric field is missing or N/A (no metric defined)
-                if (!product.keyMetricBI || 
-                    product.keyMetricBI.trim() === '' || 
-                    product.keyMetricBI === 'N/A') {
-                    return true;
-                }
-                
-                // Rule 2: Check if BI metric value is missing for current month
-                if (product.monthlyBI && Array.isArray(product.monthlyBI)) {
-                    const currentValue = product.monthlyBI[currentMonth];
-                    return !currentValue || 
-                           currentValue === 'N/A' || 
-                           currentValue === '' || 
-                           currentValue === '0' ||
-                           parseFloat(currentValue) === 0;
-                }
-                return true; // No monthlyBI array
-            }
-        });
+        // Activate the new filter (or switch from UX to BI, or vice versa)
+        if (activeNotUpdatedFilter !== null && activeNotUpdatedFilter !== metricType) {
+            // Deactivate the other card first
+            updateCardActiveState(activeNotUpdatedFilter, false);
+        }
         
-        // Update filtered data in state
-        window.State.setFilteredData(filtered);
+        activeNotUpdatedFilter = metricType;
+        updateCardActiveState(metricType, true);
         
-        // Clear all filter UI controls (so they show "All")
-        document.getElementById('search-input').value = '';
-        document.getElementById('filter-area').value = '';
-        document.getElementById('filter-maturity').value = '';
-        document.getElementById('filter-owner').value = '';
+        console.log(`✅ Activated ${metricType} "Not Updated" filter`);
         
-        // Render filtered cards
-        window.UIManager.Cards.render();
-        window.UIManager.Cards.updateStats();
+        // Publish activation event
+        window.Utils.publish('notUpdatedFilter:activated', { metricType });
         
-        // Show notification about what was filtered
-        showDataQualityFilterNotification(metricType, filtered.length);
+        // Apply filters WITH the "Not Updated" filter (stacks with multi-select)
+        applyFiltersFromUI();
+    }
+    
+    /**
+     * Update visual active state of "Not Updated" filter cards
+     * @param {string} metricType - 'UX' or 'BI'
+     * @param {boolean} isActive - true to activate, false to deactivate
+     */
+    function updateCardActiveState(metricType, isActive) {
+        const cardId = metricType === 'UX' ? 'card-missing-ux' : 'card-missing-bi';
+        const card = document.getElementById(cardId);
+        
+        if (!card) {
+            console.warn(`Card not found: ${cardId}`);
+            return;
+        }
+        
+        if (isActive) {
+            card.classList.add('stat-card-active');
+            card.setAttribute('aria-pressed', 'true');
+            card.title = `Click to remove ${metricType} "Not Updated" filter`;
+        } else {
+            card.classList.remove('stat-card-active');
+            card.setAttribute('aria-pressed', 'false');
+            card.title = `Click to filter solutions with missing ${metricType} metric updates`;
+        }
     }
     
     /**
@@ -484,10 +484,12 @@
             targetUserFilters,
             ownerFilters,
             sortBy,
-            belowTargetOnly
+            belowTargetOnly,
+            notUpdatedFilter: activeNotUpdatedFilter
         });
 
-        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly);
+        // Apply all filters including "Not Updated" card filter
+        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly, activeNotUpdatedFilter);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
@@ -512,7 +514,7 @@
         });
         
         // Check if any filters are active (arrays need length check)
-        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly;
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly || activeNotUpdatedFilter !== null;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data
@@ -559,6 +561,12 @@
         
         const belowTarget = document.getElementById('filter-below-target');
         if (belowTarget) belowTarget.checked = false;
+        
+        // Clear "Not Updated" card filter if active
+        if (activeNotUpdatedFilter !== null) {
+            updateCardActiveState(activeNotUpdatedFilter, false);
+            activeNotUpdatedFilter = null;
+        }
         
         // Clear visual feedback from headers
         updateFilterHeaderStates();
@@ -808,7 +816,8 @@
         clearFilters,
         clearDataQualityFilter,
         renderFilterPills,
-        removeFilterPill
+        removeFilterPill,
+        getActiveNotUpdatedFilter: () => activeNotUpdatedFilter  // NEW: Expose active "Not Updated" filter state
     };
     
     console.log('✅ UI Filters module loaded');

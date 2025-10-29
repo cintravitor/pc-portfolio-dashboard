@@ -7,8 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Resource Hints for Performance -->
-    <link rel="preload" href="src/css/dashboard-style.css?v=8.0.0" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="src/css/dashboard-style.css?v=8.0.0"></noscript>
+    <link rel="preload" href="src/css/dashboard-style.css?v=8.1.1" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="src/css/dashboard-style.css?v=8.1.1"></noscript>
     <link rel="dns-prefetch" href="https://script.google.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     
@@ -250,12 +250,12 @@
                         <div class="stat-label">Total Solutions</div>
                         <div class="stat-value" id="stat-total">0</div>
                     </div>
-            <div class="stat-card stat-card-warning" data-filter-type="missing-ux-metric" style="cursor: pointer;" title="Click to filter products with missing UX metric updates">
-                <div class="stat-label">⚠️ UX Metrics not updated</div>
+            <div class="stat-card stat-card-warning" id="card-missing-ux" data-filter-type="missing-ux-metric" style="cursor: pointer;" title="Click to filter products with missing UX metric updates">
+                <div class="stat-label">⚠️ UX METRICS NOT UPDATED (Current Month)</div>
                 <div class="stat-value" id="stat-missing-ux">0</div>
             </div>
-            <div class="stat-card stat-card-warning" data-filter-type="missing-bi-metric" style="cursor: pointer;" title="Click to filter products with missing BI metric updates">
-                <div class="stat-label">⚠️ BI Metrics not updated</div>
+            <div class="stat-card stat-card-warning" id="card-missing-bi" data-filter-type="missing-bi-metric" style="cursor: pointer;" title="Click to filter products with missing BI metric updates">
+                <div class="stat-label">⚠️ BI METRICS NOT UPDATED (Current Month)</div>
                 <div class="stat-value" id="stat-missing-bi">0</div>
             </div>
                 </div>

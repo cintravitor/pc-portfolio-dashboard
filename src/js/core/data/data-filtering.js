@@ -20,11 +20,13 @@
      * @param {Array<string>} ownerFilters - Array of selected owners (multi-select)
      * @param {string} sortBy - Sort option
      * @param {boolean} belowTargetOnly - Filter for below-target products only
+     * @param {string|null} notUpdatedFilter - Current month "Not Updated" filter: 'UX', 'BI', or null
      * 
      * Multi-select logic: OR within same filter type, AND across different filter types
-     * Example: (Area1 OR Area2) AND (Journey1 OR Journey2) AND (Maturity1 OR Maturity2) AND (TargetUser1 OR TargetUser2) AND (Owner1)
+     * "Not Updated" filter: Applies as primary filter, then multi-select filters apply to subset
+     * Example: (Area1 OR Area2) AND (Journey1 OR Journey2) AND (Maturity1 OR Maturity2) AND (TargetUser1 OR TargetUser2) AND (Owner1) AND (NotUpdatedUX)
      */
-    function applyFilters(searchTerm = '', areaFilters = [], journeyFilters = [], maturityFilters = [], targetUserFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false) {
+    function applyFilters(searchTerm = '', areaFilters = [], journeyFilters = [], maturityFilters = [], targetUserFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false, notUpdatedFilter = null) {
         // Get portfolio data from State
         const portfolioData = window.State.getPortfolioData();
         
@@ -124,6 +126,45 @@
                 const biBelowTarget = !isNaN(latestBI) && !isNaN(targetBI) && latestBI < targetBI;
                 
                 return uxBelowTarget || biBelowTarget;
+            });
+        }
+        
+        // Apply "Not Updated" filter (current month check)
+        if (notUpdatedFilter === 'UX' || notUpdatedFilter === 'BI') {
+            const currentMonth = new Date().getMonth();
+            
+            filtered = filtered.filter(product => {
+                if (notUpdatedFilter === 'UX') {
+                    // Check if UX metric is missing or current month value is empty/zero
+                    const uxMetricMissing = !product.keyMetricUX || 
+                                           product.keyMetricUX.trim() === '' || 
+                                           product.keyMetricUX === 'N/A';
+                    
+                    if (uxMetricMissing) return true;
+                    
+                    const currentValue = product.monthlyUX ? product.monthlyUX[currentMonth] : null;
+                    return !currentValue || 
+                           currentValue === 'N/A' || 
+                           currentValue === '' || 
+                           currentValue === '0' ||
+                           currentValue === '-' ||
+                           parseFloat(currentValue) === 0;
+                } else {
+                    // Check if BI metric is missing or current month value is empty/zero
+                    const biMetricMissing = !product.keyMetricBI || 
+                                           product.keyMetricBI.trim() === '' || 
+                                           product.keyMetricBI === 'N/A';
+                    
+                    if (biMetricMissing) return true;
+                    
+                    const currentValue = product.monthlyBI ? product.monthlyBI[currentMonth] : null;
+                    return !currentValue || 
+                           currentValue === 'N/A' || 
+                           currentValue === '' || 
+                           currentValue === '0' ||
+                           currentValue === '-' ||
+                           parseFloat(currentValue) === 0;
+                }
             });
         }
         

@@ -462,6 +462,56 @@ function getSubscriberCount(event) {
     return (eventSubscribers[event] || []).length;
 }
 
+// ==================== ERROR LOGGING ====================
+
+/**
+ * Log critical errors to console with stack trace and context
+ * Future enhancement: Send to analytics endpoint
+ * 
+ * @param {string} context - Where the error occurred (e.g., 'FilterInitialization')
+ * @param {Error} error - The error object
+ * @param {Object} metadata - Additional context
+ * @returns {Object} Error report object
+ * 
+ * @example
+ * try {
+ *   // risky operation
+ * } catch (error) {
+ *   Utils.logCriticalError('DataFetch', error, { url: apiUrl });
+ * }
+ */
+function logCriticalError(context, error, metadata = {}) {
+    const errorReport = {
+        timestamp: new Date().toISOString(),
+        context,
+        message: error.message || String(error),
+        stack: error.stack || 'No stack trace available',
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        state: {
+            hasPortfolioData: window.State?.hasData() || false,
+            currentTab: window.State?.getCurrentTab() || 'unknown',
+            ...metadata
+        }
+    };
+    
+    console.error('🚨 CRITICAL ERROR:', context);
+    console.error('Message:', error.message || String(error));
+    console.error('Stack:', error.stack || 'No stack trace');
+    console.error('Context:', errorReport);
+    
+    // Future: Send to analytics endpoint
+    // if (CONFIG.ANALYTICS_ENABLED) {
+    //     fetch('/api/log-error', { 
+    //         method: 'POST', 
+    //         body: JSON.stringify(errorReport),
+    //         headers: { 'Content-Type': 'application/json' }
+    //     }).catch(err => console.warn('Failed to send error report:', err));
+    // }
+    
+    return errorReport;
+}
+
 // ==================== MODULE EXPORTS ====================
 
 /**
@@ -505,7 +555,10 @@ window.Utils = {
     subscribe,
     unsubscribeAll,
     getRegisteredEvents,
-    getSubscriberCount
+    getSubscriberCount,
+    
+    // Error Logging
+    logCriticalError
 };
 
 console.log('✅ Utils module loaded');

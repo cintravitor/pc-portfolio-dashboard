@@ -147,13 +147,84 @@ function testAnomalyDetection() {
 }
 
 /**
+ * Wait for critical UI modules to be fully loaded
+ * Prevents race conditions where event listeners fail to attach
+ * 
+ * @param {Array<string>} modulePaths - Array of module paths to check (e.g., ['UIManager.Filters'])
+ * @param {number} timeout - Maximum time to wait in milliseconds
+ * @returns {Promise<void>} Resolves when all modules are ready
+ */
+function waitForModules(modulePaths, timeout = 5000) {
+    const startTime = Date.now();
+    return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+            const allReady = modulePaths.every(path => {
+                const parts = path.split('.');
+                let obj = window;
+                for (const part of parts) {
+                    obj = obj?.[part];
+                    if (!obj) return false;
+                }
+                return true;
+            });
+            
+            if (allReady) {
+                clearInterval(checkInterval);
+                const elapsed = Date.now() - startTime;
+                console.log(`✅ All modules ready (${elapsed}ms)`);
+                resolve();
+            } else if (Date.now() - startTime > timeout) {
+                clearInterval(checkInterval);
+                const missing = modulePaths.filter(path => {
+                    const parts = path.split('.');
+                    let obj = window;
+                    for (const part of parts) {
+                        obj = obj?.[part];
+                        if (!obj) return true;
+                    }
+                    return false;
+                });
+                const error = new Error(`Module timeout: ${missing.join(', ')} not loaded after ${timeout}ms`);
+                
+                // Log critical error but don't completely fail
+                if (window.Utils && window.Utils.logCriticalError) {
+                    window.Utils.logCriticalError('ModuleInitialization', error, { 
+                        missing: missing,
+                        timeout: timeout 
+                    });
+                } else {
+                    console.error('❌ CRITICAL:', error.message);
+                }
+                
+                // Resolve anyway to allow page to continue (graceful degradation)
+                console.warn('⚠️ Proceeding despite missing modules (degraded mode)');
+                resolve();
+            }
+        }, 50); // Check every 50ms
+    });
+}
+
+/**
  * Main initialization function
  * Orchestrates data loading and UI setup
  */
 async function initialize() {
     console.log('Portfolio Dashboard initialized');
     
-    // Setup UI event listeners
+    // NEW: Wait for critical UI modules to be ready before setting up event listeners
+    try {
+        await waitForModules([
+            'UIManager.Filters',
+            'UIManager.Cards', 
+            'UIManager.Tabs',
+            'UIManager.DetailPanel'
+        ]);
+    } catch (error) {
+        console.error('Error waiting for modules:', error);
+        // Continue anyway - graceful degradation
+    }
+    
+    // Setup UI event listeners (now safe - all modules are ready)
     setupEventListeners();
     
     // Try to load cached data first for instant display

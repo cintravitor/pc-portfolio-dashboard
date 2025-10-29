@@ -16,12 +16,72 @@
     let currentFilterContext = null;
     let isUsingFilteredData = false;
     
+    // Render state tracking (prevent multiple simultaneous renders)
+    let isRendering = false;
+    let currentAbortController = null;
+    
+    // ==================== CHART.JS READINESS CHECKER ====================
+    
+    /**
+     * Wait for Chart.js library to be available
+     * Prevents errors when trying to create charts before library loads
+     * 
+     * @param {number} timeout - Timeout in milliseconds
+     * @returns {Promise<boolean>} True if Chart.js loaded, false if timeout
+     */
+    function waitForChartJs(timeout = 10000) {
+        return new Promise((resolve, reject) => {
+            // If already loaded, resolve immediately
+            if (typeof Chart !== 'undefined') {
+                console.log('✅ Chart.js already loaded');
+                resolve(true);
+                return;
+            }
+            
+            console.log('⏳ Waiting for Chart.js to load...');
+            const startTime = Date.now();
+            const checkInterval = setInterval(() => {
+                if (typeof Chart !== 'undefined') {
+                    clearInterval(checkInterval);
+                    const elapsed = Date.now() - startTime;
+                    console.log(`✅ Chart.js loaded (${elapsed}ms)`);
+                    resolve(true);
+                } else if (Date.now() - startTime > timeout) {
+                    clearInterval(checkInterval);
+                    const error = new Error(`Chart.js failed to load within ${timeout}ms`);
+                    console.error('❌ Chart.js load timeout');
+                    
+                    // Log critical error but don't fail completely
+                    if (window.Utils && window.Utils.logCriticalError) {
+                        window.Utils.logCriticalError('ChartJsLoad', error, { 
+                            timeout: timeout,
+                            cdnUrl: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
+                        });
+                    }
+                    
+                    // Resolve with false to allow graceful degradation
+                    resolve(false);
+                }
+            }, 100); // Check every 100ms
+        });
+    }
+    
     /**
      * Main render function for Governance Dashboard
      * Entry point for the Governance tab
      */
     async function renderGovernanceDashboard() {
         console.log('🎯 Rendering Governance Dashboard...');
+        
+        // NEW: Prevent multiple simultaneous renders
+        if (isRendering) {
+            console.warn('⚠️ Render already in progress, cancelling previous render...');
+            // Cancel any in-flight request
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+            isRendering = false; // Reset flag so we can proceed
+        }
         
         const governanceContent = document.getElementById('governance-content');
         const governanceLoading = document.getElementById('governance-loading');
@@ -31,14 +91,24 @@
             return;
         }
         
+        // Set rendering flag
+        isRendering = true;
+        
+        // Create new abort controller for this render
+        currentAbortController = new AbortController();
+        
         try {
             // Show loading state
-            governanceLoading.classList.remove('hidden');
+            if (governanceLoading) {
+                governanceLoading.classList.remove('hidden');
+                governanceLoading.style.display = ''; // Clear any inline styles
+                governanceLoading.setAttribute('aria-hidden', 'false');
+            }
             governanceContent.innerHTML = '';
             
             // Fetch consolidated governance data from Apps Script
             console.log('Fetching governance data...');
-            const data = await fetchGovernanceData();
+            const data = await fetchGovernanceData(currentAbortController.signal);
             
             if (!data || !data.success) {
                 throw new Error(data?.message || 'Failed to fetch governance data');
@@ -76,7 +146,23 @@
             console.log('✅ Governance Dashboard rendered successfully');
             
         } catch (error) {
+            // NEW: If aborted due to tab switching, don't show error (this is intentional)
+            if (error.name === 'AbortError') {
+                console.log('🔄 Governance render cancelled (tab switched)');
+                governanceContent.innerHTML = ''; // Clear content
+                return; // Exit quietly
+            }
+            
             console.error('Error loading governance dashboard:', error);
+            
+            // Log critical error for debugging
+            if (window.Utils && window.Utils.logCriticalError) {
+                window.Utils.logCriticalError('GovernanceDashboardRender', error, {
+                    hasContent: !!governanceContent,
+                    errorType: error.name
+                });
+            }
+            
             governanceContent.innerHTML = `
                 <div class="governance-section">
                     <h2>⚠️ Error Loading Governance Dashboard</h2>
@@ -88,33 +174,101 @@
                 </div>
             `;
         } finally {
-            governanceLoading.classList.add('hidden');
+            // NEW: Always reset rendering flag
+            isRendering = false;
+            // NEW: ALWAYS hide loading state in finally block (guaranteed cleanup)
+            // This ensures the spinner stops even if rendering crashes
+            if (governanceLoading) {
+                // Multiple approaches to ensure it's hidden (belt and suspenders)
+                governanceLoading.classList.add('hidden');
+                governanceLoading.style.display = 'none'; // Force hide with inline style
+                governanceLoading.setAttribute('aria-hidden', 'true'); // Accessibility
+                console.log('🔄 Loading state cleaned up');
+            }
         }
     }
     
     /**
      * Fetch governance data from Apps Script backend
+     * @param {AbortSignal} externalSignal - Optional abort signal from caller (for tab switching)
      */
-    async function fetchGovernanceData() {
+    async function fetchGovernanceData(externalSignal = null) {
         const url = CONFIG.WEB_APP_URL + '?action=getGovernanceData';
         
+        let timeoutId;
+        let wasTimeout = false;
+        
         try {
-            // Simple GET request without custom headers to avoid CORS preflight
+            console.log('📡 Fetching governance data with 30s timeout...');
+            
+            // NEW: Add AbortController for timeout (prevents infinite waiting)
+            const controller = new AbortController();
+            
+            // Set timeout flag when timeout fires
+            timeoutId = setTimeout(() => {
+                wasTimeout = true;
+                controller.abort();
+            }, 30000); // 30 second timeout
+            
+            // If external signal provided (from tab switching), abort when it aborts
+            if (externalSignal) {
+                externalSignal.addEventListener('abort', () => {
+                    // Don't set wasTimeout - this is a tab switch, not a timeout
+                    controller.abort();
+                });
+            }
+            
+            // Simple GET request with abort signal
             const response = await fetch(url, {
                 method: 'GET',
                 mode: 'cors',
-                cache: 'no-cache'
+                cache: 'no-cache',
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId); // Clear timeout on successful response
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('✅ Governance data fetched successfully');
             return data;
             
         } catch (error) {
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            // NEW: Handle AbortError differently based on cause
+            if (error.name === 'AbortError') {
+                // If it was a timeout, throw user-friendly timeout error
+                if (wasTimeout) {
+                    console.error('Error fetching governance data: Timeout');
+                    const timeoutError = new Error('Request timed out after 30 seconds. The server may be under heavy load. Please try again.');
+                    
+                    // Log the timeout for debugging
+                    if (window.Utils && window.Utils.logCriticalError) {
+                        window.Utils.logCriticalError('GovernanceDataTimeout', timeoutError, {
+                            url: url,
+                            timeout: 30000
+                        });
+                    }
+                    
+                    throw timeoutError;
+                } else {
+                    // Otherwise it's a tab switch - DON'T log error, just re-throw
+                    // so renderGovernanceDashboard can handle it silently
+                    throw error;
+                }
+            }
+            
+            // Log other errors (not tab-switch aborts)
             console.error('Error fetching governance data:', error);
+            
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('Network error. Please check your internet connection and try again.');
+            }
+            
             throw error;
         }
     }
@@ -492,7 +646,14 @@
     /**
      * Initialize Distribution Column Charts
      */
-    function initializeDistributionColumnCharts(dist, gaps) {
+    async function initializeDistributionColumnCharts(dist, gaps) {
+        // NEW: Wait for Chart.js to be available
+        const chartJsReady = await waitForChartJs();
+        if (!chartJsReady) {
+            console.warn('⚠️ Chart.js not available - skipping distribution charts');
+            return; // Gracefully skip chart creation
+        }
+        
         // Journey Stage Column Chart
         const journeyCtx = document.getElementById('journey-stage-chart');
         if (journeyCtx) {
@@ -955,10 +1116,17 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     /**
      * Initialize BAU Anomaly Chart with Chart.js
      */
-    function initializeBAUAnomalyChart(bauData) {
+    async function initializeBAUAnomalyChart(bauData) {
+        // NEW: Wait for Chart.js to be available
+        const chartJsReady = await waitForChartJs();
+        if (!chartJsReady) {
+            console.warn('⚠️ Chart.js not available - skipping BAU anomaly chart');
+            return; // Gracefully skip chart creation
+        }
+        
         const canvas = document.getElementById('bau-anomaly-chart');
-        if (!canvas || typeof Chart === 'undefined') {
-            console.error('Canvas or Chart.js not found');
+        if (!canvas) {
+            console.error('Canvas element not found: bau-anomaly-chart');
             return;
         }
         
@@ -1095,9 +1263,19 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     /**
      * Initialize PTech Involvement Chart
      */
-    function initializePTechChart(ptechData) {
+    async function initializePTechChart(ptechData) {
+        // NEW: Wait for Chart.js to be available
+        const chartJsReady = await waitForChartJs();
+        if (!chartJsReady) {
+            console.warn('⚠️ Chart.js not available - skipping PTech involvement chart');
+            return; // Gracefully skip chart creation
+        }
+        
         const canvas = document.getElementById('ptech-involvement-chart');
-        if (!canvas || typeof Chart === 'undefined') return;
+        if (!canvas) {
+            console.error('Canvas element not found: ptech-involvement-chart');
+            return;
+        }
         
         new Chart(canvas, {
             type: 'doughnut',
@@ -1215,10 +1393,17 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     /**
      * Initialize Performance Gauges (Doughnut Charts)
      */
-    function initializePerformanceGauges(perfData) {
+    async function initializePerformanceGauges(perfData) {
+        // NEW: Wait for Chart.js to be available
+        const chartJsReady = await waitForChartJs();
+        if (!chartJsReady) {
+            console.warn('⚠️ Chart.js not available - skipping performance gauges');
+            return; // Gracefully skip chart creation
+        }
+        
         // UX Gauge
         const uxCanvas = document.getElementById('ux-performance-gauge');
-        if (uxCanvas && typeof Chart !== 'undefined') {
+        if (uxCanvas) {
             new Chart(uxCanvas, {
                 type: 'doughnut',
                 data: {
@@ -1245,7 +1430,7 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
         
         // BI Gauge
         const biCanvas = document.getElementById('bi-performance-gauge');
-        if (biCanvas && typeof Chart !== 'undefined') {
+        if (biCanvas) {
             const biPercentage = Math.round((perfData.bi.withData / (perfData.bi.withData + perfData.bi.noData)) * 100);
             new Chart(biCanvas, {
                 type: 'doughnut',
@@ -1559,11 +1744,31 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     
     // ==================== EXPORTS ====================
     
+    /**
+     * Cancel any in-progress governance render
+     * Called when user switches away from Insights tab
+     */
+    function cancelRender() {
+        if (isRendering && currentAbortController) {
+            console.log('🛑 Cancelling in-progress governance render...');
+            currentAbortController.abort();
+            isRendering = false;
+            
+            // Also hide loading state
+            const governanceLoading = document.getElementById('governance-loading');
+            if (governanceLoading) {
+                governanceLoading.classList.add('hidden');
+                governanceLoading.style.display = 'none';
+            }
+        }
+    }
+    
     // Export to UIManager namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Governance = {
         render: renderGovernanceDashboard,
-        updateWithFilters: updateGovernanceWithFilters
+        updateWithFilters: updateGovernanceWithFilters,
+        cancelRender: cancelRender
     };
     
     // Subscribe to filter change events

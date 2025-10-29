@@ -17,6 +17,14 @@
     function switchTab(tabName) {
         console.log(`Switching to tab: ${tabName}`);
         
+        // NEW: If switching away from governance tab, cancel any in-progress render
+        const currentTab = window.State.getCurrentTab();
+        if (currentTab === 'governance-dashboard' && tabName !== 'governance-dashboard') {
+            if (window.UIManager.Governance && window.UIManager.Governance.cancelRender) {
+                window.UIManager.Governance.cancelRender();
+            }
+        }
+        
         // Update current tab in State
         window.State.setCurrentTab(tabName);
         

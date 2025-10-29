@@ -204,8 +204,35 @@
     function initializeCustomMultiselect() {
         console.log('🔧 Initializing custom multi-select dropdowns...');
         
-        // Setup click handlers for headers
+        // NEW: Verify DOM elements exist before attaching listeners
         const headers = document.querySelectorAll('.multiselect-header');
+        if (headers.length === 0) {
+            const errorMsg = 'No .multiselect-header elements found. Cannot initialize filters.';
+            console.error('❌', errorMsg);
+            
+            // Log critical error for debugging
+            if (window.Utils && window.Utils.logCriticalError) {
+                window.Utils.logCriticalError('FilterInitialization', new Error(errorMsg), {
+                    expectedElements: '.multiselect-header',
+                    foundCount: 0
+                });
+            }
+            
+            // Show user-friendly error in filters section
+            const filtersSection = document.getElementById('filters-section');
+            if (filtersSection) {
+                const errorBanner = document.createElement('div');
+                errorBanner.style.cssText = 'color: #ef4444; padding: 1rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem; margin: 1rem 0;';
+                errorBanner.innerHTML = '⚠️ Filter initialization failed. Please refresh the page or contact support if the issue persists.';
+                filtersSection.insertBefore(errorBanner, filtersSection.firstChild);
+            }
+            
+            return false; // Signal initialization failure
+        }
+        
+        console.log(`✅ Found ${headers.length} filter headers`);
+        
+        // Setup click handlers for headers
         headers.forEach(header => {
             header.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -243,6 +270,7 @@
         });
         
         console.log('✅ Custom multi-select initialized');
+        return true; // Signal successful initialization
     }
     
     /**

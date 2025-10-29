@@ -12,10 +12,8 @@ Welcome to the P&C Portfolio Dashboard! This guide will help you get started qui
    [https://cintravitor.github.io/pc-portfolio-dashboard/](https://cintravitor.github.io/pc-portfolio-dashboard/)
 
 2. **Explore the features:**
-   - **Explorer Tab** - Browse all products with filters
-   - **Executive View** - High-level KPIs and metrics
-   - **Insights & Analytics** - Data analysis and trends
-   - **Planning & Action** - Anomaly detection and recommendations
+   - **🔍 Explore** - Browse all solutions with AI summaries and smart filters
+   - **💡 Insights** - Strategic governance dashboard with metrics, smoke detectors, and portfolio analytics
 
 ### For Developers
 

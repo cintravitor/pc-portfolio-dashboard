@@ -246,7 +246,7 @@ ui-governance.js renders dashboard
 ### Apps Script Structure
 
 ```javascript
-// analytics-backend.gs
+// COMPLETE-UPDATED-CODE.gs (Google Apps Script backend)
 
 function doGet(e) {
     const action = e.parameter.action;

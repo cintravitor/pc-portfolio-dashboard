@@ -1,8 +1,8 @@
-# 📊 Google Apps Script Analytics Backend
+# 📊 Google Apps Script Backend
 
 ## Overview
 
-This folder contains the **serverless backend** for the P&C Portfolio Analytics system. It uses Google Apps Script to collect anonymous analytics data from the dashboard and store it in a Google Sheet.
+This folder contains the **serverless backend** for the P&C Portfolio Dashboard. It uses Google Apps Script to serve portfolio data and governance metrics from Google Sheets.
 
 ---
 
@@ -10,9 +10,12 @@ This folder contains the **serverless backend** for the P&C Portfolio Analytics 
 
 | File | Description |
 |------|-------------|
-| `analytics-backend.gs` | Complete Google Apps Script code |
+| `COMPLETE-UPDATED-CODE.gs` | **ACTIVE BACKEND** - Complete Google Apps Script code with data + governance endpoints |
 | `DEPLOYMENT_GUIDE.md` | Step-by-step deployment instructions |
+| `FIND_WEB_APP_URL.md` | How to find your deployed web app URL |
 | `README.md` | This file |
+
+**⚠️ IMPORTANT:** The active backend file is `COMPLETE-UPDATED-CODE.gs`. This is what should be deployed to Google Apps Script.
 
 ---
 
@@ -24,8 +27,8 @@ Follow the complete guide in **`DEPLOYMENT_GUIDE.md`**
 
 **Quick steps:**
 1. Go to https://script.google.com
-2. Create new project: "P&C Portfolio Analytics Backend"
-3. Copy code from `analytics-backend.gs`
+2. Create new project: "P&C Portfolio Backend"
+3. Copy code from `COMPLETE-UPDATED-CODE.gs`
 4. Deploy as Web App
 5. Copy the Web App URL
 

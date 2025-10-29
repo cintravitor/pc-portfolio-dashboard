@@ -18,7 +18,7 @@
 
 1. Go to **https://script.google.com**
 2. Click **"+ New project"** (top left)
-3. Rename project to: **"P&C Portfolio Analytics Backend"**
+3. Rename project to: **"P&C Portfolio Backend"**
    - Click "Untitled project" at top
    - Type new name
    - It auto-saves
@@ -27,12 +27,12 @@
 
 ### 1.2 Copy the Code
 
-1. **Open the file:** `google-apps-script/analytics-backend.gs`
+1. **Open the file:** `google-apps-script/COMPLETE-UPDATED-CODE.gs`
 2. **Select all code** (Ctrl+A or Cmd+A)
 3. **Copy** (Ctrl+C or Cmd+C)
 4. **Go back to Apps Script editor**
 5. **Delete the default code** in `Code.gs`
-6. **Paste the analytics backend code**
+6. **Paste the backend code**
 7. **Save** (Ctrl+S or Cmd+S or disk icon)
 
 ---

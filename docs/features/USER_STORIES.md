@@ -1730,7 +1730,7 @@ This update changes filter behavior from single-select to multi-select. Users ca
 - Most common user paths (which sections viewed first)
 
 **Technical Implementation:**
-- **Backend:** `google-apps-script/analytics-backend.gs`
+- **Backend:** `google-apps-script/COMPLETE-UPDATED-CODE.gs`
   - New endpoint: `getGovernanceData()` (server-side aggregation)
   - 7 helper functions for calculating metrics
   - Returns consolidated JSON (smokeDetectors, bauAnomalies, dataHealth, ptechInvolvement, teamConsumption, performanceMetrics, strategicGaps)

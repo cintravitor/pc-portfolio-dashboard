@@ -154,7 +154,7 @@ Edit `src/css/dashboard-style.css`:
 
 ### Adding Backend Functionality
 
-Edit `google-apps-script/analytics-backend.gs`:
+Edit `google-apps-script/COMPLETE-UPDATED-CODE.gs`:
 1. Add new function
 2. Export via `doGet()` router
 3. Test in Apps Script editor

@@ -137,7 +137,7 @@ console.log(`Smoke detectors: ${data.smokeDetectors.count}`);
 
 1. Open Google Sheet
 2. Extensions → Apps Script
-3. Paste backend code from `google-apps-script/analytics-backend.gs`
+3. Paste backend code from `google-apps-script/COMPLETE-UPDATED-CODE.gs`
 4. Save (Cmd+S / Ctrl+S)
 
 ### Deploy as Web App

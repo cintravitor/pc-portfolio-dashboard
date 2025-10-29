@@ -53,7 +53,7 @@ Portfolio health metrics and strategic distribution:
 ## Data Sources
 
 ### Backend (Apps Script)
-- **Endpoint**: `getGovernanceData()` in `google-apps-script/analytics-backend.gs`
+- **Endpoint**: `getGovernanceData()` in `google-apps-script/COMPLETE-UPDATED-CODE.gs`
 - **Spreadsheet**: P&C Portfolio Dataset (2025)
   - ID: `10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI`
   - Sheet: `[2025] P&C Portfolio`
@@ -95,7 +95,7 @@ Portfolio health metrics and strategic distribution:
 - **Responsive**: Breakpoints at 1024px and 768px for tablet/mobile
 
 ### Backend Implementation
-- **File**: `google-apps-script/analytics-backend.gs`
+- **File**: `google-apps-script/COMPLETE-UPDATED-CODE.gs`
 - **Endpoint**: `doGet(e)` with `?action=getGovernanceData` parameter
 - **Helper Functions**:
   - `calculateSmokeDetectorsSummary()`: Identifies solutions with warning signals
@@ -133,7 +133,7 @@ Portfolio health metrics and strategic distribution:
 ## Deployment
 
 ### Prerequisites
-1. Deploy updated `analytics-backend.gs` to Google Apps Script
+1. Deploy updated `COMPLETE-UPDATED-CODE.gs` to Google Apps Script
 2. Verify `CONFIG.WEB_APP_URL` points to deployed endpoint
 3. Ensure `CONFIG.LITELLM_API_KEY` is valid and active
 
@@ -182,7 +182,7 @@ BAU hour thresholds are defined in:
 - **Frontend**: `initializeBAUAnomalyChart()` (annotation plugin)
 
 ### Adding New Metrics
-1. Add calculation function in `analytics-backend.gs`
+1. Add calculation function in `COMPLETE-UPDATED-CODE.gs`
 2. Include in `getGovernanceData()` return object
 3. Update frontend rendering in `ui-governance.js`
 4. Add corresponding CSS styles if needed

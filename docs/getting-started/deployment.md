@@ -67,7 +67,7 @@ GitHub Actions will build and deploy automatically (if configured).
    - Extensions → Apps Script
 
 2. **Copy Backend Code**
-   - Copy contents of `google-apps-script/analytics-backend.gs`
+   - Copy contents of `google-apps-script/COMPLETE-UPDATED-CODE.gs`
    - Paste into Code.gs in Apps Script editor
    - Save (Cmd+S / Ctrl+S)
 

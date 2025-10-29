@@ -20,6 +20,11 @@
     let isRendering = false;
     let currentAbortController = null;
     
+    // Render cache for performance (5-minute TTL)
+    let cachedGovernanceHTML = null;
+    let cacheTimestamp = null;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    
     // ==================== CHART.JS READINESS CHECKER ====================
     
     /**
@@ -69,9 +74,32 @@
     /**
      * Main render function for Governance Dashboard
      * Entry point for the Governance tab
+     * 
+     * @param {boolean} forceRefresh - Force fresh render, bypass cache
      */
-    async function renderGovernanceDashboard() {
+    async function renderGovernanceDashboard(forceRefresh = false) {
         console.log('🎯 Rendering Governance Dashboard...');
+        
+        const governanceContent = document.getElementById('governance-content');
+        
+        // Check cache validity (5-minute TTL)
+        const now = Date.now();
+        const cacheValid = cachedGovernanceHTML && 
+                           cacheTimestamp && 
+                           (now - cacheTimestamp) < CACHE_TTL;
+        
+        if (cacheValid && !forceRefresh) {
+            console.log('📦 Using cached governance content');
+            if (governanceContent) {
+                governanceContent.innerHTML = cachedGovernanceHTML;
+            }
+            // Hide loading indicator
+            const governanceLoading = document.getElementById('governance-loading');
+            if (governanceLoading) {
+                governanceLoading.classList.add('hidden');
+            }
+            return;
+        }
         
         // NEW: Prevent multiple simultaneous renders
         if (isRendering) {
@@ -83,7 +111,6 @@
             isRendering = false; // Reset flag so we can proceed
         }
         
-        const governanceContent = document.getElementById('governance-content');
         const governanceLoading = document.getElementById('governance-loading');
         
         if (!governanceContent) {
@@ -150,6 +177,11 @@
             
             // Single DOM insertion (1 reflow instead of 4)
             governanceContent.appendChild(fragment);
+            
+            // Cache the rendered content
+            cachedGovernanceHTML = governanceContent.innerHTML;
+            cacheTimestamp = now;
+            console.log('💾 Governance content cached');
             
             console.log('✅ Governance Dashboard rendered successfully');
             
@@ -1635,6 +1667,9 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
         
         console.log(`🔄 Updating governance with ${filteredData.length} filtered solutions...`);
         
+        // Clear cache since we're filtering
+        clearCache();
+        
         // Update filter state
         currentFilterContext = filterContext;
         isUsingFilteredData = filterContext.filteredCount < filterContext.totalCount;
@@ -1750,10 +1785,21 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
         }
     }
     
+    /**
+     * Clear the governance render cache
+     * Call this when data changes or filters are applied
+     */
+    function clearCache() {
+        cachedGovernanceHTML = null;
+        cacheTimestamp = null;
+        console.log('🗑️ Governance cache cleared');
+    }
+    
     // Export to UIManager namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Governance = {
         render: renderGovernanceDashboard,
+        clearCache: clearCache,
         updateWithFilters: updateGovernanceWithFilters,
         cancelRender: cancelRender
     };

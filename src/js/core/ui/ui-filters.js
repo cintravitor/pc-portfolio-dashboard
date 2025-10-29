@@ -12,6 +12,10 @@
     // State tracking for "Not Updated" card filters
     let activeNotUpdatedFilter = null; // null, 'UX', or 'BI'
     
+    // Debounce timer for filter changes
+    let filterDebounceTimer = null;
+    const FILTER_DEBOUNCE_MS = 150; // 150ms debounce for optimal responsiveness
+    
     // ==================== TACTICAL FILTERS ====================
     
     /**
@@ -32,7 +36,7 @@
         
         // Use debounced filtering for search input (improves performance)
         if (searchInput) {
-            const debouncedFilter = window.DataManager.debounce(applyFiltersFromUI, 300);
+            const debouncedFilter = window.DataManager.debounce(applyFiltersFromUI, FILTER_DEBOUNCE_MS);
             searchInput.addEventListener('input', debouncedFilter);
         }
         
@@ -454,9 +458,46 @@
     }
     
     /**
-     * Apply filters - reads filter values and updates display
+     * Apply filters - reads filter values and updates display (debounced)
      */
     function applyFiltersFromUI() {
+        // Debounce filter application to prevent excessive re-renders
+        clearTimeout(filterDebounceTimer);
+        
+        // Show loading indicator immediately for responsiveness feedback
+        showFilterLoadingIndicator();
+        
+        filterDebounceTimer = setTimeout(() => {
+            applyFiltersImmediately();
+        }, FILTER_DEBOUNCE_MS);
+    }
+    
+    /**
+     * Show loading indicator during filter application
+     */
+    function showFilterLoadingIndicator() {
+        const container = document.getElementById('cards-container');
+        if (container) {
+            container.style.opacity = '0.6';
+            container.style.pointerEvents = 'none';
+        }
+    }
+    
+    /**
+     * Hide loading indicator after filter application
+     */
+    function hideFilterLoadingIndicator() {
+        const container = document.getElementById('cards-container');
+        if (container) {
+            container.style.opacity = '1';
+            container.style.pointerEvents = 'auto';
+        }
+    }
+    
+    /**
+     * Apply filters immediately (called after debounce)
+     */
+    function applyFiltersImmediately() {
         const searchTerm = document.getElementById('search-input').value;
         const areaFilters = getSelectedValues('area');
         const journeyFilters = getSelectedValues('journey');
@@ -528,9 +569,13 @@
             window.UIManager.Cards.collapseAllAreas();
         }
         
-        window.UIManager.Cards.render();
-        window.UIManager.Cards.updateStats();
-        renderFilterPills();
+        // Use requestAnimationFrame for smooth rendering
+        requestAnimationFrame(() => {
+            window.UIManager.Cards.render();
+            window.UIManager.Cards.updateStats();
+            renderFilterPills();
+            hideFilterLoadingIndicator();
+        });
     }
     
     /**

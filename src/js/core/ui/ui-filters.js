@@ -517,6 +517,9 @@
             search: searchTerm
         });
 
+        // Get active risk filter from state
+        const riskLevelFilter = window.State.getActiveRiskFilter();
+        
         console.log('📤 Sending to DataManager:', {
             searchTerm,
             areaFilters,
@@ -526,11 +529,12 @@
             ownerFilters,
             sortBy,
             belowTargetOnly,
-            notUpdatedFilter: activeNotUpdatedFilter
+            notUpdatedFilter: activeNotUpdatedFilter,
+            riskLevelFilter
         });
 
-        // Apply all filters including "Not Updated" card filter
-        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly, activeNotUpdatedFilter);
+        // Apply all filters including "Not Updated" card filter and risk level filter
+        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly, activeNotUpdatedFilter, riskLevelFilter);
         
         // Get filtered data to determine which areas to expand
         const filteredData = window.DataManager.getFilteredData();
@@ -555,7 +559,7 @@
         });
         
         // Check if any filters are active (arrays need length check)
-        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly || activeNotUpdatedFilter !== null;
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly || activeNotUpdatedFilter !== null || riskLevelFilter !== null;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data
@@ -725,6 +729,24 @@
             });
         }
         
+        // Risk level filter pill
+        const riskLevelFilter = window.State.getActiveRiskFilter();
+        if (riskLevelFilter) {
+            const riskLabels = {
+                critical: { name: 'Critical Issues', icon: '🚨' },
+                monitor: { name: 'Monitor Closely', icon: '⚠️' },
+                datagaps: { name: 'Data Gaps', icon: '💡' }
+            };
+            const riskConfig = riskLabels[riskLevelFilter];
+            activeFilters.push({
+                type: 'risk-level',
+                label: 'Risk Level',
+                value: riskConfig.name,
+                icon: riskConfig.icon,
+                riskLevel: riskLevelFilter  // Store for removal
+            });
+        }
+        
         if (sortBy) {
             const sortLabels = {
                 'name-asc': 'Name (A-Z)',
@@ -840,6 +862,10 @@
                 if (sortBy) sortBy.value = '';
                 break;
                 
+            case 'risk-level':
+                clearRiskFilter();
+                return; // clearRiskFilter already applies filters, no need to do it again
+                
             default:
                 console.warn('Unknown filter type:', filterType);
                 return;
@@ -852,6 +878,52 @@
         applyFiltersFromUI();
     }
     
+    // ==================== RISK LEVEL FILTER ====================
+    
+    /**
+     * Apply risk level filter from badge click
+     * @param {Object} payload - Event payload with riskLevel
+     */
+    function applyRiskLevelFilter(payload) {
+        const { riskLevel } = payload;
+        
+        console.log(`🎯 Applying risk level filter: ${riskLevel}`);
+        
+        // Set risk filter in state
+        window.State.setActiveRiskFilter(riskLevel);
+        
+        // Clear any existing "Not Updated" filters to avoid confusion
+        if (activeNotUpdatedFilter) {
+            activeNotUpdatedFilter = null;
+            hideDataQualityNotification();
+            updateCardActiveState('UX', false);
+            updateCardActiveState('BI', false);
+        }
+        
+        // Apply filters with new risk level
+        applyFiltersFromUI();
+        
+        console.log(`✅ Risk level filter applied: ${riskLevel}`);
+    }
+    
+    /**
+     * Clear risk level filter
+     */
+    function clearRiskFilter() {
+        console.log('🧹 Clearing risk level filter');
+        
+        // Clear state
+        window.State.setActiveRiskFilter(null);
+        
+        // Re-apply filters without risk level
+        applyFiltersFromUI();
+        
+        console.log('✅ Risk level filter cleared');
+    }
+    
+    // Subscribe to risk level filter events
+    window.Utils.subscribe('filter:risk-level', applyRiskLevelFilter);
+    
     // Export to window.UIManager.Filters namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Filters = {
@@ -860,6 +932,7 @@
         applyFiltersFromUI,
         clearFilters,
         clearDataQualityFilter,
+        clearRiskFilter,
         renderFilterPills,
         removeFilterPill,
         getActiveNotUpdatedFilter: () => activeNotUpdatedFilter  // NEW: Expose active "Not Updated" filter state

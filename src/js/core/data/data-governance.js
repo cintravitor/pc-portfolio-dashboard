@@ -102,6 +102,12 @@
                 detectorTypes.push('Maturity: Decline Stage');
             }
             
+            // Detector 4: High BAU Headcount
+            const bauHC = parseFloat(solution.totalBAUHC) || 0;
+            if (bauHC > 3) {
+                detectorTypes.push('High BAU HC (>3)');
+            }
+            
             // If any detector triggered, add to list
             if (detectorTypes.length > 0) {
                 triggered.push({

@@ -234,6 +234,28 @@
         }
     }
     
+    /**
+     * Handle cross-tab navigation from risk badge clicks
+     * @param {Object} payload - Event payload with riskLevel
+     */
+    function handleRiskBadgeCrossTabNavigation(payload) {
+        const { riskLevel, timestamp } = payload;
+        
+        console.log(`📡 Risk badge cross-tab navigation triggered: ${riskLevel}`);
+        
+        // Switch to Explore tab
+        switchTab('portfolio-overview');
+        
+        // Small delay to ensure tab switch completes, then trigger filter
+        setTimeout(() => {
+            console.log(`🎯 Publishing risk level filter event: ${riskLevel}`);
+            window.Utils.publish('filter:risk-level', { riskLevel });
+        }, 100);
+    }
+    
+    // Subscribe to risk badge click events
+    window.Utils.subscribe('risk-badge:clicked', handleRiskBadgeCrossTabNavigation);
+    
     // Export to window.UIManager.Tabs namespace
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Tabs = {
@@ -243,5 +265,5 @@
     // Also expose as global for backward compatibility
     window.switchTab = switchTab;
     
-    console.log('✅ UI Tabs module loaded');
+    console.log('✅ UI Tabs module loaded with risk badge cross-tab navigation');
 })();

@@ -8,6 +8,59 @@
 (function() {
     'use strict';
     
+    // ==================== PRIVATE HELPERS ====================
+    
+    /**
+     * Helper function to check if a value is invalid/missing
+     * @param {*} val - Value to check
+     * @returns {boolean} True if invalid
+     */
+    function isInvalid(val) {
+        return !val || val === '' || val === 'N/A' || val === '-';
+    }
+    
+    /**
+     * Categorize product into risk level based on unified business rules
+     * Combines Risk Score and Smoke Detector count to determine risk category
+     * 
+     * @see docs/business-rules/RISK_CATEGORIZATION.md for complete rules
+     * @param {Object} product - Product object with risk metrics
+     * @returns {string|null} - 'critical', 'monitor', 'datagaps', or null
+     * 
+     * @example
+     * const product = { name: 'Portal', maturity: '1. Development', ... };
+     * const level = categorizeProductRisk(product);
+     * // Returns: 'critical' (Development = +4 risk score >= 7)
+     */
+    function categorizeProductRisk(product) {
+        // Calculate risk score and smoke detector count
+        const riskScore = window.DataManager.Analytics.calculateRiskScore(product);
+        const smokeCount = window.DataManager.Anomalies.calculateSmokeDetectors(product);
+        
+        // CRITICAL ISSUES - Urgent intervention required
+        // Criteria: Risk score >=7 OR 3+ smoke detectors OR decline + missing metrics
+        if (riskScore >= 7 || smokeCount >= 3 || 
+            (product.maturity?.includes('Decline') && 
+             (isInvalid(product.keyMetricUX) || isInvalid(product.keyMetricBI)))) {
+            return 'critical';
+        }
+        
+        // MONITOR CLOSELY - Warning signs present
+        // Criteria: Risk score 4-6.9 OR 1-2 smoke detectors
+        if ((riskScore >= 4 && riskScore < 7) || (smokeCount >= 1 && smokeCount <= 2)) {
+            return 'monitor';
+        }
+        
+        // DATA GAPS - Tracking or governance issues
+        // Criteria: Missing metrics, owner, targets, or no tracking
+        if (isInvalid(product.keyMetricUX) || isInvalid(product.keyMetricBI) || 
+            isInvalid(product.owner) || isInvalid(product.targetUX) || isInvalid(product.targetBI)) {
+            return 'datagaps';
+        }
+        
+        return null; // No risk category assigned
+    }
+    
     // ==================== PUBLIC API ====================
     
     /**
@@ -21,12 +74,13 @@
      * @param {string} sortBy - Sort option
      * @param {boolean} belowTargetOnly - Filter for below-target products only
      * @param {string|null} notUpdatedFilter - Current month "Not Updated" filter: 'UX', 'BI', or null
+     * @param {string|null} riskLevelFilter - Risk level filter: 'critical', 'monitor', 'datagaps', or null
      * 
      * Multi-select logic: OR within same filter type, AND across different filter types
      * "Not Updated" filter: Applies as primary filter, then multi-select filters apply to subset
-     * Example: (Area1 OR Area2) AND (Journey1 OR Journey2) AND (Maturity1 OR Maturity2) AND (TargetUser1 OR TargetUser2) AND (Owner1) AND (NotUpdatedUX)
+     * Example: (Area1 OR Area2) AND (Journey1 OR Journey2) AND (Maturity1 OR Maturity2) AND (TargetUser1 OR TargetUser2) AND (Owner1) AND (NotUpdatedUX) AND (RiskLevel)
      */
-    function applyFilters(searchTerm = '', areaFilters = [], journeyFilters = [], maturityFilters = [], targetUserFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false, notUpdatedFilter = null) {
+    function applyFilters(searchTerm = '', areaFilters = [], journeyFilters = [], maturityFilters = [], targetUserFilters = [], ownerFilters = [], sortBy = '', belowTargetOnly = false, notUpdatedFilter = null, riskLevelFilter = null) {
         // Get portfolio data from State
         const portfolioData = window.State.getPortfolioData();
         
@@ -127,6 +181,13 @@
                 
                 return uxBelowTarget || biBelowTarget;
             });
+        }
+        
+        // Apply Risk Level filter (if active)
+        if (riskLevelFilter) {
+            filtered = filtered.filter(product => 
+                categorizeProductRisk(product) === riskLevelFilter
+            );
         }
         
         // Apply "Not Updated" filter (current month check)
@@ -237,7 +298,8 @@
     window.DataManager.Filtering = {
         applyFilters,
         sortData,
-        getFilterOptions
+        getFilterOptions,
+        categorizeProductRisk  // Export for use in UI modules
     };
     
     console.log('✅ Data Filtering module loaded');

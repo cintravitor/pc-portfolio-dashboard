@@ -144,6 +144,9 @@
                 if (header.includes('Total') && header.includes('Headcount Allocation (BAU)') && header.includes('hours') && !header.includes('# HC')) {
                     columnMapping.totalBAUHours = i;
                 }
+                if (header.includes('Total') && header.includes('Headcount Allocation (BAU)') && header.includes('# HC')) {
+                    columnMapping.totalBAUHC = i;
+                }
                 if (header.includes('People Tech Involvement Flag')) {
                     columnMapping.ptechFlag = i;
                 }
@@ -223,6 +226,7 @@
                     bauHRBP: columnMapping.bauHRBP !== undefined ? (row[columnMapping.bauHRBP] || '') : '',
                     bauPSE: columnMapping.bauPSE !== undefined ? (row[columnMapping.bauPSE] || '') : '',
                     totalBAUHours: columnMapping.totalBAUHours !== undefined ? (row[columnMapping.totalBAUHours] || '') : '',
+                    totalBAUHC: columnMapping.totalBAUHC !== undefined ? (row[columnMapping.totalBAUHC] || '') : '',
                     // PTech Involvement
                     ptechFlag: columnMapping.ptechFlag !== undefined ? (row[columnMapping.ptechFlag] || '').toString().trim() : '',
                     // Automation extraction status

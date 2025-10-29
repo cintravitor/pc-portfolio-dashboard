@@ -816,17 +816,9 @@
         `;
         section.appendChild(title);
         
-        // AI Summary
+        // AI Summary (only card in Action Layer now)
         const aiSummary = createAISummaryCard(data);
         section.appendChild(aiSummary);
-        
-        // Smoke Detector Scorecard
-        const smokeDetectorCard = createSmokeDetectorScorecard(data.smokeDetectors);
-        section.appendChild(smokeDetectorCard);
-        
-        // Data Health Scorecard
-        const dataHealthCard = createDataHealthScorecard(data.dataHealth);
-        section.appendChild(dataHealthCard);
         
         // Generate AI summary asynchronously
         setTimeout(() => generateAISummary(data), 100);
@@ -835,7 +827,7 @@
     }
     
     /**
-     * Create AI Summary Card
+     * Create AI Summary Card with Help Icon
      */
     function createAISummaryCard(data) {
         const card = document.createElement('div');
@@ -844,6 +836,11 @@
             <h3>
                 <span>🤖</span>
                 <span>AI-Driven Insights</span>
+                <span class="ai-help-icon" title="Risk Level Guide">?
+                    <div class="help-tooltip">
+                        ${createHelpTooltipContent()}
+                    </div>
+                </span>
             </h3>
             <div id="ai-summary-content" class="governance-ai-summary-text">
                 <div class="governance-ai-loading">
@@ -853,6 +850,53 @@
             </div>
         `;
         return card;
+    }
+    
+    /**
+     * Create Help Tooltip Content
+     * Comprehensive risk level guide
+     */
+    function createHelpTooltipContent() {
+        return `
+            <div class="help-tooltip-section">
+                <div class="help-tooltip-title">🚨 CRITICAL ISSUES</div>
+                <div class="help-tooltip-items">
+                    • Risk score ≥ 7/10<br>
+                    • 3-4 smoke detectors<br>
+                    • Decline + missing metrics
+                </div>
+            </div>
+            <div class="help-tooltip-section">
+                <div class="help-tooltip-title">⚠️ MONITOR CLOSELY</div>
+                <div class="help-tooltip-items">
+                    • Risk score 4-6.9/10<br>
+                    • 1-2 smoke detectors<br>
+                    • Below target (<50%)
+                </div>
+            </div>
+            <div class="help-tooltip-section">
+                <div class="help-tooltip-title">💡 DATA GAPS</div>
+                <div class="help-tooltip-items">
+                    • Missing UX/BI metrics<br>
+                    • Missing owner/targets<br>
+                    • No tracking data
+                </div>
+            </div>
+            <div class="help-tooltip-divider"></div>
+            <div class="help-tooltip-section">
+                <div class="help-tooltip-title">🚨 4 Smoke Detectors:</div>
+                <div class="help-tooltip-items">
+                    1. 📉 Downward trend (3+ months)<br>
+                    2. 🚫 Missing key metrics<br>
+                    3. ⚠️ Decline stage<br>
+                    4. 👥 High BAU HC (>3)
+                </div>
+            </div>
+            <div class="help-tooltip-divider"></div>
+            <div style="font-size: 0.7rem; color: #94a3b8; text-align: center;">
+                💡 Hover badge for details • Click to filter
+            </div>
+        `;
     }
     
     /**
@@ -944,7 +988,9 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
             const aiText = result.choices[0].message.content.trim();
             
             contentEl.innerHTML = parseStructuredAIOutput(aiText);
-            console.log('✅ AI summary generated');
+            // Attach interactive event listeners to risk badges
+            attachRiskBadgeListeners();
+            console.log('✅ AI summary generated with interactive badges');
             
         } catch (error) {
             console.error('Error generating AI summary:', error);
@@ -959,92 +1005,7 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
         }
     }
     
-    /**
-     * Create Smoke Detector Scorecard (clickable)
-     */
-    function createSmokeDetectorScorecard(smokeDetectorData) {
-        const card = document.createElement('div');
-        card.className = 'governance-scorecard';
-        card.onclick = () => showSmokeDetectorModal(smokeDetectorData);
-        
-        const count = smokeDetectorData.count || 0;
-        const statusClass = count > 10 ? 'danger' : count > 5 ? 'warning' : '';
-        
-        card.innerHTML = `
-            <div class="scorecard-icon">🚨</div>
-            <div class="scorecard-value ${statusClass}">${count}</div>
-            <div class="scorecard-label">Smoke Detectors Triggered</div>
-        `;
-        
-        return card;
-    }
-    
-    /**
-     * Show Smoke Detector Modal with drill-down details
-     */
-    function showSmokeDetectorModal(smokeDetectorData) {
-        const modal = document.createElement('div');
-        modal.className = 'smoke-detector-modal';
-        modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
-        };
-        
-        const triggeredList = smokeDetectorData.triggered || [];
-        
-        modal.innerHTML = `
-            <div class="smoke-detector-modal-content">
-                <div class="smoke-detector-modal-header">
-                    <h2>🚨 Smoke Detector Details</h2>
-                    <button class="smoke-detector-modal-close" onclick="closeModal()">✕</button>
-                </div>
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">
-                    ${triggeredList.length} solution${triggeredList.length !== 1 ? 's' : ''} triggered warning signals
-                </p>
-                <div class="smoke-detector-list">
-                    ${triggeredList.map(item => `
-                        <div class="smoke-detector-item">
-                            <div class="smoke-detector-item-name">${escapeHtml(item.name)}</div>
-                            <div class="smoke-detector-item-triggers">
-                                ${item.triggers.map(trigger => `
-                                    <span class="smoke-detector-trigger-badge">${escapeHtml(trigger)}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Make closeModal global for onclick handlers
-        window.closeModal = () => {
-            modal.remove();
-            delete window.closeModal;
-        };
-    }
-    
-    /**
-     * Create Data Health Scorecard
-     */
-    function createDataHealthScorecard(dataHealth) {
-        const card = document.createElement('div');
-        card.className = 'governance-scorecard';
-        
-        const healthScore = dataHealth.healthScore || 0;
-        const statusClass = healthScore < 60 ? 'danger' : healthScore < 80 ? 'warning' : '';
-        
-        card.innerHTML = `
-            <div class="scorecard-icon">📊</div>
-            <div class="scorecard-value ${statusClass}">${healthScore}%</div>
-            <div class="scorecard-label">Data Health Score</div>
-            <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.2;">
-                ${dataHealth.missingMetrics} missing metrics
-            </div>
-        `;
-        
-        return card;
-    }
+    // Smoke Detector and Data Health Score cards removed - replaced by interactive risk badges in AI summary
     
     // ==================== SECTION 2: ALLOCATION ANALYSIS ====================
     
@@ -1630,25 +1591,133 @@ Use severity markers: [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] where appro
     
     /**
      * Parse inline formatting and severity markers
-     * Converts [HIGH RISK], [MEDIUM RISK], [ATTENTION NEEDED] into color-coded badges
+     * Converts AI-generated risk markers into interactive, clickable badges with data attributes
      * 
      * @param {string} text - Text with potential severity markers
-     * @returns {string} HTML with formatted severity badges
+     * @returns {string} HTML with formatted, interactive severity badges
      */
     function parseInlineFormatting(text) {
         if (!text) return '';
         
-        // Replace severity markers with color-coded badges
+        // Replace AI-generated markers with new user-friendly badge names
         let formatted = escapeHtml(text);
         
+        // HIGH RISK → CRITICAL ISSUES (red badge, 'critical' data attribute)
         formatted = formatted.replace(/\[HIGH RISK\]/gi, 
-            '<span class="ai-severity-badge ai-severity-high">HIGH RISK</span>');
+            '<span class="ai-severity-badge ai-severity-high" data-risk-level="critical">CRITICAL ISSUES</span>');
+        
+        // MEDIUM RISK → MONITOR CLOSELY (orange badge, 'monitor' data attribute)
         formatted = formatted.replace(/\[MEDIUM RISK\]/gi, 
-            '<span class="ai-severity-badge ai-severity-medium">MEDIUM RISK</span>');
+            '<span class="ai-severity-badge ai-severity-medium" data-risk-level="monitor">MONITOR CLOSELY</span>');
+        
+        // ATTENTION NEEDED → DATA GAPS (purple badge, 'datagaps' data attribute)
         formatted = formatted.replace(/\[ATTENTION NEEDED\]/gi, 
-            '<span class="ai-severity-badge ai-severity-attention">ATTENTION NEEDED</span>');
+            '<span class="ai-severity-badge ai-severity-attention" data-risk-level="datagaps">DATA GAPS</span>');
         
         return formatted;
+    }
+    
+    /**
+     * Attach event listeners to risk badges for interactive filtering
+     * Called after AI summary is rendered
+     */
+    function attachRiskBadgeListeners() {
+        const badges = document.querySelectorAll('.ai-severity-badge[data-risk-level]');
+        
+        if (badges.length === 0) {
+            console.log('No risk badges found to attach listeners');
+            return;
+        }
+        
+        console.log(`Attaching listeners to ${badges.length} risk badge(s)`);
+        
+        badges.forEach(badge => {
+            const riskLevel = badge.getAttribute('data-risk-level');
+            
+            // CLICK: Navigate to Explore tab with filter
+            badge.addEventListener('click', () => handleRiskBadgeClick(riskLevel));
+            
+            // HOVER: Show tooltip with solution names
+            badge.addEventListener('mouseenter', (e) => showRiskTooltip(e.target, riskLevel));
+            badge.addEventListener('mouseleave', () => hideRiskTooltip());
+        });
+    }
+    
+    /**
+     * Handle risk badge click - publish cross-tab navigation event
+     * @param {string} riskLevel - Risk level: 'critical', 'monitor', or 'datagaps'
+     */
+    function handleRiskBadgeClick(riskLevel) {
+        console.log(`🎯 Risk badge clicked: ${riskLevel}`);
+        
+        // Publish event to trigger cross-tab navigation with filter
+        window.Utils.publish('risk-badge:clicked', {
+            riskLevel: riskLevel,
+            timestamp: Date.now()
+        });
+    }
+    
+    /**
+     * Show risk tooltip on hover with solution names and criteria
+     * @param {HTMLElement} badgeElement - The badge element
+     * @param {string} riskLevel - Risk level: 'critical', 'monitor', or 'datagaps'
+     */
+    function showRiskTooltip(badgeElement, riskLevel) {
+        const portfolioData = window.State.getPortfolioData();
+        
+        if (!portfolioData || portfolioData.length === 0) {
+            console.warn('No portfolio data available for tooltip');
+            return;
+        }
+        
+        // Get matching solutions using the risk categorization function
+        const matchingSolutions = portfolioData
+            .filter(product => window.DataManager.Filtering.categorizeProductRisk(product) === riskLevel)
+            .sort((a, b) => a.name.localeCompare(b.name)); // Alphabetical sort
+        
+        const topSolutions = matchingSolutions.slice(0, 5);
+        const remaining = matchingSolutions.length - 5;
+        
+        // Define labels and criteria for each risk level
+        const labels = {
+            critical: { 
+                title: '🚨 CRITICAL ISSUES', 
+                criteria: 'Risk score ≥ 7/10 • 3+ smoke detectors • Decline + missing metrics' 
+            },
+            monitor: { 
+                title: '⚠️ MONITOR CLOSELY', 
+                criteria: 'Risk score 4-6.9/10 • 1-2 smoke detectors • Below target (<50%)' 
+            },
+            datagaps: { 
+                title: '💡 DATA GAPS', 
+                criteria: 'Missing UX/BI metrics • Missing owner/targets • No tracking' 
+            }
+        };
+        
+        const config = labels[riskLevel];
+        
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'risk-badge-tooltip';
+        tooltip.innerHTML = `
+            <div class="risk-tooltip-title">${config.title} (${matchingSolutions.length} Solution${matchingSolutions.length !== 1 ? 's' : ''})</div>
+            <div class="risk-tooltip-criteria">Triggered by:<br>${config.criteria}</div>
+            <div class="risk-tooltip-solutions">
+                Solutions (alphabetically):<br>
+                ${topSolutions.map(s => `• ${escapeHtml(s.name)}`).join('<br>')}
+                ${remaining > 0 ? `<br>+ ${remaining} more...` : ''}
+            </div>
+            <div class="risk-tooltip-cta">👆 Click to filter on Explore tab</div>
+        `;
+        
+        badgeElement.appendChild(tooltip);
+    }
+    
+    /**
+     * Hide risk tooltip
+     */
+    function hideRiskTooltip() {
+        document.querySelectorAll('.risk-badge-tooltip').forEach(t => t.remove());
     }
     
     // ==================== DYNAMIC FILTERING SUPPORT ====================

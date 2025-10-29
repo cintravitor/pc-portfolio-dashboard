@@ -30,6 +30,7 @@ const appState = {
     analysisDataLoaded: false,         // Whether analysis tab data has been loaded
     chartJsLoaded: false,              // Whether Chart.js library has been loaded
     chartInstances: {},                // Store chart instances to prevent memory leaks
+    activeRiskFilter: null,            // Active risk level filter: 'critical', 'monitor', 'datagaps', or null
     
     // Cache state
     lastUpdateTime: null,      // Timestamp of last data fetch
@@ -133,6 +134,14 @@ function getConstants() {
  */
 function getConstant(key) {
     return appState.constants[key];
+}
+
+/**
+ * Get active risk filter
+ * @returns {string|null} Active risk level: 'critical', 'monitor', 'datagaps', or null
+ */
+function getActiveRiskFilter() {
+    return appState.activeRiskFilter;
 }
 
 /**
@@ -261,6 +270,19 @@ function setLastUpdateTime(timestamp) {
     appState.lastUpdateTime = timestamp;
 }
 
+/**
+ * Set active risk filter
+ * @param {string|null} level - Risk level: 'critical', 'monitor', 'datagaps', or null to clear
+ */
+function setActiveRiskFilter(level) {
+    if (level !== null && !['critical', 'monitor', 'datagaps'].includes(level)) {
+        console.warn(`Invalid risk level: ${level}. Must be 'critical', 'monitor', 'datagaps', or null`);
+        return;
+    }
+    appState.activeRiskFilter = level;
+    console.log(`State: Active risk filter set to ${level || 'null'}`);
+}
+
 // ==================== STATE OPERATIONS ====================
 
 /**
@@ -280,6 +302,7 @@ function resetDataState() {
 function resetUIState() {
     appState.currentTab = 'portfolio-overview';
     appState.analysisDataLoaded = false;
+    appState.activeRiskFilter = null;
     clearAllChartInstances();
     console.log('State: UI state reset');
 }
@@ -336,6 +359,7 @@ window.State = {
     getLastUpdateTime,
     getConstants,
     getConstant,
+    getActiveRiskFilter,
     getState, // For debugging
     
     // Setters
@@ -349,6 +373,7 @@ window.State = {
     removeChartInstance,
     clearAllChartInstances,
     setLastUpdateTime,
+    setActiveRiskFilter,
     
     // Operations
     resetDataState,

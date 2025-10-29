@@ -236,8 +236,10 @@
         }
         
         // DETECTOR 4: High BAU HC Allocation
-        // This would require additional column mapping - placeholder for now
-        // In full implementation, check Total HC Allocation > 2
+        const bauHC = parseFloat(productData.totalBAUHC) || 0;
+        if (bauHC > 3) {
+            detectorCount++;
+        }
         
         return detectorCount;
     }

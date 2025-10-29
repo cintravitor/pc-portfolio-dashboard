@@ -2907,8 +2907,8 @@ select:focus {
     margin-bottom: 0;
 }
 
-/* Metrics Section - Side by Side Charts */
-.metrics-grid {
+/* Metrics Section - Side by Side Charts (Detail Panel Only) */
+#detail-panel .metrics-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 1rem !important;

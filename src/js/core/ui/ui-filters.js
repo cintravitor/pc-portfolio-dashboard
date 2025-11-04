@@ -305,6 +305,86 @@
     }
     
     /**
+     * Create "Select All" option HTML for a multi-select dropdown
+     * @param {string} filterType - Filter type identifier ('area', 'journey', etc.)
+     * @returns {string} HTML string for "Select All" checkbox option
+     */
+    function createSelectAllOption(filterType) {
+        return `
+            <div class="multiselect-option multiselect-select-all" data-value="__SELECT_ALL__" data-filter-type="${filterType}">
+                <input type="checkbox" id="${filterType}-select-all" />
+                <label for="${filterType}-select-all"><strong>Select All</strong></label>
+            </div>
+            <div class="multiselect-divider"></div>
+        `;
+    }
+    
+    /**
+     * Handle "Select All" toggle for a specific filter type
+     * @param {string} filterType - Filter type ('area', 'journey', 'maturity', 'targetUser', 'owner')
+     * @param {HTMLElement} selectAllOption - The "Select All" checkbox element
+     */
+    function handleSelectAllToggle(filterType, selectAllOption) {
+        const startTime = performance.now();
+        
+        const checkbox = selectAllOption.querySelector('input[type="checkbox"]');
+        const dropdown = document.querySelector(`.multiselect-dropdown[data-filter="${filterType}"]`);
+        const allOptions = dropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)');
+        
+        const shouldSelectAll = checkbox.checked;
+        
+        // Bulk state mutation (no DOM updates in loop for performance)
+        if (shouldSelectAll) {
+            // Select all options
+            allOptions.forEach(option => {
+                const value = option.getAttribute('data-value');
+                multiSelectState[filterType].add(value);
+            });
+        } else {
+            // Deselect all options
+            multiSelectState[filterType].clear();
+        }
+        
+        // Batch DOM updates using DocumentFragment for performance
+        allOptions.forEach(option => {
+            const optionCheckbox = option.querySelector('input[type="checkbox"]');
+            optionCheckbox.checked = shouldSelectAll;
+            option.classList.toggle('selected', shouldSelectAll);
+        });
+        
+        const elapsed = performance.now() - startTime;
+        console.log(`✅ [ANALYTICS] filter_select_all_toggle: { filterType: "${filterType}", action: "${shouldSelectAll ? 'select_all' : 'deselect_all'}", optionsCount: ${allOptions.length}, durationMs: ${elapsed.toFixed(2)} }`);
+        
+        // Update visual feedback on header
+        updateFilterHeaderStates();
+        
+        // Apply filters with existing debounce mechanism
+        setTimeout(() => {
+            applyFiltersFromUI();
+        }, 50);
+    }
+    
+    /**
+     * Update "Select All" checkbox state to reflect current selections
+     * Called after individual option changes to keep "Select All" in sync
+     * @param {string} filterType - Filter type identifier
+     */
+    function updateSelectAllState(filterType) {
+        const dropdown = document.querySelector(`.multiselect-dropdown[data-filter="${filterType}"]`);
+        if (!dropdown) return;
+        
+        const selectAllCheckbox = dropdown.querySelector('.multiselect-select-all input[type="checkbox"]');
+        if (!selectAllCheckbox) return;
+        
+        const allOptions = dropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)');
+        const totalOptions = allOptions.length;
+        const selectedCount = multiSelectState[filterType].size;
+        
+        // Update "Select All" checkbox state
+        selectAllCheckbox.checked = (selectedCount === totalOptions && totalOptions > 0);
+    }
+    
+    /**
      * Populate custom multi-select dropdowns with unique values
      */
     function populateFilters() {
@@ -321,15 +401,27 @@
         // Populate area dropdown
         const areaDropdown = document.querySelector('.multiselect-dropdown[data-filter="area"]');
         if (areaDropdown) {
-            areaDropdown.innerHTML = filterOptions.areas.map(area => `
+            areaDropdown.innerHTML = createSelectAllOption('area') + filterOptions.areas.map(area => `
                 <div class="multiselect-option" data-value="${window.Utils.escapeHtml(area)}">
                     <input type="checkbox" id="area-${window.Utils.escapeHtml(area).replace(/\s+/g, '-')}" />
                     <label for="area-${window.Utils.escapeHtml(area).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(area)}</label>
                 </div>
             `).join('');
             
-            // Add event listeners
-            areaDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+            // Add "Select All" event listener
+            const selectAllOption = areaDropdown.querySelector('.multiselect-select-all');
+            if (selectAllOption) {
+                selectAllOption.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleSelectAllToggle('area', this);
+                });
+            }
+            
+            // Add event listeners for individual options
+            areaDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
                         const checkbox = this.querySelector('input[type="checkbox"]');
@@ -343,15 +435,27 @@
         // Populate journey dropdown
         const journeyDropdown = document.querySelector('.multiselect-dropdown[data-filter="journey"]');
         if (journeyDropdown) {
-            journeyDropdown.innerHTML = filterOptions.journeys.map(journey => `
+            journeyDropdown.innerHTML = createSelectAllOption('journey') + filterOptions.journeys.map(journey => `
                 <div class="multiselect-option" data-value="${window.Utils.escapeHtml(journey)}">
                     <input type="checkbox" id="journey-${window.Utils.escapeHtml(journey).replace(/\s+/g, '-')}" />
                     <label for="journey-${window.Utils.escapeHtml(journey).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(journey)}</label>
                 </div>
             `).join('');
             
-            // Add event listeners
-            journeyDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+            // Add "Select All" event listener
+            const selectAllOption = journeyDropdown.querySelector('.multiselect-select-all');
+            if (selectAllOption) {
+                selectAllOption.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleSelectAllToggle('journey', this);
+                });
+            }
+            
+            // Add event listeners for individual options
+            journeyDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
                         const checkbox = this.querySelector('input[type="checkbox"]');
@@ -365,15 +469,27 @@
         // Populate maturity dropdown
         const maturityDropdown = document.querySelector('.multiselect-dropdown[data-filter="maturity"]');
         if (maturityDropdown) {
-            maturityDropdown.innerHTML = filterOptions.maturities.map(maturity => `
+            maturityDropdown.innerHTML = createSelectAllOption('maturity') + filterOptions.maturities.map(maturity => `
                 <div class="multiselect-option" data-value="${window.Utils.escapeHtml(maturity)}">
                     <input type="checkbox" id="maturity-${window.Utils.escapeHtml(maturity).replace(/\s+/g, '-')}" />
                     <label for="maturity-${window.Utils.escapeHtml(maturity).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(maturity)}</label>
                 </div>
             `).join('');
             
-            // Add event listeners
-            maturityDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+            // Add "Select All" event listener
+            const selectAllOption = maturityDropdown.querySelector('.multiselect-select-all');
+            if (selectAllOption) {
+                selectAllOption.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleSelectAllToggle('maturity', this);
+                });
+            }
+            
+            // Add event listeners for individual options
+            maturityDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
                         const checkbox = this.querySelector('input[type="checkbox"]');
@@ -387,15 +503,27 @@
         // Populate target user dropdown
         const targetUserDropdown = document.querySelector('.multiselect-dropdown[data-filter="targetUser"]');
         if (targetUserDropdown) {
-            targetUserDropdown.innerHTML = filterOptions.targetUsers.map(targetUser => `
+            targetUserDropdown.innerHTML = createSelectAllOption('targetUser') + filterOptions.targetUsers.map(targetUser => `
                 <div class="multiselect-option" data-value="${window.Utils.escapeHtml(targetUser)}">
                     <input type="checkbox" id="targetUser-${window.Utils.escapeHtml(targetUser).replace(/\s+/g, '-')}" />
                     <label for="targetUser-${window.Utils.escapeHtml(targetUser).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(targetUser)}</label>
                 </div>
             `).join('');
             
-            // Add event listeners
-            targetUserDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+            // Add "Select All" event listener
+            const selectAllOption = targetUserDropdown.querySelector('.multiselect-select-all');
+            if (selectAllOption) {
+                selectAllOption.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleSelectAllToggle('targetUser', this);
+                });
+            }
+            
+            // Add event listeners for individual options
+            targetUserDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
                         const checkbox = this.querySelector('input[type="checkbox"]');
@@ -409,15 +537,27 @@
         // Populate owner dropdown
         const ownerDropdown = document.querySelector('.multiselect-dropdown[data-filter="owner"]');
         if (ownerDropdown) {
-            ownerDropdown.innerHTML = filterOptions.owners.map(owner => `
+            ownerDropdown.innerHTML = createSelectAllOption('owner') + filterOptions.owners.map(owner => `
                 <div class="multiselect-option" data-value="${window.Utils.escapeHtml(owner)}">
                     <input type="checkbox" id="owner-${window.Utils.escapeHtml(owner).replace(/\s+/g, '-')}" />
                     <label for="owner-${window.Utils.escapeHtml(owner).replace(/\s+/g, '-')}">${window.Utils.escapeHtml(owner)}</label>
                 </div>
             `).join('');
             
-            // Add event listeners
-            ownerDropdown.querySelectorAll('.multiselect-option').forEach(option => {
+            // Add "Select All" event listener
+            const selectAllOption = ownerDropdown.querySelector('.multiselect-select-all');
+            if (selectAllOption) {
+                selectAllOption.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    handleSelectAllToggle('owner', this);
+                });
+            }
+            
+            // Add event listeners for individual options
+            ownerDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
                         const checkbox = this.querySelector('input[type="checkbox"]');
@@ -450,6 +590,9 @@
         
         // Update visual feedback on header
         updateFilterHeaderStates();
+        
+        // Update "Select All" checkbox state to reflect new selection
+        updateSelectAllState(filterType);
         
         // Apply filters immediately
         setTimeout(() => {
@@ -603,6 +746,11 @@
             const checkbox = option.querySelector('input[type="checkbox"]');
             if (checkbox) checkbox.checked = false;
             option.classList.remove('selected');
+        });
+        
+        // Uncheck all "Select All" checkboxes
+        document.querySelectorAll('.multiselect-select-all input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
         });
         
         const sortBy = document.getElementById('sort-by');

@@ -32,6 +32,12 @@ const appState = {
     chartInstances: {},                // Store chart instances to prevent memory leaks
     activeRiskFilter: null,            // Active risk level filter: 'critical', 'monitor', 'datagaps', or null
     
+    // Alert context state (for contextual alerting feature)
+    alertContext: {
+        productId: null,               // ID of product with active alerts
+        triggers: []                   // Array of alert trigger objects
+    },
+    
     // Cache state
     lastUpdateTime: null,      // Timestamp of last data fetch
     
@@ -142,6 +148,14 @@ function getConstant(key) {
  */
 function getActiveRiskFilter() {
     return appState.activeRiskFilter;
+}
+
+/**
+ * Get alert context for currently selected product
+ * @returns {Object} Alert context object { productId, triggers }
+ */
+function getAlertContext() {
+    return { ...appState.alertContext };
 }
 
 /**
@@ -283,6 +297,36 @@ function setActiveRiskFilter(level) {
     console.log(`State: Active risk filter set to ${level || 'null'}`);
 }
 
+/**
+ * Set alert context for a product
+ * Stores the alert triggers to persist from card click through detail panel open
+ * @param {number} productId - Product ID with alerts
+ * @param {Array} triggers - Array of trigger objects from calculateSmokeDetectors()
+ */
+function setAlertContext(productId, triggers) {
+    if (!Array.isArray(triggers)) {
+        console.warn('setAlertContext: triggers must be an array');
+        return;
+    }
+    appState.alertContext = {
+        productId: productId,
+        triggers: triggers
+    };
+    console.log(`State: Alert context set for product ${productId} (${triggers.length} trigger${triggers.length !== 1 ? 's' : ''})`);
+}
+
+/**
+ * Clear alert context
+ * Called when detail panel is closed or when switching products
+ */
+function clearAlertContext() {
+    appState.alertContext = {
+        productId: null,
+        triggers: []
+    };
+    console.log('State: Alert context cleared');
+}
+
 // ==================== STATE OPERATIONS ====================
 
 /**
@@ -360,6 +404,7 @@ window.State = {
     getConstants,
     getConstant,
     getActiveRiskFilter,
+    getAlertContext,
     getState, // For debugging
     
     // Setters
@@ -374,6 +419,8 @@ window.State = {
     clearAllChartInstances,
     setLastUpdateTime,
     setActiveRiskFilter,
+    setAlertContext,
+    clearAlertContext,
     
     // Operations
     resetDataState,

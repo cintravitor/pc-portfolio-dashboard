@@ -343,6 +343,18 @@ function setupEventListeners() {
         if (card && !e.target.closest('.detail-panel')) {
             const productId = parseInt(card.dataset.productId, 10);
             if (!isNaN(productId)) {
+                // Store alert context in state before opening detail panel (contextual alerting feature)
+                const product = window.DataManager.getProductById(productId);
+                if (product) {
+                    const alertData = window.DataManager.calculateSmokeDetectors(product);
+                    if (alertData && alertData.count > 0) {
+                        window.State.setAlertContext(productId, alertData.triggers);
+                    } else {
+                        // Clear any stale context
+                        window.State.clearAlertContext();
+                    }
+                }
+                
                 window.UIManager.showDetailPanel(productId);
             }
             return;

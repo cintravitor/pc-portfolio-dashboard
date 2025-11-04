@@ -425,7 +425,40 @@
             clickedCard.classList.add('selected');
         }
 
-        // No preprocessing needed - attributes rendered directly in template
+        // Check for alert context to display banner
+        const alertContext = window.State.getAlertContext();
+        const hasAlerts = alertContext && alertContext.productId === productId && alertContext.triggers && alertContext.triggers.length > 0;
+        
+        // Generate alert banner HTML if alerts exist
+        let alertBannerHtml = '';
+        if (hasAlerts) {
+            const { triggers } = alertContext;
+            const hasCritical = triggers.some(t => t.severity === 'critical');
+            const severity = hasCritical ? 'critical' : 'warning';
+            const icon = hasCritical ? '🔥' : '⚠️';
+            const title = hasCritical ? 'Critical Alerts Detected' : 'Attention Required';
+            
+            const triggersListHtml = triggers.map(trigger => 
+                `<li>${window.Utils.escapeHtml(trigger.message)}</li>`
+            ).join('');
+            
+            alertBannerHtml = `
+                <div class="detail-alert-banner ${severity}" role="alert" aria-live="assertive">
+                    <div class="alert-banner-icon">${icon}</div>
+                    <div class="alert-banner-content">
+                        <div class="alert-banner-title">${title}</div>
+                        <ul class="alert-banner-triggers">
+                            ${triggersListHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Log analytics event (AC 2.4)
+            if (window.UIManager && window.UIManager.Analytics) {
+                window.UIManager.Analytics.logAlertDetailPageViewed(severity, productId, triggers.length);
+            }
+        }
 
         panel.innerHTML = `
             <div class="detail-header">
@@ -434,6 +467,7 @@
                 <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
             </div>
             <div class="detail-body">
+                ${alertBannerHtml}
                 <!-- Tab Navigation -->
                 <div class="detail-tabs">
                     <button class="detail-tab active" data-tab="metrics">
@@ -613,6 +647,9 @@
      * Hide detail panel
      */
     function hideDetailPanel() {
+        // Clear alert context (part of contextual alerting feature)
+        window.State.clearAlertContext();
+        
         // Destroy chart instances
         const chartInstances = window.State.getChartInstances();
         Object.values(chartInstances).forEach(chart => {

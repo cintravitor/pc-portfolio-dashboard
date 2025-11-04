@@ -22,6 +22,9 @@
     let cachedFilteredData = null;
     let cachedGroupedData = null;
     
+    // Track if tooltip listeners have been set up
+    let tooltipListenersInitialized = false;
+    
     /**
      * Get grouped data with memoization for performance
      * @returns {Object} { groupedByArea, sortedAreas }
@@ -93,9 +96,9 @@
             const cardsHtml = products.map(product => {
                 const summary = window.DataManager.getCardSummaryMetrics(product);
                 
-                // Calculate smoke detector count for this product
-                const smokeCount = window.DataManager.calculateSmokeDetectors(product);
-                const smokeDetectorBadge = getSmokeDetectorBadge(smokeCount);
+                // Calculate smoke detector alerts for this product (returns {count, triggers})
+                const alertData = window.DataManager.calculateSmokeDetectors(product);
+                const smokeDetectorBadge = getSmokeDetectorBadge(product.id, alertData);
                 
                 // Generate metric badges with actual values
                 const uxBadge = getMetricBadgeWithValues('UX', summary.uxStatus, summary.uxValue, summary.uxTarget, summary.uxMetric);
@@ -152,6 +155,12 @@
         
         // Set up event delegation for toggle clicks (better than inline onclick)
         setupAreaToggleListeners(container);
+        
+        // Set up alert tooltip listeners (only once)
+        if (!tooltipListenersInitialized) {
+            setupAlertTooltipListeners();
+            tooltipListenersInitialized = true;
+        }
     }
     
     /**
@@ -222,20 +231,35 @@
     }
     
     /**
-     * Generate smoke detector badge HTML
+     * Generate smoke detector badge HTML with contextual alert tooltip
      * Shows warning badge in top-right corner of card when detectors are triggered
-     * @param {number} count - Number of smoke detectors triggered (0-4)
-     * @returns {string} HTML for smoke detector badge, or empty string if count is 0
+     * Badge is enhanced with hover tooltip showing specific alert causes
+     * 
+     * @param {number} productId - Product ID for analytics and state management
+     * @param {Object} alertData - Alert data from calculateSmokeDetectors() { count, triggers }
+     * @returns {string} HTML for smoke detector badge, or empty string if no alerts
      */
-    function getSmokeDetectorBadge(count) {
-        if (!count || count === 0) return '';
+    function getSmokeDetectorBadge(productId, alertData) {
+        if (!alertData || !alertData.count || alertData.count === 0) return '';
         
-        const icon = count >= 3 ? '🔥' : '⚠️';
-        const severity = count >= 3 ? 'critical' : 'warning';
-        const tooltip = `${count} smoke detector${count > 1 ? 's' : ''} triggered - Click card for details`;
+        const { count, triggers } = alertData;
+        
+        // Determine severity based on trigger content, not just count
+        const hasCritical = triggers.some(t => t.severity === 'critical');
+        const severity = hasCritical ? 'critical' : 'warning';
+        const icon = hasCritical ? '🔥' : '⚠️';
+        
+        // Generate data attributes for tooltip functionality
+        const triggersJson = JSON.stringify(triggers).replace(/"/g, '&quot;');
         
         return `
-            <div class="smoke-detector-badge smoke-${severity}" title="${tooltip}">
+            <div class="smoke-detector-badge smoke-${severity}" 
+                 data-product-id="${productId}"
+                 data-alert-severity="${severity}"
+                 data-alert-triggers='${triggersJson}'
+                 tabindex="0"
+                 role="button"
+                 aria-label="${count} alert${count > 1 ? 's' : ''} detected. Press enter for details.">
                 ${icon}
             </div>
         `;
@@ -482,6 +506,202 @@
         if (lastUpdate) {
             document.getElementById('last-update').textContent = `Last updated: ${lastUpdate.toLocaleString()}`;
         }
+    }
+    
+    // ==================== ALERT TOOLTIP FUNCTIONALITY ====================
+    
+    // Store active tooltip reference for cleanup
+    let activeTooltip = null;
+    let activeTooltipBadge = null;
+    
+    /**
+     * Create and show alert tooltip for a smoke detector badge
+     * Displays specific alert triggers with <100ms target performance
+     * 
+     * @param {HTMLElement} badge - The smoke detector badge element
+     * @param {Array} triggers - Array of trigger objects from calculateSmokeDetectors()
+     * @param {string} severity - Alert severity ('warning' or 'critical')
+     * @param {number} productId - Product ID for analytics
+     */
+    function showAlertTooltip(badge, triggers, severity, productId) {
+        // Hide any existing tooltip first
+        hideAlertTooltip();
+        
+        // Performance: Start timing
+        const perfStart = performance.now();
+        
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'alert-tooltip position-below';
+        tooltip.setAttribute('role', 'tooltip');
+        
+        // Build tooltip content
+        const icon = severity === 'critical' ? '🔥' : '⚠️';
+        const title = severity === 'critical' ? 'Critical Alerts' : 'Attention Required';
+        
+        const triggersHtml = triggers.map(trigger => {
+            const cssClass = trigger.severity === 'critical' ? 'critical' : '';
+            return `<li class="alert-tooltip-trigger-item ${cssClass}">${window.Utils.escapeHtml(trigger.message)}</li>`;
+        }).join('');
+        
+        tooltip.innerHTML = `
+            <div class="alert-tooltip-header">
+                <span class="alert-tooltip-icon">${icon}</span>
+                <h4 class="alert-tooltip-title">${title}</h4>
+            </div>
+            <ul class="alert-tooltip-triggers">
+                ${triggersHtml}
+            </ul>
+        `;
+        
+        // Add to DOM (initially hidden via CSS)
+        document.body.appendChild(tooltip);
+        
+        // Position tooltip relative to badge
+        positionTooltip(tooltip, badge);
+        
+        // Show tooltip with animation
+        requestAnimationFrame(() => {
+            tooltip.classList.add('visible');
+        });
+        
+        // Store references for cleanup
+        activeTooltip = tooltip;
+        activeTooltipBadge = badge;
+        
+        // Log analytics event (AC 1.4)
+        if (window.UIManager && window.UIManager.Analytics) {
+            window.UIManager.Analytics.logAlertContextHovered(severity, productId);
+        }
+        
+        // Performance: Log timing
+        const perfEnd = performance.now();
+        const duration = perfEnd - perfStart;
+        if (duration > 100) {
+            console.warn(`⚠️ Tooltip display exceeded 100ms target: ${duration.toFixed(2)}ms`);
+        }
+    }
+    
+    /**
+     * Position tooltip relative to badge with smart viewport detection
+     * @param {HTMLElement} tooltip - Tooltip element
+     * @param {HTMLElement} badge - Badge element
+     */
+    function positionTooltip(tooltip, badge) {
+        const badgeRect = badge.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Calculate position (default: below badge, aligned to right)
+        let top = badgeRect.bottom + 8;
+        let left = badgeRect.right - tooltipRect.width;
+        
+        // Ensure tooltip stays within viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Adjust horizontal position if needed
+        if (left < 8) {
+            left = 8;
+        } else if (left + tooltipRect.width > viewportWidth - 8) {
+            left = viewportWidth - tooltipRect.width - 8;
+        }
+        
+        // Check if tooltip would overflow bottom of viewport
+        if (top + tooltipRect.height > viewportHeight - 8) {
+            // Position above badge instead
+            top = badgeRect.top - tooltipRect.height - 8;
+            tooltip.classList.remove('position-below');
+            tooltip.classList.add('position-above');
+        }
+        
+        // Apply position
+        tooltip.style.position = 'fixed';
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+    }
+    
+    /**
+     * Hide and remove active tooltip
+     */
+    function hideAlertTooltip() {
+        if (activeTooltip) {
+            activeTooltip.classList.remove('visible');
+            // Remove from DOM after animation completes
+            setTimeout(() => {
+                if (activeTooltip && activeTooltip.parentNode) {
+                    activeTooltip.parentNode.removeChild(activeTooltip);
+                }
+                activeTooltip = null;
+                activeTooltipBadge = null;
+            }, 100);
+        }
+    }
+    
+    /**
+     * Setup event listeners for alert tooltip functionality
+     * Called once when cards are first rendered
+     */
+    function setupAlertTooltipListeners() {
+        // Use event delegation for better performance
+        const container = document.getElementById('cards-container');
+        if (!container) return;
+        
+        // Mouse enter on badge
+        container.addEventListener('mouseenter', (e) => {
+            const badge = e.target.closest('.smoke-detector-badge');
+            if (!badge) return;
+            
+            try {
+                const triggers = JSON.parse(badge.getAttribute('data-alert-triggers'));
+                const severity = badge.getAttribute('data-alert-severity');
+                const productId = parseInt(badge.getAttribute('data-product-id'), 10);
+                
+                if (triggers && triggers.length > 0) {
+                    showAlertTooltip(badge, triggers, severity, productId);
+                }
+            } catch (error) {
+                console.error('Failed to show alert tooltip:', error);
+            }
+        }, true); // Use capture phase for delegation
+        
+        // Mouse leave on badge
+        container.addEventListener('mouseleave', (e) => {
+            const badge = e.target.closest('.smoke-detector-badge');
+            if (badge && badge === activeTooltipBadge) {
+                hideAlertTooltip();
+            }
+        }, true);
+        
+        // Keyboard focus on badge (accessibility)
+        container.addEventListener('focus', (e) => {
+            const badge = e.target.closest('.smoke-detector-badge');
+            if (!badge) return;
+            
+            try {
+                const triggers = JSON.parse(badge.getAttribute('data-alert-triggers'));
+                const severity = badge.getAttribute('data-alert-severity');
+                const productId = parseInt(badge.getAttribute('data-product-id'), 10);
+                
+                if (triggers && triggers.length > 0) {
+                    showAlertTooltip(badge, triggers, severity, productId);
+                }
+            } catch (error) {
+                console.error('Failed to show alert tooltip on focus:', error);
+            }
+        }, true);
+        
+        // Keyboard blur on badge
+        container.addEventListener('blur', (e) => {
+            const badge = e.target.closest('.smoke-detector-badge');
+            if (badge && badge === activeTooltipBadge) {
+                hideAlertTooltip();
+            }
+        }, true);
+        
+        // Hide tooltip when scrolling (better UX)
+        window.addEventListener('scroll', hideAlertTooltip, { passive: true });
+        
+        console.log('✅ Alert tooltip event listeners attached');
     }
     
     /**

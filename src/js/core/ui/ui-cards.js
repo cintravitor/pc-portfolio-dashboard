@@ -26,8 +26,33 @@
     let tooltipListenersInitialized = false;
     
     /**
+     * Map journey stage values from data to display names
+     * @param {string} journeyStage - Raw journey stage value from data
+     * @returns {string|null} Display name for the journey stage, or null if not mappable
+     */
+    function getJourneyDisplayName(journeyStage) {
+        if (!journeyStage || journeyStage === 'N/A' || journeyStage.trim() === '') {
+            return null; // Skip products with no journey stage
+        }
+        
+        // Journey stage mapping with consistent sizing
+        const journeyMap = {
+            '(1) Discover and apply for a position': 'Discovery & Apply',
+            '(2) Start and adapt': 'Start & Adapt',
+            '(3) Perform my role': 'Perform My Role',
+            '(4) Develop myself and grow': 'Develop & Grow',
+            '(5) Interrupt and get back to work': 'Interrupt & Get Back',
+            '(6) Resign or get terminated': 'Resign & Exit',
+            '(7) Return to Nubank': 'Return to Nubank',
+            'All': 'All Journey Stages'
+        };
+        
+        return journeyMap[journeyStage] || null;
+    }
+    
+    /**
      * Get grouped data with memoization for performance
-     * @returns {Object} { groupedByArea, sortedAreas }
+     * @returns {Object} { groupedByJourney, sortedJourneys }
      */
     function getGroupedData() {
         const filteredData = window.DataManager.getFilteredData();
@@ -37,22 +62,36 @@
             return cachedGroupedData;
         }
         
-        // Cache miss - recompute grouping
-        const groupedByArea = {};
+        // Initialize all journey stages with empty arrays (to show even with 0 solutions)
+        const groupedByJourney = {
+            'All Journey Stages': [],
+            'Discovery & Apply': [],
+            'Start & Adapt': [],
+            'Perform My Role': [],
+            'Develop & Grow': [],
+            'Interrupt & Get Back': [],
+            'Resign & Exit': [],
+            'Return to Nubank': []
+        };
+        
+        // Group solutions by journey stage
         filteredData.forEach(product => {
-            const area = product.area || 'Uncategorized';
-            if (!groupedByArea[area]) {
-                groupedByArea[area] = [];
+            const journeyStage = product.journeyMain;
+            const displayName = getJourneyDisplayName(journeyStage);
+            
+            // Only add products with valid journey stage mappings
+            if (displayName && groupedByJourney[displayName] !== undefined) {
+                groupedByJourney[displayName].push(product);
             }
-            groupedByArea[area].push(product);
+            // Products with unmapped or missing journey stages are skipped
         });
         
-        // Sort areas alphabetically
-        const sortedAreas = Object.keys(groupedByArea).sort();
+        // All journey stages in correct order (already sorted by initialization order)
+        const sortedJourneys = Object.keys(groupedByJourney);
         
         // Update cache
         cachedFilteredData = filteredData;
-        cachedGroupedData = { groupedByArea, sortedAreas };
+        cachedGroupedData = { groupedByJourney, sortedJourneys };
         
         return cachedGroupedData;
     }
@@ -66,7 +105,7 @@
     }
     
     /**
-     * Render product cards grouped by P&C Area with collapsible sections
+     * Render product cards grouped by Main Journey Stage with collapsible sections
      */
     function renderCards() {
         const container = document.getElementById('cards-container');
@@ -85,14 +124,14 @@
         container.classList.remove('hidden');
 
         // Get grouped data (from cache if possible)
-        const { groupedByArea, sortedAreas } = getGroupedData();
+        const { groupedByJourney, sortedJourneys } = getGroupedData();
 
         // Render collapsible sections
-        container.innerHTML = sortedAreas.map(area => {
-            const products = groupedByArea[area];
-            const isExpanded = expandedSections.has(area);
+        container.innerHTML = sortedJourneys.map(journey => {
+            const products = groupedByJourney[journey];
+            const isExpanded = expandedSections.has(journey);
             
-            // Generate cards HTML for this area
+            // Generate cards HTML for this journey stage
             const cardsHtml = products.map(product => {
                 const summary = window.DataManager.getCardSummaryMetrics(product);
                 
@@ -136,13 +175,13 @@
                 `;
             }).join('');
             
-            // SECURITY: Use data-area attribute instead of inline onclick
+            // SECURITY: Use data-journey attribute instead of inline onclick
             return `
-            <div class="area-section" data-area="${window.Utils.escapeHtml(area)}">
+            <div class="area-section" data-journey="${window.Utils.escapeHtml(journey)}">
                 <div class="area-header">
                     <div class="area-header-content">
                         <span class="area-toggle-icon">${isExpanded ? '−' : '+'}</span>
-                        <h3 class="area-title">${window.Utils.escapeHtml(area)}</h3>
+                        <h3 class="area-title">${window.Utils.escapeHtml(journey)}</h3>
                         <span class="area-count">(${products.length})</span>
                     </div>
                 </div>
@@ -164,7 +203,7 @@
     }
     
     /**
-     * Set up event delegation for area toggle clicks
+     * Set up event delegation for journey stage toggle clicks
      * More efficient and secure than inline onclick
      */
     function setupAreaToggleListeners(container) {
@@ -182,9 +221,9 @@
             const section = header.closest('.area-section');
             if (!section) return;
             
-            const area = section.dataset.area;
-            if (area) {
-                toggleArea(area);
+            const journey = section.dataset.journey;
+            if (journey) {
+                toggleArea(journey);
             }
         };
         
@@ -378,61 +417,61 @@
     }
     
     /**
-     * Toggle area section expansion
-     * @param {string} area - Area name to toggle
+     * Toggle journey stage section expansion
+     * @param {string} journey - Journey stage display name to toggle
      */
-    function toggleArea(area) {
+    function toggleArea(journey) {
         try {
-            if (!area) {
-                console.warn('toggleArea called with empty area');
+            if (!journey) {
+                console.warn('toggleArea called with empty journey');
                 return;
             }
             
-            if (expandedSections.has(area)) {
-                expandedSections.delete(area);
+            if (expandedSections.has(journey)) {
+                expandedSections.delete(journey);
             } else {
-                expandedSections.add(area);
+                expandedSections.add(journey);
             }
             
             // Don't invalidate cache - grouping hasn't changed
             renderCards();
         } catch (error) {
-            console.error('Failed to toggle area:', area, error);
+            console.error('Failed to toggle journey:', journey, error);
         }
     }
     
     /**
-     * Expand specific areas (used by filtering)
-     * @param {Array<string>} areas - Array of area names to expand
+     * Expand specific journey stages (used by filtering)
+     * @param {Array<string>} journeys - Array of journey stage names to expand
      */
-    function expandAreas(areas) {
+    function expandAreas(journeys) {
         try {
-            if (!Array.isArray(areas)) {
-                console.warn('expandAreas called with non-array:', areas);
+            if (!Array.isArray(journeys)) {
+                console.warn('expandAreas called with non-array:', journeys);
                 return;
             }
             
-            areas.forEach(area => {
-                if (area) {
-                    expandedSections.add(area);
+            journeys.forEach(journey => {
+                if (journey) {
+                    expandedSections.add(journey);
                 }
             });
             
             renderCards();
         } catch (error) {
-            console.error('Failed to expand areas:', error);
+            console.error('Failed to expand journey stages:', error);
         }
     }
     
     /**
-     * Collapse all areas
+     * Collapse all journey stage sections
      */
     function collapseAllAreas() {
         try {
             expandedSections.clear();
             renderCards();
         } catch (error) {
-            console.error('Failed to collapse all areas:', error);
+            console.error('Failed to collapse all journey stages:', error);
         }
     }
     

@@ -1,4 +1,7 @@
 {
+  "name": "pc-portfolio-dashboard",
+  "version": "8.1.0",
+  "description": "P&C Portfolio Dashboard - Journey Stage Grouping",
   "dependencies": {
     "csv-parse": "^6.1.0",
     "node-fetch": "^3.3.2"

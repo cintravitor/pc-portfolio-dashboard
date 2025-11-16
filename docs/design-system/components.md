@@ -460,49 +460,55 @@ All components follow these principles:
 
 ## 🪟 Modals & Panels
 
-### Detail Panel (Slide-in)
+### Solution Detail Modal (Full-Screen Immersive)
 
+**Behavior:** Full-screen overlay modal (100vw × 100vh) that opens when user clicks a solution card. Provides immersive view of solution metrics with Chart.js visualizations.
+
+**Features:**
+- Full-screen takeover (covers header, filters, all content)
+- History API integration (URL hash: `#/solution/{slug}`)
+- Browser back button closes modal
+- ESC key closes modal
+- Hardware-accelerated animations (<100ms)
+- Focus trap for accessibility
+- Lazy-loaded Chart.js graphs
+
+**CSS:**
 ```css
 .detail-panel-overlay {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(4px);
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(24px);
     z-index: 1000;
-    display: flex;
-    justify-content: flex-end;
-    animation: fadeIn 0.3s ease;
+    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
 }
 
 .detail-panel {
-    width: 600px;
-    max-width: 100%;
+    width: 100vw;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    padding: 2rem;
-    animation: slideInRight 0.3s ease;
+    background: var(--glass-bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
 }
 
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
-@keyframes fadeIn {
+@keyframes modalFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 ```
+
+**Accessibility:**
+- `role="dialog"` on overlay
+- `aria-modal="true"`
+- Focus trapped within modal
+- ESC key closes (with screen reader announcement)
+- Focus restored on close
+- Tab navigation with ARIA roles and states
 
 ---
 

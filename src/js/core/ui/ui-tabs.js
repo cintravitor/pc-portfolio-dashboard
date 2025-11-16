@@ -154,8 +154,8 @@
             }
             
         } else {
-            // ==================== EXPLORE TAB: Full Filter Suite ====================
-            // Show all filters and controls
+            // ==================== EXPLORE TAB: Clean Filter Design ====================
+            // Show core filters only (Sort By and Below Target are permanently hidden via CSS)
             
             // Show search row
             const searchRow = document.querySelector('.filters-row-search');
@@ -165,13 +165,8 @@
             const ownerFilterWrapper = document.getElementById('filter-owner-wrapper');
             if (ownerFilterWrapper) ownerFilterWrapper.style.display = 'block';
             
-            // Show Sort By dropdown
-            const sortBy = document.getElementById('sort-by');
-            if (sortBy) sortBy.style.display = 'block';
-            
-            // Show Below Target Metrics checkbox
-            const belowTargetLabel = document.querySelector('.filter-checkbox');
-            if (belowTargetLabel) belowTargetLabel.style.display = 'flex';
+            // Legacy controls remain hidden (enforced by CSS !important rules)
+            // Sort By dropdown and Below Target Metrics checkbox are permanently hidden
             
             // Move Clear Filters button back to actions row
             const clearBtn = document.querySelector('.clear-filters');

@@ -32,6 +32,11 @@ const appState = {
     chartInstances: {},                // Store chart instances to prevent memory leaks
     activeRiskFilter: null,            // Active risk level filter: 'critical', 'monitor', 'datagaps', or null
     
+    // Detail modal state
+    currentDetailModalProduct: null,   // Currently displayed product in modal
+    isDetailModalOpen: false,          // Track modal open/close state
+    detailModalHistory: [],            // Stack for modal navigation history
+    
     // Alert context state (for contextual alerting feature)
     alertContext: {
         productId: null,               // ID of product with active alerts
@@ -430,8 +435,66 @@ function getStateStats() {
         analysisLoaded: appState.analysisDataLoaded,
         chartJsLoaded: appState.chartJsLoaded,
         activeCharts: Object.keys(appState.chartInstances).length,
-        lastUpdate: appState.lastUpdateTime ? new Date(appState.lastUpdateTime).toISOString() : 'Never'
+        lastUpdate: appState.lastUpdateTime ? new Date(appState.lastUpdateTime).toISOString() : 'Never',
+        isModalOpen: appState.isDetailModalOpen
     };
+}
+
+// ==================== DETAIL MODAL STATE MANAGEMENT ====================
+
+/**
+ * Get current modal product
+ * @returns {Object|null} Currently displayed product in modal
+ */
+function getCurrentDetailModalProduct() {
+    return appState.currentDetailModalProduct;
+}
+
+/**
+ * Set current modal product
+ * @param {Object|null} product - Product object or null
+ */
+function setCurrentDetailModalProduct(product) {
+    appState.currentDetailModalProduct = product;
+}
+
+/**
+ * Get modal open state
+ * @returns {boolean} Modal open status
+ */
+function getIsDetailModalOpen() {
+    return appState.isDetailModalOpen;
+}
+
+/**
+ * Set modal open state
+ * @param {boolean} isOpen - Modal open status
+ */
+function setDetailModalOpen(isOpen) {
+    appState.isDetailModalOpen = Boolean(isOpen);
+}
+
+/**
+ * Get modal navigation history
+ * @returns {Array} Modal history stack
+ */
+function getDetailModalHistory() {
+    return appState.detailModalHistory;
+}
+
+/**
+ * Add entry to modal navigation history
+ * @param {Object} entry - History entry
+ */
+function pushDetailModalHistory(entry) {
+    appState.detailModalHistory.push(entry);
+}
+
+/**
+ * Clear modal navigation history
+ */
+function clearDetailModalHistory() {
+    appState.detailModalHistory = [];
 }
 
 // ==================== MODULE EXPORTS ====================
@@ -455,6 +518,9 @@ window.State = {
     getConstant,
     getActiveRiskFilter,
     getAlertContext,
+    getCurrentDetailModalProduct,
+    getIsDetailModalOpen,
+    getDetailModalHistory,
     getState, // For debugging
     
     // Setters
@@ -471,6 +537,10 @@ window.State = {
     setActiveRiskFilter,
     setAlertContext,
     clearAlertContext,
+    setCurrentDetailModalProduct,
+    setDetailModalOpen,
+    pushDetailModalHistory,
+    clearDetailModalHistory,
     
     // Operations
     resetDataState,

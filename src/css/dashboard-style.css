@@ -2905,17 +2905,20 @@ label.filter-checkbox,
 
 /* ===== FULL-SCREEN MODAL OVERLAY ===== */
 .detail-panel-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
     background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(24px) saturate(120%);
     -webkit-backdrop-filter: blur(24px) saturate(120%);
     animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
+    display: block;
 }
 
 @keyframes modalFadeIn {
@@ -2925,9 +2928,13 @@ label.filter-checkbox,
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -2936,6 +2943,7 @@ label.filter-checkbox,
     overflow: hidden;
     animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
+    z-index: 10000 !important;
 }
 
 .detail-header {

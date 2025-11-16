@@ -1,0 +1,409 @@
+/*
+ * =======================================================================
+ * MODAL OVERRIDES - Future Refinements Workspace
+ * =======================================================================
+ * 
+ * Purpose: Isolated CSS file for modal behavior and appearance refinements
+ * Version: v2.0.0+
+ * Status: EXPERIMENTAL - Not currently loaded in index.html
+ * 
+ * HOW TO USE THIS FILE:
+ * 1. This file contains a copy of all modal-related CSS from dashboard-style.css
+ * 2. Load this file AFTER dashboard-style.css to override modal styles
+ * 3. Modify styles here without touching the main CSS file
+ * 4. Easy to test: comment out the <link> tag to disable overrides
+ * 5. Easy to rollback: remove the <link> tag entirely
+ * 
+ * TO ACTIVATE:
+ * Add this line to index.html AFTER the main CSS:
+ * <link rel="stylesheet" href="src/css/modal-overrides.css">
+ * 
+ * MODIFICATION AREAS (Ready for your changes):
+ * - Modal sizing and positioning
+ * - Animation behavior and timing
+ * - Glass effects and transparency
+ * - Spacing and padding
+ * - Responsive behavior
+ * - Header appearance
+ * - Content layout
+ * - Chart sizing
+ * 
+ * =======================================================================
+ */
+
+/* ===== MODAL OVERLAY ===== */
+.detail-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.04);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== MODAL CONTAINER ===== */
+.detail-panel {
+    /* SIZE - Current: Compact, production-stable */
+    position: relative;
+    width: 90%;              /* MODIFY: Adjust modal width (90%, 95%, 1400px, etc.) */
+    max-width: 1200px;       /* MODIFY: Change maximum width */
+    height: 92vh;            /* MODIFY: Adjust modal height (92vh, 95vh, etc.) */
+    
+    /* APPEARANCE - Glassmorphism */
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    
+    /* BORDERS & SHADOWS */
+    border-radius: 1.5rem;   /* MODIFY: Adjust corner roundness */
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 
+        0 24px 80px rgba(99, 102, 241, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    
+    /* LAYOUT */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    /* ANIMATION */
+    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* MODAL ENTRANCE ANIMATION */
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);  /* MODIFY: Adjust entry motion */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ===== MODAL HEADER ===== */
+.detail-header {
+    padding: 2rem;           /* MODIFY: Adjust header padding */
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    position: relative;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+/* CLOSE BUTTON */
+.detail-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.detail-close:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+}
+
+/* TITLE & SUBTITLE */
+.detail-title {
+    font-size: 1.625rem;     /* MODIFY: Adjust title size */
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    padding-right: 3rem;
+}
+
+.detail-subtitle {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    opacity: 0.95;
+    line-height: 1.5;
+}
+
+/* ===== MODAL BODY ===== */
+.detail-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ===== TAB NAVIGATION ===== */
+.detail-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1.25rem 1.5rem 0;    /* MODIFY: Adjust tabs padding */
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 2px solid rgba(226, 232, 240, 0.6);
+    flex-shrink: 0;
+}
+
+.detail-tab {
+    padding: 1rem 2rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px 12px 0 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.detail-tab:hover {
+    background: rgba(99, 102, 241, 0.05);
+    color: var(--mercury-accent);
+}
+
+.detail-tab.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--mercury-accent);
+    box-shadow: 0 -2px 8px rgba(99, 102, 241, 0.1);
+}
+
+.detail-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--mercury-accent), var(--mercury-glow));
+    border-radius: 2px 2px 0 0;
+}
+
+/* ===== TAB CONTENT ===== */
+.detail-tab-content {
+    display: none;
+    padding: 1.75rem 1.5rem 2rem !important;  /* MODIFY: Adjust content padding */
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    animation: fadeInTab 0.3s ease;
+    background: rgba(248, 250, 252, 0.5);     /* MODIFY: Adjust glass effect */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.detail-tab-content.active {
+    display: block;
+}
+
+.detail-tab-content#tab-core-details {
+    background: rgba(255, 255, 255, 0.45);    /* MODIFY: Core details glass effect */
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+@keyframes fadeInTab {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== METRICS GRID ===== */
+#detail-panel .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;            /* MODIFY: Adjust spacing between metric cards */
+    margin-top: 0;
+    align-items: stretch;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ===== METRIC CARDS ===== */
+.metric-card {
+    /* APPEARANCE */
+    background: rgba(255, 255, 255, 0.65);    /* MODIFY: Adjust glass transparency */
+    backdrop-filter: blur(10px);               /* MODIFY: Adjust blur intensity */
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 1.5rem;                           /* MODIFY: Adjust card padding */
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);
+    
+    /* LAYOUT */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;          /* MODIFY: Set fixed height (e.g., 400px, 500px) if desired */
+    min-width: 0;
+    transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
+    transform: translateY(-1px);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* ===== CHART CONTAINER ===== */
+.chart-container {
+    position: relative;
+    height: 300px;          /* MODIFY: Adjust chart height (300px, 350px, 400px, etc.) */
+    margin-top: 0.875rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 1rem 1.125rem; /* MODIFY: Adjust chart padding */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    min-width: 0;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+    width: 100% !important;
+    max-width: 100%;
+}
+
+/* ===== RESPONSIVE: MOBILE ===== */
+@media (max-width: 768px) {
+    .detail-panel-overlay {
+        padding: 0.5rem;    /* MODIFY: Mobile overlay padding */
+    }
+    
+    .detail-panel {
+        width: 98%;         /* MODIFY: Mobile modal width */
+        max-height: 96vh;
+    }
+    
+    .detail-header {
+        padding: 1.5rem 1.25rem;  /* MODIFY: Mobile header padding */
+        min-height: 80px;
+    }
+    
+    .detail-tabs {
+        padding: 1rem 1.5rem 0;   /* MODIFY: Mobile tabs padding */
+        gap: 0.25rem;
+    }
+    
+    .detail-tab {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .detail-tab-subtitle {
+        display: none;      /* Hide subtitles on mobile */
+    }
+    
+    .detail-tab-content {
+        padding: 1.5rem 1.25rem 2rem !important;  /* MODIFY: Mobile content padding */
+        overflow-y: auto !important;
+    }
+    
+    .chart-container {
+        height: 250px;      /* MODIFY: Mobile chart height */
+    }
+    
+    .metric-card {
+        padding: 1.25rem;   /* MODIFY: Mobile card padding */
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;   /* Single column on mobile */
+        gap: 1.25rem;
+    }
+}
+
+/*
+ * =======================================================================
+ * EXPERIMENTATION GUIDE
+ * =======================================================================
+ * 
+ * COMMON MODIFICATIONS:
+ * 
+ * 1. LARGER MODAL:
+ *    .detail-panel {
+ *        width: 96vw;
+ *        max-width: 1800px;
+ *        height: 96vh;
+ *    }
+ * 
+ * 2. MORE SPACING:
+ *    .detail-header { padding: 3rem; }
+ *    .detail-tab-content { padding: 3rem 4rem !important; }
+ *    #detail-panel .metrics-grid { gap: 2.5rem; }
+ * 
+ * 3. TALLER CHARTS:
+ *    .chart-container { height: 400px; }
+ *    .metric-card { min-height: 500px; }
+ * 
+ * 4. MORE GLASS EFFECT:
+ *    .detail-panel {
+ *        background: rgba(255, 255, 255, 0.3);
+ *        backdrop-filter: blur(30px) saturate(200%);
+ *    }
+ * 
+ * 5. DIFFERENT ANIMATION:
+ *    @keyframes modalSlideUp {
+ *        from {
+ *            opacity: 0;
+ *            transform: translateY(60px) scale(0.9);
+ *        }
+ *        to {
+ *            opacity: 1;
+ *            transform: translateY(0) scale(1);
+ *        }
+ *    }
+ * 
+ * 6. FULL-SCREEN ON MOBILE:
+ *    @media (max-width: 768px) {
+ *        .detail-panel {
+ *            width: 100vw;
+ *            height: 100vh;
+ *            height: 100dvh;
+ *            border-radius: 0;
+ *        }
+ *    }
+ * 
+ * =======================================================================
+ * TESTING CHECKLIST:
+ * - [ ] Modal opens smoothly
+ * - [ ] Content is readable
+ * - [ ] Charts display correctly
+ * - [ ] Scrolling works
+ * - [ ] Responsive on mobile
+ * - [ ] Animations feel premium
+ * - [ ] Glass effects look good
+ * - [ ] Close button works
+ * =======================================================================
+ */
+

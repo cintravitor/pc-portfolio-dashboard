@@ -3062,8 +3062,9 @@ label.filter-checkbox,
 
 .detail-tab.active {
     background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     color: var(--mercury-accent);
-    box-shadow: 0 -2px 8px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
 }
 
 .detail-tab.active::after {

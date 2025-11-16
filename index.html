@@ -7,8 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Resource Hints for Performance -->
-    <link rel="preload" href="src/css/dashboard-style.css?v=8.3.0" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="src/css/dashboard-style.css?v=8.3.0"></noscript>
+    <link rel="preload" href="src/css/dashboard-style.css?v=8.4.0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="src/css/dashboard-style.css?v=8.4.0"></noscript>
     <link rel="dns-prefetch" href="https://script.google.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     
@@ -178,8 +178,11 @@
                     <span class="header-badge">2025</span>
                 </div>
                 <div class="header-actions">
-                    <span class="last-update" id="last-update">Last updated: Never</span>
-                    <button class="refresh-btn" onclick="fetchSheetData()">🔄 Refresh Data</button>
+                    <span class="last-update-subtle" id="last-update">Last updated: Never</span>
+                    <button class="refresh-btn-subtle" onclick="fetchSheetData()">
+                        <span class="refresh-icon">🔄</span>
+                        <span>Refresh</span>
+                    </button>
                 </div>
             </div>
             <!-- Tab Navigation -->
@@ -187,24 +190,18 @@
                 <button class="tab-btn active" data-tab="portfolio-overview">🔍 Explore</button>
                 <button class="tab-btn" data-tab="governance-dashboard">💡 Insights</button>
             </div>
+            <!-- Consolidated Filters Section (Single Row) -->
             <div class="filters-section" id="filters-section">
                 <div class="filters-container">
-                    <!-- Row 1: Search Box (Full Width) -->
-                    <div class="filters-row-search">
+                    <div class="filters-row-consolidated">
+                        <!-- Search Box (spans 2 columns) -->
                         <div class="search-box">
                             <input type="text" id="search-input" placeholder="Search by solution name, problem, or description..." oninput="applyFilters()">
                         </div>
-                    </div>
-                    
-                    <!-- Row 2: Main Filter Controls (Equal Width) -->
-                    <div class="filters-row-main">
+                        <!-- 4 Primary Filters (Journey Stage removed) -->
                         <div class="custom-multiselect" id="filter-area-wrapper">
                             <div class="multiselect-header" data-filter="area">P&C Area</div>
                             <div class="multiselect-dropdown" data-filter="area"></div>
-                        </div>
-                        <div class="custom-multiselect" id="filter-journey-wrapper">
-                            <div class="multiselect-header" data-filter="journey">Journey Stage</div>
-                            <div class="multiselect-dropdown" data-filter="journey"></div>
                         </div>
                         <div class="custom-multiselect" id="filter-maturity-wrapper">
                             <div class="multiselect-header" data-filter="maturity">Maturity Stage</div>
@@ -218,24 +215,22 @@
                             <div class="multiselect-header" data-filter="owner">Owner Name</div>
                             <div class="multiselect-dropdown" data-filter="owner"></div>
                         </div>
-                    </div>
-                    
-                    <!-- Row 3: Actions & Sort Controls -->
-                    <div class="filters-row-actions">
-                        <select id="sort-by" onchange="applyFilters()">
-                            <option value="">Sort By...</option>
-                            <option value="name-asc">Product Name (A-Z)</option>
-                            <option value="name-desc">Product Name (Z-A)</option>
-                            <option value="maturity-asc">Maturity Stage</option>
-                            <option value="area-asc">P&C Area (A-Z)</option>
-                            <option value="owner-asc">Owner (A-Z)</option>
-                        </select>
-                        <label class="filter-checkbox" title="Show only products where UX or BI metrics are below target">
-                            <input type="checkbox" id="filter-below-target" onchange="applyFilters()">
-                            <span>Below Target Metrics</span>
-                        </label>
+                        <!-- Clear Filters Button -->
                         <button class="clear-filters" onclick="window.UIManager.Filters.clearFilters()">Clear Filters</button>
                     </div>
+                    <!-- Sort & Below Target controls remain available but hidden in consolidated layout -->
+                    <select id="sort-by" onchange="applyFilters()" style="display: none;">
+                        <option value="">Sort By...</option>
+                        <option value="name-asc">Product Name (A-Z)</option>
+                        <option value="name-desc">Product Name (Z-A)</option>
+                        <option value="maturity-asc">Maturity Stage</option>
+                        <option value="area-asc">P&C Area (A-Z)</option>
+                        <option value="owner-asc">Owner (A-Z)</option>
+                    </select>
+                    <label class="filter-checkbox" title="Show only products where UX or BI metrics are below target" style="display: none;">
+                        <input type="checkbox" id="filter-below-target" onchange="applyFilters()">
+                        <span>Below Target Metrics</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -244,19 +239,24 @@
         <!-- Portfolio Overview Tab Content -->
         <div class="tab-content active" id="tab-portfolio-overview">
             <div class="content-left" id="content-left">
-                <div class="stats-bar" id="stats-bar" style="display: none;">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Solutions</div>
-                        <div class="stat-value" id="stat-total">0</div>
+                <!-- New Content Header with Inline Metrics (Premium Glass-Morphism Pills) -->
+                <div class="content-header" id="content-header" style="display: none;">
+                    <h2 class="section-title">P&C Solutions</h2>
+                    <div class="inline-metrics">
+                        <div class="metric-item metric-pill" id="inline-total-wrapper">
+                            <span class="metric-label">Total:</span>
+                            <span class="metric-value" id="inline-total">0</span>
+                        </div>
+                        <div class="metric-item metric-pill metric-warning" id="inline-ux-wrapper" style="cursor: pointer;" title="Click to filter products with missing UX metric updates">
+                            <span class="metric-label">⚠️ UX Not Updated:</span>
+                            <span class="metric-value" id="inline-ux">0</span>
+                        </div>
+                        <div class="metric-item metric-pill metric-warning" id="inline-bi-wrapper" style="cursor: pointer;" title="Click to filter products with missing BI metric updates">
+                            <span class="metric-label">⚠️ BI Not Updated:</span>
+                            <span class="metric-value" id="inline-bi">0</span>
+                        </div>
+                        <span class="metric-info-icon" title="Metrics update dynamically as you filter">ⓘ</span>
                     </div>
-            <div class="stat-card stat-card-warning" id="card-missing-ux" data-filter-type="missing-ux-metric" style="cursor: pointer;" title="Click to filter products with missing UX metric updates">
-                <div class="stat-label">⚠️ UX METRICS NOT UPDATED (Current Month)</div>
-                <div class="stat-value" id="stat-missing-ux">0</div>
-            </div>
-            <div class="stat-card stat-card-warning" id="card-missing-bi" data-filter-type="missing-bi-metric" style="cursor: pointer;" title="Click to filter products with missing BI metric updates">
-                <div class="stat-label">⚠️ BI METRICS NOT UPDATED (Current Month)</div>
-                <div class="stat-value" id="stat-missing-bi">0</div>
-            </div>
                 </div>
                 <div id="loading" class="loading">
                     <div class="spinner"></div>
@@ -329,8 +329,8 @@
     <!-- UI Modules (Modular Architecture - Deferred for optimal FCP) -->
     <script defer src="src/js/core/ui/ui-analytics.js?v=1.0.0"></script>
     <script defer src="src/js/core/ui/ui-charts.js?v=7.3.1"></script>
-    <script defer src="src/js/core/ui/ui-cards.js?v=8.1.0"></script>
-    <script defer src="src/js/core/ui/ui-filters.js?v=7.2.0"></script>
+    <script defer src="src/js/core/ui/ui-cards.js?v=8.4.0"></script>
+    <script defer src="src/js/core/ui/ui-filters.js?v=8.4.0"></script>
     <script defer src="src/js/core/ui/ui-detail-panel.js?v=7.4.5"></script>
     <script defer src="src/js/core/ui/ui-governance.js?v=8.0.0"></script>
     <script defer src="src/js/core/ui/ui-drill-down.js?v=7.2.0"></script>

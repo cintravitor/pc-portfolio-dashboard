@@ -126,8 +126,14 @@
         // Get grouped data (from cache if possible)
         const { groupedByJourney, sortedJourneys } = getGroupedData();
 
-        // Render collapsible sections
-        container.innerHTML = sortedJourneys.map(journey => {
+        // Filter out empty journey sections for better UX (Premium Design v8.4.0)
+        // Only show journey stages that have at least 1 product
+        const journeysWithResults = sortedJourneys.filter(journey => 
+            groupedByJourney[journey] && groupedByJourney[journey].length > 0
+        );
+
+        // Render collapsible sections (only non-empty ones)
+        container.innerHTML = journeysWithResults.map(journey => {
             const products = groupedByJourney[journey];
             const isExpanded = expandedSections.has(journey);
             
@@ -509,32 +515,38 @@
     }
     
     /**
-     * Update statistics display
+     * Update inline metrics display (Premium Header Redesign v8.4.0)
      * Updated to use filtered data for consistency with dynamic updates
      * Defensive: checks if elements exist before updating (handles cached old HTML)
      */
-    function updateStats() {
-        const statsBar = document.getElementById('stats-bar');
-        if (!statsBar) {
-            console.warn('Stats bar not found');
+    function updateInlineMetrics() {
+        const contentHeader = document.getElementById('content-header');
+        if (!contentHeader) {
+            console.warn('Content header not found');
             return;
         }
-        statsBar.style.display = 'flex';
+        contentHeader.style.display = 'flex';
 
         // Use filtered data (ensures consistency with dynamic updates)
         const filteredData = window.DataManager.getFilteredData();
         const metrics = window.DataManager.calculateFilteredSummaryMetrics(filteredData);
         
-        // Safely update stats if elements exist
-        const statTotal = document.getElementById('stat-total');
-        if (statTotal) statTotal.textContent = metrics.total;
+        // Update inline metric values
+        const inlineTotal = document.getElementById('inline-total');
+        const inlineUX = document.getElementById('inline-ux');
+        const inlineBI = document.getElementById('inline-bi');
         
-        // Update data quality cards
-        const statMissingUX = document.getElementById('stat-missing-ux');
-        const statMissingBI = document.getElementById('stat-missing-bi');
-        
-        if (statMissingUX) statMissingUX.textContent = metrics.missingUX;
-        if (statMissingBI) statMissingBI.textContent = metrics.missingBI;
+        if (inlineTotal) inlineTotal.textContent = metrics.total;
+        if (inlineUX) inlineUX.textContent = metrics.missingUX;
+        if (inlineBI) inlineBI.textContent = metrics.missingBI;
+    }
+    
+    /**
+     * Legacy function name for backwards compatibility
+     * @deprecated Use updateInlineMetrics() instead
+     */
+    function updateStats() {
+        updateInlineMetrics();
     }
     
     /**
@@ -545,6 +557,76 @@
         if (lastUpdate) {
             document.getElementById('last-update').textContent = `Last updated: ${lastUpdate.toLocaleString()}`;
         }
+    }
+    
+    /**
+     * Clear visual active state from inline metric pills
+     * Called when filters are cleared to sync visual state
+     */
+    function clearInlineMetricsActiveState() {
+        const uxWrapper = document.getElementById('inline-ux-wrapper');
+        const biWrapper = document.getElementById('inline-bi-wrapper');
+        
+        if (uxWrapper) uxWrapper.classList.remove('metric-active');
+        if (biWrapper) biWrapper.classList.remove('metric-active');
+        
+        console.log('🧹 Cleared inline metrics visual state');
+    }
+    
+    /**
+     * Setup click handlers for inline warning metrics
+     * Allows users to click on UX/BI warning metrics to filter results
+     * Connected to data quality filtering system (v8.4.0)
+     */
+    function setupInlineMetricsListeners() {
+        const uxWrapper = document.getElementById('inline-ux-wrapper');
+        const biWrapper = document.getElementById('inline-bi-wrapper');
+        
+        if (uxWrapper) {
+            uxWrapper.addEventListener('click', () => {
+                console.log('🎯 UX metric clicked - toggling missing UX metrics filter');
+                
+                if (window.UIManager && window.UIManager.Filters && window.UIManager.Filters.toggleNotUpdatedFilter) {
+                    // Toggle the filter (same as old stat card behavior)
+                    window.UIManager.Filters.toggleNotUpdatedFilter('UX');
+                    
+                    // Update visual state based on active filter
+                    const activeFilter = window.UIManager.Filters.getActiveNotUpdatedFilter();
+                    if (activeFilter === 'UX') {
+                        uxWrapper.classList.add('metric-active');
+                        if (biWrapper) biWrapper.classList.remove('metric-active');
+                    } else {
+                        uxWrapper.classList.remove('metric-active');
+                    }
+                } else {
+                    console.error('UIManager.Filters.toggleNotUpdatedFilter not available');
+                }
+            });
+        }
+        
+        if (biWrapper) {
+            biWrapper.addEventListener('click', () => {
+                console.log('🎯 BI metric clicked - toggling missing BI metrics filter');
+                
+                if (window.UIManager && window.UIManager.Filters && window.UIManager.Filters.toggleNotUpdatedFilter) {
+                    // Toggle the filter (same as old stat card behavior)
+                    window.UIManager.Filters.toggleNotUpdatedFilter('BI');
+                    
+                    // Update visual state based on active filter
+                    const activeFilter = window.UIManager.Filters.getActiveNotUpdatedFilter();
+                    if (activeFilter === 'BI') {
+                        biWrapper.classList.add('metric-active');
+                        if (uxWrapper) uxWrapper.classList.remove('metric-active');
+                    } else {
+                        biWrapper.classList.remove('metric-active');
+                    }
+                } else {
+                    console.error('UIManager.Filters.toggleNotUpdatedFilter not available');
+                }
+            });
+        }
+        
+        console.log('✅ Inline metrics click listeners connected to data quality filtering');
     }
     
     // ==================== ALERT TOOLTIP FUNCTIONALITY ====================
@@ -817,7 +899,10 @@
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Cards = {
         render: renderCards,
-        updateStats,
+        updateStats,  // Legacy - calls updateInlineMetrics
+        updateInlineMetrics,  // NEW: Premium header redesign v8.4.0
+        setupInlineMetricsListeners,  // NEW: Setup click handlers for warning metrics
+        clearInlineMetricsActiveState,  // NEW: Clear visual state when filters cleared
         updateLastUpdateDisplay,
         updateFilteredSummaryCards,  // NEW: Real-time summary card updates
         toggleArea,

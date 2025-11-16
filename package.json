@@ -1,6 +1,6 @@
 {
   "name": "pc-portfolio-dashboard",
-  "version": "8.3.0",
+  "version": "8.4.0",
   "description": "P&C Portfolio Dashboard - Optimized Space Utilization",
   "dependencies": {
     "csv-parse": "^6.1.0",

@@ -296,6 +296,11 @@ async function fetchSheetData() {
         window.UIManager.updateStats();
         window.UIManager.updateLastUpdateDisplay();
         
+        // Setup inline metrics click listeners (Premium Header Redesign v8.4.0)
+        if (window.UIManager.Cards && window.UIManager.Cards.setupInlineMetricsListeners) {
+            window.UIManager.Cards.setupInlineMetricsListeners();
+        }
+        
         console.log('✅ Data fetch and UI update complete');
 
     } catch (error) {

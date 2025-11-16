@@ -196,7 +196,7 @@
      */
     const multiSelectState = {
         area: new Set(),
-        journey: new Set(),
+        // journey: new Set(),  // REMOVED: Journey Stage filter (Premium Header Redesign v8.4.0 - redundant with grouping)
         maturity: new Set(),
         targetUser: new Set(),
         owner: new Set()
@@ -290,9 +290,9 @@
      * Update visual state of filter headers based on selections
      */
     function updateFilterHeaderStates() {
-        ['area', 'journey', 'maturity', 'targetUser', 'owner'].forEach(filterType => {
+        ['area', 'maturity', 'targetUser', 'owner'].forEach(filterType => {  // journey removed
             const header = document.querySelector(`.multiselect-header[data-filter="${filterType}"]`);
-            const hasSelections = multiSelectState[filterType].size > 0;
+            const hasSelections = multiSelectState[filterType] && multiSelectState[filterType].size > 0;
             
             if (header) {
                 if (hasSelections) {
@@ -393,7 +393,7 @@
         console.log('📋 Populating filters:', filterOptions);
         
         // Guard clause: Skip if no data available yet
-        if (!filterOptions || !filterOptions.areas || !filterOptions.journeys || !filterOptions.maturities || !filterOptions.targetUsers || !filterOptions.owners) {
+        if (!filterOptions || !filterOptions.areas || !filterOptions.maturities || !filterOptions.targetUsers || !filterOptions.owners) {
             console.warn('⚠️ Filter options not available yet - skipping filter population');
             return;
         }
@@ -432,7 +432,9 @@
             });
         }
         
-        // Populate journey dropdown
+        // REMOVED: Journey dropdown population (Premium Header Redesign v8.4.0)
+        // Journey Stage filter removed - redundant with journey stage grouping
+        /* 
         const journeyDropdown = document.querySelector('.multiselect-dropdown[data-filter="journey"]');
         if (journeyDropdown) {
             journeyDropdown.innerHTML = createSelectAllOption('journey') + filterOptions.journeys.map(journey => `
@@ -442,7 +444,6 @@
                 </div>
             `).join('');
             
-            // Add "Select All" event listener
             const selectAllOption = journeyDropdown.querySelector('.multiselect-select-all');
             if (selectAllOption) {
                 selectAllOption.addEventListener('click', function(e) {
@@ -454,7 +455,6 @@
                 });
             }
             
-            // Add event listeners for individual options
             journeyDropdown.querySelectorAll('.multiselect-option:not(.multiselect-select-all)').forEach(option => {
                 option.addEventListener('click', function(e) {
                     if (e.target.tagName !== 'INPUT') {
@@ -465,6 +465,7 @@
                 });
             });
         }
+        */
         
         // Populate maturity dropdown
         const maturityDropdown = document.querySelector('.multiselect-dropdown[data-filter="maturity"]');
@@ -643,7 +644,7 @@
     function applyFiltersImmediately() {
         const searchTerm = document.getElementById('search-input').value;
         const areaFilters = getSelectedValues('area');
-        const journeyFilters = getSelectedValues('journey');
+        const journeyFilters = [];  // REMOVED: Journey filter (v8.4.0) - always empty array
         const maturityFilters = getSelectedValues('maturity');
         const targetUserFilters = getSelectedValues('targetUser');
         const ownerFilters = getSelectedValues('owner');
@@ -701,8 +702,8 @@
             }
         });
         
-        // Check if any filters are active (arrays need length check)
-        const hasActiveFilters = searchTerm || areaFilters.length > 0 || journeyFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly || activeNotUpdatedFilter !== null || riskLevelFilter !== null;
+        // Check if any filters are active (arrays need length check) - journey removed
+        const hasActiveFilters = searchTerm || areaFilters.length > 0 || maturityFilters.length > 0 || targetUserFilters.length > 0 || ownerFilters.length > 0 || belowTargetOnly || activeNotUpdatedFilter !== null || riskLevelFilter !== null;
         
         if (hasActiveFilters && filteredData.length > 0) {
             // Get unique areas from filtered data
@@ -736,7 +737,7 @@
         
         // Clear custom multi-select state
         multiSelectState.area.clear();
-        multiSelectState.journey.clear();
+        // multiSelectState.journey.clear();  // REMOVED: Journey filter (v8.4.0)
         multiSelectState.maturity.clear();
         multiSelectState.targetUser.clear();
         multiSelectState.owner.clear();
@@ -747,6 +748,11 @@
             if (checkbox) checkbox.checked = false;
             option.classList.remove('selected');
         });
+        
+        // Clear inline metrics visual state (Premium Header Redesign v8.4.0)
+        if (window.UIManager && window.UIManager.Cards && window.UIManager.Cards.clearInlineMetricsActiveState) {
+            window.UIManager.Cards.clearInlineMetricsActiveState();
+        }
         
         // Uncheck all "Select All" checkboxes
         document.querySelectorAll('.multiselect-select-all input[type="checkbox"]').forEach(checkbox => {
@@ -789,7 +795,7 @@
         // Get current filter values (custom multi-select arrays)
         const searchTerm = document.getElementById('search-input')?.value || '';
         const areaFilters = getSelectedValues('area');
-        const journeyFilters = getSelectedValues('journey');
+        const journeyFilters = [];  // REMOVED: Journey filter (v8.4.0)
         const maturityFilters = getSelectedValues('maturity');
         const targetUserFilters = getSelectedValues('targetUser');
         const ownerFilters = getSelectedValues('owner');
@@ -820,7 +826,8 @@
             });
         }
         
-        // Handle multiple journey selections
+        // REMOVED: Journey filter pills (v8.4.0)
+        /* 
         if (journeyFilters && journeyFilters.length > 0) {
             journeyFilters.forEach(journey => {
                 activeFilters.push({
@@ -831,6 +838,7 @@
                 });
             });
         }
+        */
         
         // Handle multiple maturity selections
         if (maturityFilters && maturityFilters.length > 0) {
@@ -961,13 +969,8 @@
                 break;
                 
             case 'journey':
-                multiSelectState.journey.delete(filterValue);
-                const journeyOption = document.querySelector(`.multiselect-dropdown[data-filter="journey"] .multiselect-option[data-value="${filterValue}"]`);
-                if (journeyOption) {
-                    journeyOption.classList.remove('selected');
-                    const checkbox = journeyOption.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                }
+                // REMOVED: Journey filter (v8.4.0) - no-op for backwards compatibility
+                console.warn('Journey filter pill removal attempted but journey filter is removed');
                 break;
                 
             case 'maturity':
@@ -1083,6 +1086,7 @@
         clearRiskFilter,
         renderFilterPills,
         removeFilterPill,
+        toggleNotUpdatedFilter,  // EXPOSED: For inline metrics click handlers (v8.4.0)
         getActiveNotUpdatedFilter: () => activeNotUpdatedFilter  // NEW: Expose active "Not Updated" filter state
     };
     

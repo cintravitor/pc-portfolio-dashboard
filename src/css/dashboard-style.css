@@ -569,11 +569,11 @@ body::before {
 .automation-recommendation {
     display: flex;
     gap: 0.75rem;
-    padding: 1rem;
+    padding: 0.875rem; /* Reduced from 1rem */
     margin-bottom: 0.75rem;
     border-radius: 10px;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: 0.8125rem; /* Slightly smaller */
+    line-height: 1.4; /* Tighter */
     position: relative;
 }
 
@@ -2910,14 +2910,15 @@ label.filter-checkbox,
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
     z-index: 9999 !important;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(24px) saturate(120%);
-    -webkit-backdrop-filter: blur(24px) saturate(120%);
+    background: rgba(15, 23, 42, 0.75); /* Lighter to show dashboard behind */
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
     will-change: opacity;
     display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none; /* Allow clicks to pass through to dashboard scroll */
 }
 
 /* Removed keyframe animation - now using JavaScript-controlled transitions for expanding card effect */
@@ -2925,38 +2926,67 @@ label.filter-checkbox,
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    /* Premium Card Positioning: Centered with breathing room */
+    top: 3vh !important;
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: 94vw !important;
+    max-width: 1600px !important;
+    height: 92vh !important;
+    
+    /* Premium Glass Card Aesthetic */
     background: linear-gradient(135deg, 
-        rgba(250, 251, 253, 0.95) 0%, 
-        rgba(245, 247, 251, 0.95) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+        rgba(255, 255, 255, 0.98) 0%, 
+        rgba(250, 251, 253, 0.96) 100%);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    
+    /* Refined Card Elevation */
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 
+        0 0 0 1px rgba(226, 232, 240, 0.6),
+        0 24px 60px -10px rgba(99, 102, 241, 0.3),
+        0 48px 100px -20px rgba(139, 92, 246, 0.2);
+    
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto; /* Enable internal scrolling */
+    overflow-x: hidden;
     will-change: transform, opacity;
     z-index: 10000 !important;
     transform-origin: center center;
-    box-shadow: 
-        0 0 0 1px rgba(255, 255, 255, 0.3) inset,
-        0 20px 80px rgba(99, 102, 241, 0.15);
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto; /* Modal content catches clicks */
 }
 
 .detail-header {
-    padding: 2.5rem 3rem;
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+    padding: 2rem 3rem;
+    background: transparent; /* Remove gradient to eliminate black line */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none; /* Remove border that creates black line */
+    border-radius: 20px 20px 0 0;
     position: relative;
     flex-shrink: 0;
-    z-index: 1;
-    box-shadow: 0 1px 3px rgba(99, 102, 241, 0.06);
+    z-index: 2;
+}
+
+.detail-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.detail-progress {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 6px;
 }
 
 .detail-close {
@@ -2983,6 +3013,80 @@ label.filter-checkbox,
     color: var(--primary);
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+/* ===== MODAL NAVIGATION ARROWS ===== */
+.modal-nav-btn {
+    position: fixed; /* Fixed to viewport for consistent positioning */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(250, 251, 253, 0.9) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10002 !important; /* Above modal content */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 16px rgba(99, 102, 241, 0.2),
+        0 8px 32px rgba(139, 92, 246, 0.1);
+    color: var(--primary);
+    opacity: 0.9;
+}
+
+.modal-nav-previous {
+    left: max(2vw, 20px); /* Responsive positioning */
+}
+
+.modal-nav-next {
+    right: max(2vw, 20px); /* Responsive positioning */
+}
+
+.modal-nav-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(250, 251, 253, 1) 100%);
+    color: var(--secondary);
+    transform: translateY(-50%) scale(1.15);
+    box-shadow: 
+        0 8px 24px rgba(99, 102, 241, 0.35),
+        0 12px 48px rgba(139, 92, 246, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    opacity: 1;
+}
+
+.modal-nav-btn:active {
+    transform: translateY(-50%) scale(1.08);
+}
+
+.modal-nav-btn svg {
+    width: 28px;
+    height: 28px;
+    stroke-width: 2.5;
+}
+
+/* Responsive - hide on smaller screens */
+@media (max-width: 768px) {
+    .modal-nav-btn {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .modal-nav-previous {
+        left: 1rem;
+    }
+    
+    .modal-nav-next {
+        right: 1rem;
+    }
 }
 
 .detail-title {
@@ -3020,6 +3124,8 @@ label.filter-checkbox,
     overflow: hidden;
     flex: 1;
     min-height: 0;
+    width: 100%; /* Ensure full width */
+    max-width: 100%; /* No constraints */
     background: transparent;
 }
 
@@ -3031,12 +3137,14 @@ label.filter-checkbox,
 .detail-tabs {
     display: flex;
     gap: 0.5rem;
-    margin: 1.5rem 2rem;
+    margin: 1rem 1.5rem 0 1.5rem; /* Match grid padding */
     padding: 0.5rem;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
     border: 1px solid rgba(226, 232, 240, 0.4);
     flex-shrink: 0;
+    width: calc(100% - 3rem); /* Explicit width calculation */
+    max-width: calc(100% - 3rem);
 }
 
 .detail-tab {
@@ -3143,30 +3251,37 @@ label.filter-checkbox,
     margin-bottom: 0;
 }
 
-/* Metrics Section - Side by Side Charts (Detail Panel Only) */
+/* Metrics Section - FULL WIDTH UTILIZATION */
 #detail-panel .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-top: 0;
+    gap: 1.25rem; /* Slightly reduced gap for more chart space */
+    margin: 0;
+    padding: 1.25rem 1.25rem 1.5rem 1.25rem; /* Tighter padding */
     align-items: stretch;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important; /* Remove any max-width */
+    box-sizing: border-box;
+    justify-items: stretch; /* Force cards to fill grid cells */
 }
 
 .metric-card {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 14px;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);
+    padding: 1.25rem; /* REDUCED padding for more chart space */
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
     display: flex;
     flex-direction: column;
     min-height: 0;
+    width: 100% !important; /* Force full width */
+    max-width: 100% !important; /* No constraints */
     min-width: 0;
     transition: all 0.2s ease;
+    overflow: visible;
+    flex: 1; /* Flex to fill grid cell */
 }
 
 .metric-card:hover {
@@ -3191,7 +3306,7 @@ label.filter-checkbox,
     color: #1e293b;
     text-transform: none;
     letter-spacing: -0.01em;
-    margin-bottom: 0.875rem;
+    margin-bottom: 0.5rem; /* FURTHER REDUCED for chart space */
     flex-shrink: 0;
     display: block;
 }
@@ -3210,7 +3325,7 @@ label.filter-checkbox,
 
 .metric-card .detail-field {
     flex-shrink: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Reduced for tighter layout */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3222,18 +3337,22 @@ label.filter-checkbox,
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Tighter spacing */
 }
 
 .metric-card .recommendation-placeholder {
-    margin-top: 0.875rem;
+    margin-top: 0.75rem;
     flex-shrink: 0;
+    max-height: 140px; /* CONSTRAIN recommendation height */
+    overflow-y: auto; /* Add scroll if needed */
+    overflow-x: hidden;
 }
 
 .metric-card .automation-recommendation {
     margin-bottom: 0;
-    padding: 0.875rem;
+    padding: 0.75rem; /* Reduced padding */
     font-size: 0.8125rem;
+    line-height: 1.4; /* Tighter line height */
 }
 
 .metric-performance-indicator {
@@ -3395,20 +3514,27 @@ label.filter-checkbox,
 
 .chart-container {
     position: relative;
-    height: 300px;
-    margin-top: 0.875rem;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    padding: 1rem 1.125rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    width: 100%;
+    height: 500px; /* DRAMATICALLY INCREASED for maximum visibility */
+    margin-top: 0.75rem;
+    margin-left: -0.75rem;  /* Extend further left */
+    margin-right: -0.75rem; /* Extend further right */
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 12px;
+    padding: 1rem 0.75rem; /* Tighter padding for more chart space */
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.06);
+    width: calc(100% + 1.5rem); /* Extend 0.75rem each side */
+    min-height: 500px;
     min-width: 0;
+    max-width: none; /* No constraints */
+    overflow: visible;
 }
 
 .chart-container canvas {
     max-height: 100%;
     width: 100% !important;
+    height: 100% !important; /* Fill full container height */
     max-width: 100%;
+    display: block;
 }
 
 @media (max-width: 768px) {

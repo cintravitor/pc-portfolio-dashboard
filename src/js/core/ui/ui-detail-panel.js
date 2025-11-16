@@ -441,6 +441,44 @@
     }
     
     /**
+     * Get navigation info for current solution
+     * @param {number} productId - Current product ID
+     * @returns {Object} Navigation context
+     */
+    function getNavigationContext(productId) {
+        const filteredData = window.DataManager.getFilteredData();
+        const currentIndex = filteredData.findIndex(p => p.id === productId);
+        
+        return {
+            currentIndex,
+            total: filteredData.length,
+            hasPrevious: currentIndex > 0,
+            hasNext: currentIndex < filteredData.length - 1,
+            previousId: currentIndex > 0 ? filteredData[currentIndex - 1].id : null,
+            nextId: currentIndex < filteredData.length - 1 ? filteredData[currentIndex + 1].id : null,
+            previousName: currentIndex > 0 ? filteredData[currentIndex - 1].name : null,
+            nextName: currentIndex < filteredData.length - 1 ? filteredData[currentIndex + 1].name : null
+        };
+    }
+    
+    /**
+     * Navigate to another solution (with animation)
+     * @param {string} direction - 'previous' or 'next'
+     */
+    function navigateToSolution(direction) {
+        const currentProduct = window.State.getCurrentDetailModalProduct();
+        if (!currentProduct) return;
+        
+        const navContext = getNavigationContext(currentProduct.id);
+        const targetId = direction === 'previous' ? navContext.previousId : navContext.nextId;
+        
+        if (targetId !== null) {
+            // Quick transition: close current, open next
+            showDetailPanel(targetId);
+        }
+    }
+    
+    /**
      * Show detail panel for a product with streamlined attribute display
      * Displays essential ownership and context information in scannable format
      * @param {number} productId - Product ID to display
@@ -473,6 +511,9 @@
             panel._originCard = clickedCard;
             panel._originRect = cardRect;
         }
+        
+        // Get navigation context
+        const navContext = getNavigationContext(productId);
 
         // Check for alert context to display banner
         const alertContext = window.State.getAlertContext();
@@ -513,8 +554,29 @@
             <div class="detail-header">
                 <button class="detail-close" aria-label="Close detail modal (press ESC or browser back)" role="button">×</button>
                 <div class="detail-title" id="detail-modal-title" role="heading" aria-level="1">${window.Utils.escapeHtml(product.name)}</div>
-                <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
+                <div class="detail-header-meta">
+                    <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
+                    ${navContext.total > 1 ? `<div class="detail-progress">Solution ${navContext.currentIndex + 1} of ${navContext.total}</div>` : ''}
+                </div>
             </div>
+            ${navContext.hasPrevious ? `
+                <button class="modal-nav-btn modal-nav-previous" 
+                        aria-label="Previous solution: ${window.Utils.escapeHtml(navContext.previousName)}"
+                        title="${window.Utils.escapeHtml(navContext.previousName)}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+            ` : ''}
+            ${navContext.hasNext ? `
+                <button class="modal-nav-btn modal-nav-next" 
+                        aria-label="Next solution: ${window.Utils.escapeHtml(navContext.nextName)}"
+                        title="${window.Utils.escapeHtml(navContext.nextName)}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            ` : ''}
             <div class="detail-body">
                 ${alertBannerHtml}
                 <!-- Tab Navigation -->
@@ -556,8 +618,8 @@
         overlay.setAttribute('aria-modal', 'true');
         overlay.setAttribute('aria-labelledby', 'detail-modal-title');
         
-        // Prevent body scroll when modal is open
-        document.body.style.overflow = 'hidden';
+        // Allow body scroll to see dashboard content below modal
+        // Note: Modal has its own internal scrolling via overflow-y: auto
         
         // Store previously focused element for restoration on close
         const previouslyFocused = document.activeElement;
@@ -569,12 +631,18 @@
             overlay.style.opacity = '0';
             
             // Set panel initial state to match card position/size
-            const scaleX = cardRect.width / window.innerWidth;
-            const scaleY = cardRect.height / window.innerHeight;
-            const translateX = cardRect.left + (cardRect.width / 2) - (window.innerWidth / 2);
-            const translateY = cardRect.top + (cardRect.height / 2) - (window.innerHeight / 2);
+            // Account for modal being centered (50%) and offset from top (2vh)
+            const modalCenterX = window.innerWidth / 2;
+            const modalTop = window.innerHeight * 0.02;
+            const modalCenterY = modalTop + (window.innerHeight * 0.94) / 2;
             
-            panel.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+            const scaleX = cardRect.width / (window.innerWidth * 0.96);
+            const scaleY = cardRect.height / (window.innerHeight * 0.94);
+            const translateX = cardRect.left + (cardRect.width / 2) - modalCenterX;
+            const translateY = cardRect.top + (cardRect.height / 2) - modalCenterY;
+            
+            // Initial transform with proper positioning (account for translateX(-50%) base)
+            panel.style.transform = `translateX(-50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
             panel.style.opacity = '0.5';
             
             // Force reflow to ensure initial state is applied
@@ -583,19 +651,19 @@
             // Animate to full screen using requestAnimationFrame for smoothness
             requestAnimationFrame(() => {
                 // Enable transitions
-                overlay.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-                panel.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                overlay.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                panel.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 
-                // Animate to full screen
+                // Animate to centered modal position
                 overlay.style.opacity = '1';
-                panel.style.transform = 'translate(0, 0) scale(1, 1)';
+                panel.style.transform = 'translateX(-50%) translate(0, 0) scale(1, 1)';
                 panel.style.opacity = '1';
                 
                 // Clean up transition styles after animation completes
                 setTimeout(() => {
                     overlay.style.transition = '';
                     panel.style.transition = '';
-                }, 200);
+                }, 300);
             });
         } else {
             // Fallback: simple fade-in if no card reference
@@ -612,6 +680,9 @@
         // Setup modal close handlers
         setupModalCloseHandlers();
         
+        // Setup navigation button handlers
+        setupNavigationHandlers();
+        
         // Focus close button for keyboard accessibility (after animation)
         setTimeout(() => {
             const closeBtn = panel.querySelector('.detail-close');
@@ -621,27 +692,44 @@
         }, 210);
 
         
-        // Load charts asynchronously (non-blocking) using requestAnimationFrame for optimal performance
-        // Modal UI renders instantly while charts load in background
-        requestAnimationFrame(() => {
+        // Load charts immediately for first-click display
+        // Use setTimeout(0) to ensure DOM is fully ready
+        setTimeout(() => {
+            const uxCanvas = document.getElementById('chart-ux');
+            const biCanvas = document.getElementById('chart-bi');
+            
+            if (!uxCanvas || !biCanvas) {
+                console.error('Chart canvas elements not found');
+                return;
+            }
+            
             window.UIManager.Charts.loadChartJs()
                 .then(() => {
-                    window.UIManager.Charts.renderMetricChart('chart-ux', product.monthlyUX, product.targetUX, product.keyMetricUX);
-                    window.UIManager.Charts.renderMetricChart('chart-bi', product.monthlyBI, product.targetBI, product.keyMetricBI);
+                    // Render charts immediately after Chart.js loads
+                    window.UIManager.Charts.renderMetricChart(
+                        'chart-ux', 
+                        product.monthlyUX, 
+                        product.targetUX, 
+                        product.keyMetricUX || 'UX Metric'
+                    );
+                    window.UIManager.Charts.renderMetricChart(
+                        'chart-bi', 
+                        product.monthlyBI, 
+                        product.targetBI, 
+                        product.keyMetricBI || 'BI Metric'
+                    );
                 })
                 .catch(error => {
                     console.error('Failed to load charts:', error);
                     // Show fallback message
-                    const uxContainer = document.getElementById('chart-ux');
-                    const biContainer = document.getElementById('chart-bi');
-                    if (uxContainer && uxContainer.parentElement) {
-                        uxContainer.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load charts. Please refresh the page.</p>';
+                    if (uxCanvas && uxCanvas.parentElement) {
+                        uxCanvas.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load UX chart. Please refresh.</p>';
                     }
-                    if (biContainer && biContainer.parentElement) {
-                        biContainer.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load charts. Please refresh the page.</p>';
+                    if (biCanvas && biCanvas.parentElement) {
+                        biCanvas.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load BI chart. Please refresh.</p>';
                     }
                 });
-        });
+        }, 50); // Small delay to ensure DOM is ready
         
         // Generate AI recommendations asynchronously
         generateAndDisplayRecommendations(product);
@@ -725,7 +813,7 @@
     
     /**
      * Setup event handlers for closing the modal
-     * Handles backdrop click, ESC key, and close button
+     * Handles backdrop click, ESC key, close button, and arrow key navigation
      */
     function setupModalCloseHandlers() {
         const overlay = document.getElementById('detail-panel-overlay');
@@ -735,24 +823,46 @@
         // Close button click
         closeBtn.addEventListener('click', hideDetailPanel);
         
-        // Backdrop click (clicking outside modal)
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                hideDetailPanel();
-            }
-        });
+        // Backdrop click (clicking outside modal) - disabled to allow scrolling
+        // overlay.addEventListener('click', (e) => {
+        //     if (e.target === overlay) {
+        //         hideDetailPanel();
+        //     }
+        // });
         
-        // ESC key press
-        const escHandler = (e) => {
+        // Keyboard handlers (ESC to close, arrows to navigate)
+        const keyHandler = (e) => {
             if (e.key === 'Escape') {
                 hideDetailPanel();
-                document.removeEventListener('keydown', escHandler);
+                document.removeEventListener('keydown', keyHandler);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateToSolution('previous');
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateToSolution('next');
             }
         };
-        document.addEventListener('keydown', escHandler);
+        document.addEventListener('keydown', keyHandler);
         
         // Store handler reference for cleanup
-        overlay._escHandler = escHandler;
+        overlay._keyHandler = keyHandler;
+    }
+    
+    /**
+     * Setup navigation button handlers
+     */
+    function setupNavigationHandlers() {
+        const prevBtn = document.querySelector('.modal-nav-previous');
+        const nextBtn = document.querySelector('.modal-nav-next');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => navigateToSolution('previous'));
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => navigateToSolution('next'));
+        }
     }
     
     /**
@@ -779,25 +889,29 @@
             // Get current position of origin card (may have moved due to filtering/scrolling)
             const currentCardRect = originCard.getBoundingClientRect();
             
-            // Calculate transform to contract back to card
-            const scaleX = currentCardRect.width / window.innerWidth;
-            const scaleY = currentCardRect.height / window.innerHeight;
-            const translateX = currentCardRect.left + (currentCardRect.width / 2) - (window.innerWidth / 2);
-            const translateY = currentCardRect.top + (currentCardRect.height / 2) - (window.innerHeight / 2);
+            // Calculate transform to contract back to card (account for modal's new centered position)
+            const modalCenterX = window.innerWidth / 2;
+            const modalTop = window.innerHeight * 0.02;
+            const modalCenterY = modalTop + (window.innerHeight * 0.94) / 2;
+            
+            const scaleX = currentCardRect.width / (window.innerWidth * 0.96);
+            const scaleY = currentCardRect.height / (window.innerHeight * 0.94);
+            const translateX = currentCardRect.left + (currentCardRect.width / 2) - modalCenterX;
+            const translateY = currentCardRect.top + (currentCardRect.height / 2) - modalCenterY;
             
             // Enable transitions
-            overlay.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-            panel.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            overlay.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            panel.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             
             // Animate back to card position
             overlay.style.opacity = '0';
-            panel.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+            panel.style.transform = `translateX(-50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
             panel.style.opacity = '0';
             
             // After animation completes, hide and cleanup
             setTimeout(() => {
                 completeHidePanel(overlay, panel, skipHistoryPop);
-            }, 200);
+            }, 300);
         } else {
             // Fallback: simple fade-out
             overlay.style.transition = 'opacity 0.15s ease';
@@ -828,10 +942,10 @@
         });
         window.State.clearAllChartInstances();
         
-        // Clean up ESC key listener
-        if (overlay && overlay._escHandler) {
-            document.removeEventListener('keydown', overlay._escHandler);
-            overlay._escHandler = null;
+        // Clean up keyboard listeners
+        if (overlay && overlay._keyHandler) {
+            document.removeEventListener('keydown', overlay._keyHandler);
+            overlay._keyHandler = null;
         }
         
         // Hide overlay and panel
@@ -847,8 +961,9 @@
             panel.style.opacity = '';
         }
         
-        // Restore body scroll
+        // Restore body styles
         document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
         
         // Restore focus to previously focused element (accessibility)
         if (panel && panel._previouslyFocused) {

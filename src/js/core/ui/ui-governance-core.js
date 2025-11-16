@@ -87,8 +87,8 @@
                 throw new Error('No portfolio data available. Please refresh data first.');
             }
             
-            // Calculate all governance metrics
-            const governanceData = window.DataManager.Governance.calculateAll(portfolioData);
+            // Calculate all governance metrics using facade method
+            const governanceData = window.DataManager.calculateGovernanceMetrics(portfolioData);
             console.log('Governance data calculated:', governanceData);
             
             // PERFORMANCE: Use DocumentFragment for batch DOM insertion
@@ -214,7 +214,7 @@
             btn.addEventListener('click', function() {
                 const issueType = this.dataset.issueType;
                 if (window.UIGovernance && window.UIGovernance.Smoke) {
-                    const governanceData = window.DataManager.Governance.calculateAll(window.State.getPortfolioData());
+                    const governanceData = window.DataManager.calculateGovernanceMetrics(window.State.getPortfolioData());
                     window.UIGovernance.Smoke.showSmokeDetectorModal(governanceData.smokeDetectorData);
                 }
             });

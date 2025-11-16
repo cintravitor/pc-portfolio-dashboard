@@ -74,7 +74,7 @@
      * Helper function for "View All Issues" button
      */
     function drillDownToAllDataHealthIssues() {
-        const anomalyReport = window.DataManager.checkAnomalies();
+        const anomalyReport = window.DataManager.detectAnomalies();
         const allIssueProducts = anomalyReport.dataHealthIssues.map(item => item.name);
         
         drillDownToInsightsAnalytics({
@@ -337,9 +337,9 @@
         // Temporarily replace portfolio data with filtered data
         window.State.setPortfolioData(filteredData);
         
-        // Calculate metrics and analysis with filtered data
-        const metrics = window.DataManager.calculatePortfolioMetrics();
-        const analysis = window.DataManager.analyzePortfolioData(filteredData);
+        // Calculate metrics and analysis with filtered data using facade methods
+        const metrics = window.DataManager.getPortfolioMetrics();
+        const analysis = window.DataManager.analyzePortfolio(filteredData);
         
         // Restore original data
         window.State.setPortfolioData(originalData);

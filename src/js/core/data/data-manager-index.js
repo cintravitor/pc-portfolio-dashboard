@@ -172,6 +172,56 @@
         return window.DataManager.Accessors.getCardSummaryMetrics();
     }
     
+    // ==================== NEW FACADE METHODS (Phase 1 Event Migration) ====================
+    
+    /**
+     * Calculate governance metrics for given data
+     * Facade method to reduce direct sub-module coupling
+     * @param {Array} data - Portfolio data to analyze
+     * @returns {Object} Governance metrics
+     */
+    function calculateGovernanceMetrics(data) {
+        return window.DataManager.Governance.calculateAll(data);
+    }
+    
+    /**
+     * Categorize product risk level
+     * Facade method to reduce direct sub-module coupling
+     * @param {Object} product - Product to categorize
+     * @returns {string} Risk level: 'critical', 'monitor', or 'healthy'
+     */
+    function categorizeRisk(product) {
+        return window.DataManager.Filtering.categorizeProductRisk(product);
+    }
+    
+    /**
+     * Detect anomalies in portfolio data
+     * Facade method to reduce direct sub-module coupling
+     * @returns {Object} Anomaly report
+     */
+    function detectAnomalies() {
+        return window.DataManager.Anomalies.checkAnomalies();
+    }
+    
+    /**
+     * Get portfolio-wide metrics
+     * Facade method to reduce direct sub-module coupling
+     * @returns {Object} Portfolio metrics
+     */
+    function getPortfolioMetrics() {
+        return window.DataManager.Analytics.calculatePortfolioMetrics();
+    }
+    
+    /**
+     * Analyze portfolio data for insights
+     * Facade method to reduce direct sub-module coupling
+     * @param {Array} data - Portfolio data to analyze
+     * @returns {Object} Analysis results
+     */
+    function analyzePortfolio(data) {
+        return window.DataManager.Analytics.analyzePortfolioData(data);
+    }
+    
     // ==================== PUBLIC FACADE API ====================
     
     const facadeAPI = {
@@ -184,6 +234,13 @@
         getPortfolioData,    // Read-only accessor
         getProductById,      // Read-only accessor
         getSummaryMetrics,   // Read-only accessor
+        
+        // New Phase 1 facade methods (reduce coupling)
+        calculateGovernanceMetrics,  // Governance calculation
+        categorizeRisk,              // Risk categorization
+        detectAnomalies,             // Anomaly detection
+        getPortfolioMetrics,         // Portfolio metrics
+        analyzePortfolio,            // Portfolio analysis
         
         // ==================== SUB-MODULES (Backward Compatibility) ====================
         // Direct access to sub-modules for backward compatibility

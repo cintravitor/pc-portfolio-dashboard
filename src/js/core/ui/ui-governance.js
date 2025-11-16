@@ -148,8 +148,8 @@
                 biAutomation: portfolioData[0]?.biAutomation
             });
             
-            // Calculate all governance metrics client-side (includes automation percentages)
-            const governanceData = window.DataManager.Governance.calculateAll(portfolioData);
+            // Calculate all governance metrics using facade method
+            const governanceData = window.DataManager.calculateGovernanceMetrics(portfolioData);
             console.log('Governance data calculated:', governanceData);
             
             // Clear and start building dashboard
@@ -1738,9 +1738,9 @@ Example: "10 solutions [HIGH RISK] require immediate attention" NOT "10 solution
             return;
         }
         
-        // Get matching solutions using the risk categorization function
+        // Get matching solutions using the risk categorization facade method
         const matchingSolutions = portfolioData
-            .filter(product => window.DataManager.Filtering.categorizeProductRisk(product) === riskLevel)
+            .filter(product => window.DataManager.categorizeRisk(product) === riskLevel)
             .sort((a, b) => a.name.localeCompare(b.name)); // Alphabetical sort
         
         const topSolutions = matchingSolutions.slice(0, 5);
@@ -1815,8 +1815,8 @@ Example: "10 solutions [HIGH RISK] require immediate attention" NOT "10 solution
         showFilterBadge(filterContext);
         
         try {
-            // Calculate governance metrics client-side (NO network call)
-            const governanceData = window.DataManager.Governance.calculateAll(filteredData);
+            // Calculate governance metrics using facade method (NO network call)
+            const governanceData = window.DataManager.calculateGovernanceMetrics(filteredData);
             
             // Update all sections with new data (await because it's async)
             await updateDashboardSections(governanceData);

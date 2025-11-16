@@ -15,8 +15,8 @@
 (function() {
     'use strict';
     
-    // Private state
-    const expandedSections = new Set();
+    // Private state - Horizontal Journey Navigation
+    let activeJourneyStage = null; // Tracks currently selected journey stage
     
     // Performance optimization: Cache grouped data
     let cachedFilteredData = null;
@@ -105,7 +105,178 @@
     }
     
     /**
-     * Render product cards grouped by Main Journey Stage with collapsible sections
+     * Render horizontal journey navigation bar
+     * Creates stage pills with glassmorphism and active state management
+     */
+    function renderJourneyNavigation() {
+        const navigationContainer = document.getElementById('journey-navigation');
+        const stagesWrapper = document.getElementById('journey-stages-wrapper');
+        
+        if (!navigationContainer || !stagesWrapper) {
+            console.warn('Journey navigation containers not found');
+            return;
+        }
+        
+        // Get grouped data
+        const { groupedByJourney, sortedJourneys } = getGroupedData();
+        
+        // Filter to show only stages with solutions
+        const journeysWithResults = sortedJourneys.filter(journey => 
+            groupedByJourney[journey] && groupedByJourney[journey].length > 0
+        );
+        
+        // If no results, hide navigation
+        if (journeysWithResults.length === 0) {
+            navigationContainer.style.display = 'none';
+            return;
+        }
+        
+        // Show navigation
+        navigationContainer.style.display = 'block';
+        
+        // Only set default active stage if one was previously selected and still has results
+        if (activeJourneyStage && !journeysWithResults.includes(activeJourneyStage)) {
+            activeJourneyStage = null; // Reset if previous stage has no results
+        }
+        
+        // Render stage buttons
+        stagesWrapper.innerHTML = journeysWithResults.map(journey => {
+            const count = groupedByJourney[journey].length;
+            const isActive = journey === activeJourneyStage;
+            const activeClass = isActive ? 'active' : '';
+            
+            return `
+                <button class="journey-stage-btn ${activeClass}" 
+                        data-journey="${window.Utils.escapeHtml(journey)}"
+                        role="tab"
+                        aria-selected="${isActive}"
+                        aria-controls="cards-container"
+                        ${count === 0 ? 'disabled' : ''}>
+                    <span class="journey-stage-name">${window.Utils.escapeHtml(journey)}</span>
+                    <span class="journey-stage-count">${count}</span>
+                </button>
+            `;
+        }).join('');
+        
+        // Set up event delegation for stage selection
+        setupJourneyNavigationListeners(stagesWrapper);
+    }
+    
+    /**
+     * Set up event delegation for journey stage button clicks and keyboard navigation
+     * @param {HTMLElement} stagesWrapper - The wrapper containing stage buttons
+     */
+    function setupJourneyNavigationListeners(stagesWrapper) {
+        // Remove old listeners if exist
+        const oldClickListener = stagesWrapper._journeyClickListener;
+        const oldKeyListener = stagesWrapper._journeyKeyListener;
+        
+        if (oldClickListener) {
+            stagesWrapper.removeEventListener('click', oldClickListener);
+        }
+        if (oldKeyListener) {
+            stagesWrapper.removeEventListener('keydown', oldKeyListener);
+        }
+        
+        // Click listener
+        const clickListener = function(event) {
+            const button = event.target.closest('.journey-stage-btn');
+            if (!button || button.disabled) return;
+            
+            const journey = button.dataset.journey;
+            if (journey) {
+                selectJourneyStage(journey);
+            }
+        };
+        
+        // Keyboard navigation listener (Arrow keys + Home/End)
+        const keyListener = function(event) {
+            const button = event.target.closest('.journey-stage-btn');
+            if (!button) return;
+            
+            const buttons = Array.from(stagesWrapper.querySelectorAll('.journey-stage-btn:not([disabled])'));
+            const currentIndex = buttons.indexOf(button);
+            
+            let targetIndex = currentIndex;
+            
+            switch(event.key) {
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                    targetIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
+                    event.preventDefault();
+                    break;
+                case 'ArrowRight':
+                case 'ArrowDown':
+                    targetIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
+                    event.preventDefault();
+                    break;
+                case 'Home':
+                    targetIndex = 0;
+                    event.preventDefault();
+                    break;
+                case 'End':
+                    targetIndex = buttons.length - 1;
+                    event.preventDefault();
+                    break;
+                case 'Enter':
+                case ' ':
+                    const journey = button.dataset.journey;
+                    if (journey) {
+                        selectJourneyStage(journey);
+                    }
+                    event.preventDefault();
+                    break;
+                default:
+                    return;
+            }
+            
+            if (targetIndex !== currentIndex && buttons[targetIndex]) {
+                buttons[targetIndex].focus();
+            }
+        };
+        
+        stagesWrapper.addEventListener('click', clickListener);
+        stagesWrapper.addEventListener('keydown', keyListener);
+        
+        // Store for cleanup
+        stagesWrapper._journeyClickListener = clickListener;
+        stagesWrapper._journeyKeyListener = keyListener;
+    }
+    
+    /**
+     * Select a journey stage and update the display with smooth transition
+     * @param {string} stageName - The display name of the journey stage to show
+     */
+    function selectJourneyStage(stageName) {
+        if (activeJourneyStage === stageName) {
+            return; // Already selected
+        }
+        
+        const cardsContainer = document.getElementById('cards-container');
+        if (!cardsContainer) return;
+        
+        // Use requestAnimationFrame for smoother transition (GPU-optimized)
+        cardsContainer.classList.add('transitioning');
+        
+        // Wait for fade-out transition to complete
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                activeJourneyStage = stageName;
+                renderJourneyNavigation(); // Update active button state
+                renderCards(); // Render new stage's cards
+                
+                // Remove transitioning class for fade-in after a frame
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        cardsContainer.classList.remove('transitioning');
+                    }, 50);
+                });
+            }, 250); // Reduced from 300ms for snappier feel
+        });
+    }
+    
+    /**
+     * Render product cards for the active journey stage only
      */
     function renderCards() {
         const container = document.getElementById('cards-container');
@@ -117,89 +288,101 @@
             container.classList.add('hidden');
             emptyState.classList.remove('hidden');
             invalidateCache(); // Clear cache on empty
+            
+            // Also hide journey navigation
+            const navigationContainer = document.getElementById('journey-navigation');
+            if (navigationContainer) {
+                navigationContainer.style.display = 'none';
+            }
             return;
         }
 
         emptyState.classList.add('hidden');
         container.classList.remove('hidden');
 
+        // Render journey navigation first
+        renderJourneyNavigation();
+
         // Get grouped data (from cache if possible)
-        const { groupedByJourney, sortedJourneys } = getGroupedData();
+        const { groupedByJourney } = getGroupedData();
 
-        // Filter out empty journey sections for better UX (Premium Design v8.4.0)
-        // Only show journey stages that have at least 1 product
-        const journeysWithResults = sortedJourneys.filter(journey => 
-            groupedByJourney[journey] && groupedByJourney[journey].length > 0
-        );
+        // If no active stage selected, show elegant minimal empty state
+        if (!activeJourneyStage) {
+            container.innerHTML = `
+                <div class="empty-stage-zen">
+                    <div class="zen-arrows">
+                        <span class="zen-arrow">↑</span>
+                        <span class="zen-arrow">↑</span>
+                        <span class="zen-arrow">↑</span>
+                    </div>
+                    <div class="zen-text">Choose a journey stage to explore</div>
+                    <div class="zen-divider"></div>
+                </div>
+            `;
+            return;
+        }
 
-        // Render collapsible sections (only non-empty ones)
-        container.innerHTML = journeysWithResults.map(journey => {
-            const products = groupedByJourney[journey];
-            const isExpanded = expandedSections.has(journey);
+        // Get products for the active journey stage
+        const activeProducts = groupedByJourney[activeJourneyStage] || [];
+
+        // If no products for active stage, show empty state
+        if (activeProducts.length === 0) {
+            container.innerHTML = '<div class="empty-stage-message">No solutions found for this journey stage.</div>';
+            return;
+        }
+
+        // Generate cards HTML for active journey stage only
+        const cardsHtml = activeProducts.map(product => {
+            const summary = window.DataManager.getCardSummaryMetrics(product);
             
-            // Generate cards HTML for this journey stage
-            const cardsHtml = products.map(product => {
-                const summary = window.DataManager.getCardSummaryMetrics(product);
+            // Calculate smoke detector alerts for this product (returns {count, triggers})
+            const alertData = window.DataManager.calculateSmokeDetectors(product);
+            const smokeDetectorBadge = getSmokeDetectorBadge(product.id, alertData);
+            
+            // Generate metric badges with actual values
+            const uxBadge = getMetricBadgeWithValues('UX', summary.uxStatus, summary.uxValue, summary.uxTarget, summary.uxMetric);
+            const biBadge = getMetricBadgeWithValues('BI', summary.biStatus, summary.biValue, summary.biTarget, summary.biMetric);
+            
+            // Get P&C Area for badge
+            const pncArea = product.area || 'N/A';
+            const pncAreaBadge = pncArea !== 'N/A' ? `<span class="card-pnc-area-badge">${window.Utils.escapeHtml(pncArea)}</span>` : '';
+            
+            return `
+            <div class="product-card product-card-compact fade-in" data-product-id="${product.id}">
+                ${smokeDetectorBadge}
                 
-                // Calculate smoke detector alerts for this product (returns {count, triggers})
-                const alertData = window.DataManager.calculateSmokeDetectors(product);
-                const smokeDetectorBadge = getSmokeDetectorBadge(product.id, alertData);
-                
-                // Generate metric badges with actual values
-                const uxBadge = getMetricBadgeWithValues('UX', summary.uxStatus, summary.uxValue, summary.uxTarget, summary.uxMetric);
-                const biBadge = getMetricBadgeWithValues('BI', summary.biStatus, summary.biValue, summary.biTarget, summary.biMetric);
-                
-                return `
-                <div class="product-card product-card-compact fade-in" data-product-id="${product.id}">
-                    ${smokeDetectorBadge}
-                    
-                    <div class="card-header-compact">
+                <div class="card-header-compact">
+                    <div class="card-title-row">
+                        ${pncAreaBadge}
                         <div class="card-title-compact">
                             ${window.Utils.escapeHtml(product.name)}
                         </div>
                     </div>
+                </div>
+                
+                <div class="card-body-compact">
+                    <div class="card-owner">
+                        <span class="owner-icon">👤</span>
+                        <span class="owner-name">${window.Utils.escapeHtml(summary.owner)}</span>
+                    </div>
                     
-                    <div class="card-body-compact">
-                        <div class="card-owner">
-                            <span class="owner-icon">👤</span>
-                            <span class="owner-name">${window.Utils.escapeHtml(summary.owner)}</span>
-                        </div>
-                        
-                        <div class="card-problem-wrapper">
-                            <div class="card-problem-extended">
-                                ${window.Utils.escapeHtml(summary.problem)}
-                            </div>
-                            <span class="ai-attribution">powered by OpenAI</span>
-                        </div>
-                        
-                        <div class="card-metrics-new">
-                            ${uxBadge}
-                            ${biBadge}
+                    <div class="card-problem-wrapper">
+                        <div class="card-problem-extended">
+                            ${window.Utils.escapeHtml(summary.problem)}
                         </div>
                     </div>
-                </div>
-                `;
-            }).join('');
-            
-            // SECURITY: Use data-journey attribute instead of inline onclick
-            return `
-            <div class="area-section" data-journey="${window.Utils.escapeHtml(journey)}">
-                <div class="area-header">
-                    <div class="area-header-content">
-                        <span class="area-toggle-icon">${isExpanded ? '−' : '+'}</span>
-                        <h3 class="area-title">${window.Utils.escapeHtml(journey)}</h3>
-                        <span class="area-count">(${products.length})</span>
+                    
+                    <div class="card-metrics-horizontal">
+                        ${uxBadge}
+                        ${biBadge}
                     </div>
-                </div>
-                <div class="area-cards ${isExpanded ? 'expanded' : 'collapsed'}">
-                    ${cardsHtml}
                 </div>
             </div>
             `;
         }).join('');
         
-        // Set up event delegation for toggle clicks (better than inline onclick)
-        setupAreaToggleListeners(container);
+        // Render cards directly (no wrapper sections needed)
+        container.innerHTML = cardsHtml;
         
         // Set up alert tooltip listeners (only once)
         if (!tooltipListenersInitialized) {
@@ -208,34 +391,6 @@
         }
     }
     
-    /**
-     * Set up event delegation for journey stage toggle clicks
-     * More efficient and secure than inline onclick
-     */
-    function setupAreaToggleListeners(container) {
-        // Remove old listener if exists
-        const oldListener = container._areaToggleListener;
-        if (oldListener) {
-            container.removeEventListener('click', oldListener);
-        }
-        
-        // Create new listener
-        const newListener = function(event) {
-            const header = event.target.closest('.area-header');
-            if (!header) return;
-            
-            const section = header.closest('.area-section');
-            if (!section) return;
-            
-            const journey = section.dataset.journey;
-            if (journey) {
-                toggleArea(journey);
-            }
-        };
-        
-        container.addEventListener('click', newListener);
-        container._areaToggleListener = newListener; // Store for cleanup
-    }
     
     /**
      * Get platform information with icon
@@ -423,62 +578,34 @@
     }
     
     /**
-     * Toggle journey stage section expansion
-     * @param {string} journey - Journey stage display name to toggle
+     * Legacy function - now redirects to selectJourneyStage
+     * Maintained for backward compatibility
+     * @deprecated Use selectJourneyStage instead
      */
     function toggleArea(journey) {
-        try {
-            if (!journey) {
-                console.warn('toggleArea called with empty journey');
-                return;
-            }
-            
-            if (expandedSections.has(journey)) {
-                expandedSections.delete(journey);
-            } else {
-                expandedSections.add(journey);
-            }
-            
-            // Don't invalidate cache - grouping hasn't changed
-            renderCards();
-        } catch (error) {
-            console.error('Failed to toggle journey:', journey, error);
-        }
+        console.warn('toggleArea is deprecated. Use selectJourneyStage instead.');
+        selectJourneyStage(journey);
     }
     
     /**
-     * Expand specific journey stages (used by filtering)
-     * @param {Array<string>} journeys - Array of journey stage names to expand
+     * Legacy function - now selects first journey with results
+     * Maintained for backward compatibility
+     * @deprecated No longer needed with horizontal navigation
      */
     function expandAreas(journeys) {
-        try {
-            if (!Array.isArray(journeys)) {
-                console.warn('expandAreas called with non-array:', journeys);
-                return;
-            }
-            
-            journeys.forEach(journey => {
-                if (journey) {
-                    expandedSections.add(journey);
-                }
-            });
-            
-            renderCards();
-        } catch (error) {
-            console.error('Failed to expand journey stages:', error);
+        console.warn('expandAreas is deprecated with horizontal navigation.');
+        if (Array.isArray(journeys) && journeys.length > 0) {
+            selectJourneyStage(journeys[0]);
         }
     }
     
     /**
-     * Collapse all journey stage sections
+     * Legacy function - maintained for compatibility
+     * @deprecated No longer needed with horizontal navigation
      */
     function collapseAllAreas() {
-        try {
-            expandedSections.clear();
-            renderCards();
-        } catch (error) {
-            console.error('Failed to collapse all journey stages:', error);
-        }
+        console.warn('collapseAllAreas is deprecated with horizontal navigation.');
+        // No-op: Single stage always visible
     }
     
     /**
@@ -899,15 +1026,17 @@
     if (!window.UIManager) window.UIManager = {};
     window.UIManager.Cards = {
         render: renderCards,
+        renderJourneyNavigation,  // NEW: Horizontal journey navigation
+        selectJourneyStage,  // NEW: Select active journey stage
         updateStats,  // Legacy - calls updateInlineMetrics
         updateInlineMetrics,  // NEW: Premium header redesign v8.4.0
         setupInlineMetricsListeners,  // NEW: Setup click handlers for warning metrics
         clearInlineMetricsActiveState,  // NEW: Clear visual state when filters cleared
         updateLastUpdateDisplay,
         updateFilteredSummaryCards,  // NEW: Real-time summary card updates
-        toggleArea,
-        expandAreas,
-        collapseAllAreas,
+        toggleArea,  // DEPRECATED: Legacy compatibility
+        expandAreas,  // DEPRECATED: Legacy compatibility
+        collapseAllAreas,  // DEPRECATED: Legacy compatibility
         invalidateCache  // Export for external cache invalidation
     };
     
@@ -916,6 +1045,6 @@
     window.Utils.subscribe('filters:changed', updateFilteredSummaryCards);
     console.log('✅ Summary cards subscribed to filters:changed event');
     
-    console.log('✅ UI Cards module loaded (OPTIMIZED)');
+    console.log('✅ UI Cards module loaded (HORIZONTAL JOURNEY NAVIGATION)');
 })();
 

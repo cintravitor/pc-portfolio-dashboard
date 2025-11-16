@@ -498,7 +498,7 @@
             </div>
         `;
 
-        // Show overlay and panel
+        // Show overlay and panel - PRODUCTION APPROACH (SIMPLE & WORKING)
         const overlay = document.getElementById('detail-panel-overlay');
         overlay.classList.remove('hidden');
         panel.classList.remove('hidden');
@@ -672,7 +672,7 @@
         if (overlay) overlay.classList.add('hidden');
         if (panel) panel.classList.add('hidden');
         
-        // Restore body scroll
+        // Restore body scroll - PRODUCTION APPROACH (SIMPLE & WORKING)
         document.body.style.overflow = '';
         
         // Remove selected class from cards

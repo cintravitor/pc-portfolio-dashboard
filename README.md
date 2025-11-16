@@ -1,6 +1,6 @@
 # P&C Portfolio Dashboard
 
-![Version](https://img.shields.io/badge/version-8.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-production-green.svg)
 
 An interactive dashboard for managing and visualizing the People & Culture (P&C) portfolio solutions with AI-powered insights and strategic governance features.
@@ -62,13 +62,14 @@ The dashboard follows a modern, modular architecture:
 ### Two Main Views
 
 #### 🔍 Explore Tab
-- **🆕 Premium Header with Inline Metrics** (v8.4.0): Ultra-compact header with glass-morphism design, inline metrics display, and consolidated single-row filters for maximum content visibility
+- **🆕 Horizontal Journey Navigation** (v2.0.0): Interactive horizontal navigation bar with glassmorphism design, single-stage card view, and responsive layout
+- **Enhanced Solution Cards**: Compact design with P&C Area badges, horizontal metric layout, and improved scanability
+- **Premium Header with Inline Metrics**: Ultra-compact header with glass-morphism design and consolidated filters
 - **AI-Powered Cards**: Solution cards with AI-generated summaries (120-147 chars)
 - **Smart Filtering**: Multi-select filters by area, maturity, target user, and owner
 - **Clickable Warning Metrics**: Interactive UX/BI metrics that filter to missing data
-- **Smart Section Visibility**: Journey sections auto-hide when empty
 - **Smoke Detectors**: Automated issue detection with visual indicators
-- **Detail Panels**: Comprehensive solution details with metric charts
+- **Detail Panels**: Comprehensive solution details with metric charts (production-stable)
 - **Search**: Fast text search across solutions
 
 #### 💡 Insights Tab (Consolidated Dashboard)
@@ -111,11 +112,14 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder.
 - **[Deployment Guide](./docs/getting-started/deployment.md)** - Deploy to production
 
 #### Features & User Guides
-- **🆕 [Dynamic Strategic Filtering](./docs/features/DYNAMIC_STRATEGIC_FILTERING.md)** - Real-time filtering (v7.4.0)
+- **🆕 [Horizontal Journey Navigation](./docs/CHANGELOG.md)** - New journey stage flow (v2.0.0)
+- **[Dynamic Strategic Filtering](./docs/features/DYNAMIC_STRATEGIC_FILTERING.md)** - Real-time filtering (v7.4.0)
 - **[Governance Dashboard](./docs/features/GOVERNANCE_DASHBOARD.md)** - Strategic insights (v6.3.0)
 - **[AI Features](./docs/features/AI_FEATURES_USER_STORIES.md)** - AI-powered capabilities
 - **[Smoke Detectors](./docs/features/SMOKE_DETECTORS_README.md)** - Automated issue detection
 - **[User Stories](./docs/features/USER_STORIES.md)** - Complete feature list
+- **[CHANGELOG](./docs/CHANGELOG.md)** - Version history and release notes
+- **[ROLLBACK](./docs/ROLLBACK.md)** - Rollback procedures and emergency instructions
 
 #### Technical Documentation
 - **[Architecture Overview](./docs/architecture/overview.md)** - System design and patterns
@@ -246,8 +250,8 @@ Want to see your name here? Check out [CONTRIBUTING.md](./CONTRIBUTING.md) to ge
 
 ---
 
-**Version**: 6.3.0  
-**Last Updated**: October 21, 2025  
+**Version**: 2.0.0  
+**Last Updated**: November 16, 2025  
 **Status**: ✅ Production Ready
 
 Made with ❤️ by the P&C team

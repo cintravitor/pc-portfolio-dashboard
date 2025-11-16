@@ -89,7 +89,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 1rem;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
 }
 
 .executive-health-metric-card:hover {
@@ -769,7 +769,7 @@ body::before {
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing - smooth & snappy */
     position: relative;
 }
 
@@ -879,7 +879,7 @@ body::before {
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--text-primary);
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -912,7 +912,7 @@ select {
     font-weight: 500;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -946,7 +946,7 @@ select:focus {
     position: relative;
     min-width: 160px;
     flex: 1;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Consistent premium easing */
 }
 
 .multiselect-header {
@@ -960,7 +960,7 @@ select:focus {
     font-weight: 500;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing - consistent */
     box-shadow: 
         0 2px 8px rgba(139, 92, 246, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -1109,7 +1109,7 @@ select:focus {
     font-weight: 500;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
     user-select: none;
     white-space: nowrap;
     box-shadow: 
@@ -1170,12 +1170,25 @@ select:focus {
 /* Tab Content */
 .tab-content {
     display: none;
+    opacity: 0;
 }
 
 .tab-content.active {
     display: flex;
     gap: 2rem;
     align-items: flex-start;
+    animation: tabFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes tabFadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(6px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0);
+    }
 }
 
 .main-content {
@@ -2715,13 +2728,21 @@ select:focus {
     /* margin-top removed - handled by grid gap */
 }
 
+/* Horizontal Metrics Layout - Premium Compact Design */
+.card-metrics-horizontal {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: auto;
+}
+
 .metric-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.625rem;
-    font-size: 0.8125rem;
+    gap: 0.25rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.6875rem;
     font-weight: 600;
     border: 1.5px solid;
     transition: all 0.2s ease;
@@ -2755,9 +2776,9 @@ select:focus {
     color: #6b7280;
 }
 
-/* Metric Badge Components */
+/* Metric Badge Components - Compact Horizontal */
 .metric-label {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -2772,7 +2793,7 @@ select:focus {
 }
 
 .metric-current {
-    font-size: 1rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -2781,12 +2802,12 @@ select:focus {
 .metric-separator {
     opacity: 0.4;
     font-weight: 400;
-    font-size: 0.875rem;
+    font-size: 0.6875rem;
     margin: 0 0.0625rem;
 }
 
 .metric-target {
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     font-weight: 500;
     opacity: 0.65;
     line-height: 1;
@@ -2861,7 +2882,26 @@ select:focus {
     margin-top: auto; /* Push to bottom */
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
+
+/* Force hide legacy filter controls - prevent tab-switching visibility issues */
+#sort-by,
+label.filter-checkbox,
+.filter-checkbox {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
 
 /* ===== FULL-SCREEN MODAL OVERLAY ===== */
 .detail-panel-overlay {
@@ -2878,7 +2918,7 @@ select:focus {
     background: rgba(99, 102, 241, 0.04);
     backdrop-filter: blur(16px) saturate(120%);
     -webkit-backdrop-filter: blur(16px) saturate(120%);
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
@@ -2921,7 +2961,7 @@ select:focus {
     padding: 2rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    position: relative; /* Not sticky - just stays at top of panel */
+    position: relative;
     flex-shrink: 0;
     z-index: 1;
 }
@@ -2941,7 +2981,7 @@ select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
 }
 
 .detail-close:hover {
@@ -2969,9 +3009,9 @@ select:focus {
     display: flex;
     flex-direction: column;
     padding: 0;
-    overflow: hidden;
-    flex: 1;
-    min-height: 0;
+    overflow: hidden; /* Body container controls overflow */
+    flex: 1; /* Takes remaining space after header */
+    min-height: 0; /* Critical for flexbox scrolling */
 }
 
 .detail-body-column {
@@ -2982,9 +3022,10 @@ select:focus {
 .detail-tabs {
     display: flex;
     gap: 0.5rem;
-    padding: 1.5rem 1.5rem 0 !important;
+    padding: 1.25rem 1.5rem 0;
     background: rgba(255, 255, 255, 0.3);
     border-bottom: 2px solid rgba(226, 232, 240, 0.6);
+    flex-shrink: 0;
 }
 
 .detail-tab {
@@ -2996,7 +3037,7 @@ select:focus {
     font-weight: 600;
     color: #64748b;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing - consistent */
     position: relative;
     display: flex;
     align-items: center;
@@ -3048,7 +3089,7 @@ select:focus {
     opacity: 0.7;
 }
 
-/* Detail Tab Content */
+/* Detail Tab Content - CRITICAL SCROLLING FIX */
 .detail-tab-content {
     display: none;
     padding: 1.75rem 1.5rem 2rem !important;
@@ -3093,9 +3134,9 @@ select:focus {
 
 /* Metrics Section - Side by Side Charts (Detail Panel Only) */
 #detail-panel .metrics-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
     margin-top: 0;
     align-items: stretch;
     width: 100% !important;
@@ -3120,6 +3161,7 @@ select:focus {
 .metric-card:hover {
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
     transform: translateY(-1px);
+    border-color: rgba(99, 102, 241, 0.3); /* Subtle accent on hover */
 }
 
 .metric-card.below-target {
@@ -3407,6 +3449,11 @@ select:focus {
         max-height: 96vh;
     }
     
+    .detail-header {
+        padding: 1.5rem 1.25rem; /* Compact for mobile */
+        min-height: 80px;
+    }
+    
     .detail-body {
         padding: 0;
     }
@@ -3425,7 +3472,20 @@ select:focus {
         display: none;
     }
     
+    .detail-tabs {
+        padding: 1rem 1.25rem 0 !important;
+    }
+    
     .detail-tab-content {
+        padding: 1.5rem 1.25rem 2rem !important; /* Adjusted for mobile */
+        overflow-y: auto !important; /* Ensure scrolling on mobile */
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .metric-card {
         padding: 1.25rem;
     }
     
@@ -4515,12 +4575,12 @@ select:focus {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.75rem;
     cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid rgba(99, 102, 241, 0.15);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    min-height: 160px;
+    min-height: 120px;
     display: flex;
     flex-direction: column;
 }
@@ -4536,23 +4596,45 @@ select:focus {
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
-/* Card Header - Compact */
+/* Card Header - Compact with Inline P&C Badge */
 .card-header-compact {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid rgba(99, 102, 241, 0.1);
 }
 
+.card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-pnc-area-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.4rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--mercury-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
 .card-title-compact {
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #1e293b;
     line-height: 1.3;
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .status-badge-compact {
@@ -4564,11 +4646,11 @@ select:focus {
     flex-shrink: 0;
 }
 
-/* Card Body - Compact */
+/* Card Body - Compact with Tighter Spacing */
 .card-body-compact {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.4rem;
     flex: 1;
 }
 
@@ -4582,7 +4664,7 @@ select:focus {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     color: #64748b;
 }
 
@@ -4596,10 +4678,15 @@ select:focus {
 }
 
 .card-problem {
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: 0.6875rem;
+    line-height: 1.35;
     color: #475569;
     flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-height: 2.7em;
 }
 
 /* Metric Indicators */
@@ -4820,150 +4907,519 @@ select:focus {
     }
 }
 
-/* ==================== AREA SECTIONS (COLLAPSIBLE BY P&C AREA) ==================== */
+/* ==================== HORIZONTAL JOURNEY NAVIGATION ==================== */
 
-.area-section {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    overflow: visible;
-    transition: all 0.3s ease;
-    margin-bottom: 0; /* ULTRA-COMPACT: Zero gap for maximum density */
+/* Journey Navigation Container - Matches filter section design harmony */
+.journey-navigation {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    position: relative;
 }
 
-.area-section:hover {
-    box-shadow: none;
-}
-
-/* Area Header (Clickable) - Ultra-compact design for maximum density */
-.area-header {
-    padding: 0.25rem 0.5rem;
-    background: transparent;
-    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-.area-header:hover {
-    background: rgba(102, 126, 234, 0.05);
-    border-bottom-color: rgba(99, 102, 241, 0.3);
-}
-
-.area-header:active {
-    transform: scale(0.99);
-}
-
-.area-header-content {
+/* Journey Stages Wrapper with Progress Line */
+.journey-stages-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
 }
 
-.area-toggle-icon {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--mercury-accent);
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 6px;
-    transition: all 0.2s ease;
+/* Subtle Progress Line Behind Stages */
+.journey-stages-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(99, 102, 241, 0.1) 0%,
+        rgba(99, 102, 241, 0.15) 50%,
+        rgba(99, 102, 241, 0.1) 100%
+    );
+    transform: translateY(-50%);
+    z-index: 0;
+    border-radius: 1px;
 }
 
-.area-header:hover .area-toggle-icon {
-    background: rgba(102, 126, 234, 0.18);
-    transform: scale(1.05);
-}
-
-.area-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
+/* Individual Stage Button - Premium Glass Pill */
+.journey-stage-btn {
+    position: relative;
+    z-index: 1;
     flex: 1;
-    letter-spacing: -0.015em;
-    line-height: 1.3;
-}
-
-.area-count {
-    font-size: 0.8125rem;
+    min-width: 0;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(var(--blur-light));
+    -webkit-backdrop-filter: blur(var(--blur-light));
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    border-radius: 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.5);
-    padding: 0.25rem 0.625rem;
-    border-radius: 12px;
-    border: 1px solid rgba(99, 102, 241, 0.15);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.04);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    user-select: none;
+    min-height: 72px; /* Consistent height for 2-line names */
+    justify-content: center;
 }
 
-/* Area Cards Container */
-.area-cards {
+/* Stage Name Text - Allow 2-line wrap for full visibility */
+.journey-stage-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-align: center;
+    max-width: 100%;
+    /* Allow wrapping for longer stage names */
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+    word-break: break-word;
+    hyphens: manual;
 }
 
-.area-cards.expanded {
-    max-height: 10000px;
+/* Stage Count Badge */
+.journey-stage-count {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    min-width: 32px;
+}
+
+/* Hover State - Lift Effect */
+.journey-stage-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.65);
+    border-color: rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.12);
+    color: var(--text-primary);
+}
+
+.journey-stage-btn:hover .journey-stage-count {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: var(--text-secondary);
+}
+
+/* Active State - Mercury Accent with Bottom Indicator */
+.journey-stage-btn.active {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(99, 102, 241, 0.05) 100%
+    );
+    border-color: var(--mercury-accent);
+    color: var(--mercury-accent);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(0);
+}
+
+.journey-stage-btn.active .journey-stage-name {
+    font-weight: 700;
+}
+
+.journey-stage-btn.active .journey-stage-count {
+    background: var(--mercury-accent);
+    color: white;
+    border-color: var(--mercury-accent);
+    font-weight: 700;
+}
+
+/* Active State Bottom Indicator */
+.journey-stage-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--mercury-accent) 50%,
+        transparent 100%
+    );
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 -2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Active State - No Hover Transform */
+.journey-stage-btn.active:hover {
+    transform: translateY(0);
+}
+
+/* Pressed/Active State Animation */
+.journey-stage-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+}
+
+/* Focus State for Accessibility */
+.journey-stage-btn:focus-visible {
+    outline: 2px solid var(--mercury-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* Disabled State (for stages with 0 solutions) */
+.journey-stage-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Loading/Transition State */
+.journey-navigation.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Smooth entry animation for journey navigation */
+.journey-navigation {
+    animation: slideInFromTop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stage button staggered entry animation */
+.journey-stage-btn {
+    animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+.journey-stage-btn:nth-child(1) { animation-delay: 0.05s; }
+.journey-stage-btn:nth-child(2) { animation-delay: 0.1s; }
+.journey-stage-btn:nth-child(3) { animation-delay: 0.15s; }
+.journey-stage-btn:nth-child(4) { animation-delay: 0.2s; }
+.journey-stage-btn:nth-child(5) { animation-delay: 0.25s; }
+.journey-stage-btn:nth-child(6) { animation-delay: 0.3s; }
+.journey-stage-btn:nth-child(7) { animation-delay: 0.35s; }
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ==================== JOURNEY NAVIGATION RESPONSIVE ==================== */
+
+/* Tablet - Compact Design */
+@media (max-width: 1024px) {
+    .journey-navigation {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .journey-stages-wrapper {
+        gap: 0.625rem;
+    }
+    
+    .journey-stage-btn {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .journey-stage-name {
+        font-size: 0.875rem;
+    }
+    
+    .journey-stage-count {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.375rem;
+        min-width: 28px;
+    }
+}
+
+/* Mobile - Horizontal Scroll with Snap Points */
+@media (max-width: 768px) {
+    .journey-navigation {
+        padding: 1rem 0;
+    }
+    
+    .journey-stages-wrapper {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-padding: 1rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+        padding: 0 1rem;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+    
+    /* Hide scrollbar for Chrome/Safari */
+    .journey-stages-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Mobile stage buttons - fixed width for scroll */
+    .journey-stage-btn {
+        flex: 0 0 auto;
+        min-width: 140px;
+        max-width: 160px;
+        scroll-snap-align: start;
+        padding: 0.875rem 0.75rem;
+        font-size: 0.8125rem;
+    }
+    
+    .journey-stage-name {
+        font-size: 0.8125rem;
+        white-space: normal;
+        line-height: 1.2;
+        max-height: 2.4em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .journey-stage-count {
+        font-size: 0.6875rem;
+        min-width: 24px;
+    }
+    
+    /* Hide progress line on mobile for cleaner look */
+    .journey-stages-wrapper::before {
+        display: none;
+    }
+    
+    /* Visual hint for scrollability - fade on edges */
+    .journey-navigation::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(250, 251, 253, 0.8) 100%
+        );
+        pointer-events: none;
+        z-index: 2;
+    }
+}
+
+/* ==================== CARD CONTAINER (FOR ACTIVE JOURNEY STAGE) ==================== */
+
+/* Simple container for active stage cards - no collapsing needed */
+.cards-grid {
     opacity: 1;
-    padding: 0.375rem 0; /* ULTRA-COMPACT: Maximum content density */
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 1.25rem;
+    gap: 1rem;
+    padding: 0.375rem 0;
+    will-change: opacity, transform;
 }
 
-.area-cards.collapsed {
-    max-height: 0;
+/* When cards-grid has empty state, position close to journey navigation */
+.cards-grid:has(.empty-stage-zen) {
+    display: flex;
+    align-items: flex-start; /* Align to top, not center */
+    justify-content: center;
+    padding-top: 3rem; /* Close to journey stages above */
+}
+
+/* Fade effect when switching stages - GPU accelerated */
+.cards-grid.transitioning {
     opacity: 0;
-    padding: 0 1.5rem;
+    transform: translateY(8px);
 }
 
-/* Responsive Area Sections */
+/* Empty Stage Message - Legacy fallback */
+.empty-stage-message {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(150%);
+    border-radius: 1.5rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+/* Zen Empty State - Elegant Minimalism - Close to Journey Navigation */
+.empty-stage-zen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+    position: relative;
+    
+    /* Subtle fade-in animation on appear */
+    animation: zenFadeIn 0.6s ease-out;
+    
+    /* Very subtle gradient radiating upward - connecting to navigation */
+    background: 
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
+}
+
+/* Subtle Upward Arrows - Visual Connection to Navigation */
+.zen-arrows {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.4; /* Increased from 0.25 for better visibility */
+    animation: zenArrowsPulse 3s ease-in-out infinite;
+}
+
+.zen-arrow {
+    font-size: 1.25rem;
+    color: var(--mercury-accent);
+    line-height: 1;
+    font-weight: 300;
+}
+
+/* Elegant Text - The Hero Element */
+.zen-text {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.005em;
+    opacity: 0.75;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    animation: zenTextBreathe 4s ease-in-out infinite;
+}
+
+/* Horizontal Divider - Mercury Accent, More Prominent */
+.zen-divider {
+    width: 220px;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--mercury-accent) 50%,
+        transparent 100%
+    );
+    opacity: 0.25; /* Reduced opacity but stronger color */
+    border-radius: 1px;
+}
+
+/* Fade-in Animation - Premium Entrance */
+@keyframes zenFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Subtle Arrows Animation - Gentle Pulse */
+@keyframes zenArrowsPulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-3px);
+    }
+}
+
+/* Text Breathing - Gentle, Confident */
+@keyframes zenTextBreathe {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 0.85;
+    }
+}
+
+/* Responsive Card Grid */
 @media (max-width: 1024px) {
-    .area-cards.expanded {
+    .cards-grid {
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 1rem;
     }
 }
 
 @media (max-width: 768px) {
-    .area-section {
-        border-radius: 12px;
-        margin-bottom: 1rem;
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+        padding: 1rem 0;
     }
     
-    .area-header {
-        padding: 1rem 1.25rem;
+    .empty-stage-message {
+        padding: 3rem 1.5rem;
+        font-size: 1rem;
     }
     
-    .area-header-content {
-        gap: 0.75rem;
+    .empty-stage-zen {
+        padding: 2rem 1.5rem;
+        max-width: 100%;
     }
     
-    .area-toggle-icon {
-        width: 28px;
-        height: 28px;
-        font-size: 1.25rem;
+    .cards-grid:has(.empty-stage-zen) {
+        padding-top: 2rem;
     }
     
-    .area-title {
+    .zen-arrows {
+        gap: 0.875rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .zen-arrow {
         font-size: 1.125rem;
     }
     
-    .area-count {
-        font-size: 0.875rem;
-        padding: 0.25rem 0.625rem;
+    .zen-text {
+        font-size: 1rem;
+        margin-bottom: 1.25rem;
     }
     
-    .area-cards.expanded {
-        padding: 1rem;
-        grid-template-columns: 1fr;
-        gap: 0.875rem;
+    .zen-divider {
+        width: 150px;
     }
 }
 
@@ -5691,7 +6147,7 @@ select:focus {
     min-height: 160px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Premium easing */
 }
 
 .metric-card:hover {
@@ -6820,47 +7276,41 @@ select:focus {
     }
 }
 
-/* ==================== INSIGHTS TAB: MINIMAL FILTER LAYOUT ==================== */
+/* ==================== INSIGHTS TAB: CONSISTENT FILTER LAYOUT ==================== */
 
-/* When in Insights mode, create a clean single-row layout (no box, no borders) */
-.filters-container.insights-mode {
-    padding: 0.75rem 0;
-}
+/* Insights mode uses SAME filter styling as Explore for perfect consistency */
+/* All default styles inherited - no overrides needed */
 
 .filters-container.insights-mode .filters-row-main {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.875rem; /* Match Explore tab */
     flex-wrap: wrap;
     justify-content: flex-start;
 }
 
-/* Make the 4 strategic filters equal width and properly sized */
-.filters-container.insights-mode .custom-multiselect {
-    flex: 1;
-    min-width: 200px;
-    max-width: 250px;
-}
+/* Filters in Insights mode match Explore tab exactly - NO custom sizing */
+/* Removed empty rule - all sizing inherited from .custom-multiselect */
 
-/* Position Clear Filters button in Insights mode (keep original styling) */
+/* Position Clear Filters button consistently */
 .filters-container.insights-mode .clear-filters {
     margin-left: auto;
 }
 
-/* Hide the actions row completely in Insights mode */
+/* Hide the actions row in Insights mode */
 .filters-container.insights-mode .filters-row-actions {
-    display: none;
+    display: none !important;
 }
 
-/* Add subtle animation when switching to Insights mode */
+/* Subtle fade-in animation (reduced from 0.4s to 0.3s for snappier feel) */
 .filters-container.insights-mode .filters-row-main {
-    animation: fadeInSlideUp 0.4s ease-out;
+    animation: fadeInSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeInSlideUp {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -6868,23 +7318,11 @@ select:focus {
     }
 }
 
-/* Responsive adjustments for Insights mode */
-@media (max-width: 1200px) {
-    .filters-container.insights-mode .custom-multiselect {
-        min-width: 180px;
-        max-width: 220px;
-    }
-}
-
+/* Responsive: Match Explore tab behavior */
 @media (max-width: 992px) {
     .filters-container.insights-mode .filters-row-main {
         flex-direction: column;
         align-items: stretch;
-    }
-    
-    .filters-container.insights-mode .custom-multiselect {
-        max-width: 100%;
-        min-width: 100%;
     }
     
     .filters-container.insights-mode .clear-filters {
@@ -7284,4 +7722,5 @@ select:focus {
         page-break-inside: avoid;
     }
 }
+
 

@@ -64,16 +64,7 @@ function validateRequest(e) {
  */
 function logSuspiciousActivity(reason, details) {
   try {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${reason}: ${details}`;
-    Logger.log('⚠️ SECURITY: ' + logEntry);
-    
-    // Optionally: Write to a separate sheet for security monitoring
-    // const sheet = SpreadsheetApp.openById('YOUR_SPREADSHEET_ID')
-    //   .getSheetByName('SecurityLog');
-    // if (sheet) {
-    //   sheet.appendRow([timestamp, reason, details]);
-    // }
+    Logger.log(`⚠️ SECURITY: [${new Date().toISOString()}] ${reason}: ${details}`);
   } catch (error) {
     Logger.log('Failed to log suspicious activity: ' + error.toString());
   }
@@ -98,7 +89,6 @@ const CACHE_CONFIG = {
  */
 function getCachedOrFresh(cacheKey, fetchFunction, ttl) {
   if (!CACHE_CONFIG.ENABLE_CACHING) {
-    Logger.log('⚠️ Caching disabled, fetching fresh data');
     return fetchFunction();
   }
   
@@ -106,17 +96,13 @@ function getCachedOrFresh(cacheKey, fetchFunction, ttl) {
   const cached = cache.get(cacheKey);
   
   if (cached) {
-    Logger.log(`✅ Cache hit: ${cacheKey}`);
     return JSON.parse(cached);
   }
   
-  Logger.log(`❌ Cache miss: ${cacheKey}, fetching fresh data`);
   const freshData = fetchFunction();
   
-  // Store in cache
   try {
     cache.put(cacheKey, JSON.stringify(freshData), ttl);
-    Logger.log(`💾 Cached data for ${ttl}s: ${cacheKey}`);
   } catch (e) {
     Logger.log(`⚠️ Failed to cache data: ${e.toString()}`);
   }
@@ -154,8 +140,6 @@ function doGet(e) {
     const spreadsheetId = '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI';
     
     if (action === 'getGovernanceData') {
-      Logger.log('🎯 Governance data request received');
-      
       const cacheKey = getCacheKey(spreadsheetId, 'governance');
       const governanceData = getCachedOrFresh(
         cacheKey,
@@ -177,8 +161,6 @@ function doGet(e) {
     }
     
     // DEFAULT: Return raw sheet data (backward compatible) with caching
-    Logger.log('📊 Portfolio data request received');
-    
     const cacheKey = getCacheKey(spreadsheetId, 'portfolio');
     const portfolioData = getCachedOrFresh(
       cacheKey,
@@ -235,8 +217,6 @@ function doGet(e) {
 
 function getGovernanceData() {
   try {
-    Logger.log('📊 Starting governance data calculation...');
-    
     const sheet = SpreadsheetApp.openById('10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI')
       .getSheetByName('[2025] P&C Portfolio');
     
@@ -245,10 +225,8 @@ function getGovernanceData() {
     }
     
     const data = sheet.getDataRange().getValues();
-    const headers = data[1]; // Row 1 has column names
-    const rows = data.slice(2); // Skip rows 0 and 1
-    
-    Logger.log(`Processing ${rows.length} solutions...`);
+    const headers = data[1];
+    const rows = data.slice(2);
     
     const governanceData = {
       smokeDetectors: calculateSmokeDetectorsSummary(rows, headers),
@@ -266,7 +244,6 @@ function getGovernanceData() {
       timestamp: new Date().toISOString()
     };
     
-    Logger.log('✅ Governance data calculation complete');
     return governanceData;
     
   } catch (error) {

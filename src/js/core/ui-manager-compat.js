@@ -119,16 +119,4 @@
             window.UIManager.hideDetailPanel();
         }
     };
-    
-    console.log('✅ UI Manager compatibility wrapper loaded');
-    console.log('📊 Active UI Modules:', {
-        Tabs: !!window.UIManager.Tabs,
-        Filters: !!window.UIManager.Filters,
-        Cards: !!window.UIManager.Cards,
-        DetailPanel: !!window.UIManager.DetailPanel,
-        Charts: !!window.UIManager.Charts,
-        Governance: !!window.UIManager.Governance,
-        Analytics: !!window.UIManager.Analytics,
-        DrillDown: !!window.UIManager.DrillDown
-    });
 })();

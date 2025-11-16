@@ -234,14 +234,5 @@
     // Replace DataManager with facade-enhanced interface
     window.DataManager = Object.assign({}, window.DataManager, facadeAPI);
     
-    console.log('✅ Data Manager Index loaded - Facade API with event-driven architecture');
-    console.log('📊 Data Manager Modules:', loadedModules);
-    console.log('🎯 Facade API: fetchData(), filterData(), fetchGovernance() (event-driven)');
-    console.log('📡 Events: data:loaded, data:filtered, data:governance:loaded');
-    
-    // Log API summary
-    const apiCount = Object.keys(facadeAPI).filter(key => typeof facadeAPI[key] === 'function').length;
-    console.log(`📦 DataManager API: ${apiCount} total functions (7 facade + ${apiCount - 7} legacy)`);
-    
 })();
 

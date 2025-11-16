@@ -186,7 +186,6 @@ function setPortfolioData(data) {
     
     const oldData = appState.portfolioData;
     appState.portfolioData = data;
-    console.log(`State: Portfolio data set (${data.length} items)`);
     
     // Emit state change event for subscribers
     if (window.Utils && window.Utils.publishEnhanced) {
@@ -234,7 +233,6 @@ function setColumnMapping(mapping) {
         throw new Error('Column mapping must be an object');
     }
     appState.columnMapping = mapping;
-    console.log('State: Column mapping updated');
 }
 
 /**
@@ -340,7 +338,6 @@ function setActiveRiskFilter(level) {
     
     const oldLevel = appState.activeRiskFilter;
     appState.activeRiskFilter = level;
-    console.log(`State: Active risk filter set to ${level || 'null'}`);
     
     // Emit state change event for subscribers
     if (window.Utils && window.Utils.publishEnhanced) {
@@ -367,7 +364,6 @@ function setAlertContext(productId, triggers) {
         productId: productId,
         triggers: triggers
     };
-    console.log(`State: Alert context set for product ${productId} (${triggers.length} trigger${triggers.length !== 1 ? 's' : ''})`);
 }
 
 /**
@@ -379,7 +375,6 @@ function clearAlertContext() {
         productId: null,
         triggers: []
     };
-    console.log('State: Alert context cleared');
 }
 
 // ==================== STATE OPERATIONS ====================
@@ -392,7 +387,6 @@ function resetDataState() {
     appState.filteredData = [];
     appState.columnMapping = {};
     appState.lastUpdateTime = null;
-    console.log('State: Data state reset');
 }
 
 /**
@@ -403,7 +397,6 @@ function resetUIState() {
     appState.analysisDataLoaded = false;
     appState.activeRiskFilter = null;
     clearAllChartInstances();
-    console.log('State: UI state reset');
 }
 
 /**
@@ -412,7 +405,6 @@ function resetUIState() {
 function resetState() {
     resetDataState();
     resetUIState();
-    console.log('State: Complete state reset');
 }
 
 /**

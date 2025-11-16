@@ -101,8 +101,6 @@
             description: meta.description || '',
             ...meta
         });
-        
-        console.log(`✅ Service registered: ${name}${deps.length > 0 ? ` (deps: ${deps.join(', ')})` : ''}`);
     }
     
     /**
@@ -175,8 +173,6 @@
         services.delete(name);
         dependencies.delete(name);
         metadata.delete(name);
-        
-        console.log(`🗑️ Service unregistered: ${name}`);
         return true;
     }
     
@@ -188,11 +184,9 @@
      * Services.clear(); // Reset all services
      */
     function clear() {
-        const count = services.size;
         services.clear();
         dependencies.clear();
         metadata.clear();
-        console.log(`🗑️ Cleared ${count} service(s)`);
     }
     
     /**
@@ -326,10 +320,6 @@
                 registered++;
             }
         });
-        
-        if (registered > 0) {
-            console.log(`📦 Auto-registered ${registered} existing service(s)`);
-        }
     }
     
     // ==================== MODULE EXPORTS ====================
@@ -362,11 +352,6 @@
     
     // Auto-register existing services
     autoRegisterExistingServices();
-    
-    // Log statistics
-    const stats = getStats();
-    console.log('✅ Service Locator loaded');
-    console.log(`📦 ${stats.totalServices} service(s) registered, ${stats.totalDependencies} total dependencies`);
     
 })();
 

@@ -17,8 +17,6 @@
  * @throws {Error} If critical dependencies are missing
  */
 (function verifyCoreDependencies() {
-    console.log('[Dashboard] Verifying dependencies...');
-    
     const criticalDependencies = [
         { name: 'CONFIG', description: 'Configuration object' },
         { name: 'State', description: 'State management', path: 'window.State' },
@@ -65,86 +63,9 @@
         
         throw new Error(`Critical dependencies missing: ${missingCritical.map(d => d.name).join(', ')}`);
     }
-    
-    // Check optional dependencies
-    const missingOptional = optionalDependencies.filter(dep => !window[dep.name]);
-    if (missingOptional.length > 0) {
-        console.warn('[Dashboard] ⚠️ Optional features unavailable:');
-        missingOptional.forEach(dep => {
-            console.warn(`  - ${dep.name} (${dep.description})`);
-        });
-    }
-    
-    console.log('[Dashboard] ✅ All critical dependencies verified');
-    console.log('[Dashboard] 🎯 Ready to initialize');
 })();
 
 // ==================== DATA LOADING & INITIALIZATION ====================
-
-/**
- * Test anomaly detection with current portfolio data
- * Logs results to console for verification
- */
-function testAnomalyDetection() {
-    console.log('='.repeat(60));
-    console.log('ANOMALY DETECTION TEST');
-    console.log('='.repeat(60));
-    
-    const portfolioData = window.State.getPortfolioData();
-    
-    if (!portfolioData || portfolioData.length === 0) {
-        console.warn('⚠️ No portfolio data available. Load data first.');
-        return;
-    }
-    
-    // Run anomaly detection
-    const anomalyReport = window.DataManager.checkAnomalies();
-    
-    // Log full report
-    console.log('\n📊 ANOMALY REPORT:');
-    console.log(JSON.stringify(anomalyReport, null, 2));
-    
-    console.log('\n📈 SUMMARY:');
-    console.log(`  • Total Owner Overloads: ${anomalyReport.summary.totalOwnerOverloads}`);
-    console.log(`  • Total Data Health Issues: ${anomalyReport.summary.totalDataHealthIssues}`);
-    console.log(`  • Total Anomalies: ${anomalyReport.summary.totalAnomalies}`);
-    console.log(`  • Generated: ${anomalyReport.summary.timestamp}`);
-    
-    if (anomalyReport.ownerOverload.length > 0) {
-        console.log('\n⚠️ OWNER OVERLOAD (>3 products in Development/Growth):');
-        anomalyReport.ownerOverload.forEach((item, index) => {
-            console.log(`  ${index + 1}. ${item.owner} (${item.productCount} products):`);
-            item.products.forEach(productName => {
-                console.log(`     - ${productName}`);
-            });
-        });
-    } else {
-        console.log('\n✅ No owner overloads detected');
-    }
-    
-    if (anomalyReport.dataHealthIssues.length > 0) {
-        console.log(`\n🏥 DATA HEALTH ISSUES (${anomalyReport.dataHealthIssues.length} products with issues):`);
-        console.log('  Top 10 products with most issues:');
-        anomalyReport.dataHealthIssues.slice(0, 10).forEach((item, index) => {
-            console.log(`  ${index + 1}. ${item.name} (${item.issueCount} issues):`);
-            item.issues.forEach(issue => {
-                console.log(`     - ${issue}`);
-            });
-        });
-        
-        if (anomalyReport.dataHealthIssues.length > 10) {
-            console.log(`  ... and ${anomalyReport.dataHealthIssues.length - 10} more products with issues`);
-        }
-    } else {
-        console.log('\n✅ No data health issues detected');
-    }
-    
-    console.log('\n' + '='.repeat(60));
-    console.log('TEST COMPLETE');
-    console.log('='.repeat(60));
-    
-    return anomalyReport;
-}
 
 /**
  * Wait for critical UI modules to be fully loaded
@@ -170,8 +91,6 @@ function waitForModules(modulePaths, timeout = 5000) {
             
             if (allReady) {
                 clearInterval(checkInterval);
-                const elapsed = Date.now() - startTime;
-                console.log(`✅ All modules ready (${elapsed}ms)`);
                 resolve();
             } else if (Date.now() - startTime > timeout) {
                 clearInterval(checkInterval);
@@ -209,9 +128,7 @@ function waitForModules(modulePaths, timeout = 5000) {
  * Orchestrates data loading and UI setup
  */
 async function initialize() {
-    console.log('Portfolio Dashboard initialized');
-    
-    // NEW: Wait for critical UI modules to be ready before setting up event listeners
+    // Wait for critical UI modules to be ready before setting up event listeners
     try {
         await waitForModules([
             'UIManager.Filters',
@@ -230,22 +147,14 @@ async function initialize() {
     // Try to load cached data first for instant display
     const cachedData = window.DataManager.loadCachedData();
     if (cachedData && cachedData.length > 0) {
-        console.log(`📦 Loading ${cachedData.length} products from cache...`);
         window.State.setPortfolioData(cachedData);
         window.UIManager.renderCards();
         window.UIManager.updateStats();
         window.UIManager.updateLastUpdateDisplay();
-        console.log('✅ Cached data loaded');
-    } else {
-        console.log('⚠️ No cached data found - click "Refresh Data" button to load');
     }
     
     // Initialize auto-update system
     initAutoUpdate();
-    
-    console.log('✅ Dashboard ready');
-    console.log('\n💡 TIP: Click "Refresh Data" to load latest data from Google Sheets');
-    console.log('💡 TIP: Run testAnomalyDetection() in console to test anomaly detection');
 }
 
 /**
@@ -300,8 +209,6 @@ async function fetchSheetData() {
         if (window.UIManager.Cards && window.UIManager.Cards.setupInlineMetricsListeners) {
             window.UIManager.Cards.setupInlineMetricsListeners();
         }
-        
-        console.log('✅ Data fetch and UI update complete');
 
     } catch (error) {
         console.error('Error in fetchSheetData:', error);
@@ -335,7 +242,6 @@ function setupEventListeners() {
             window.UIManager.switchTab(tabName);
         });
     });
-    console.log('✅ Tab buttons initialized');
     
     // Setup tactical filters and sorting for Portfolio Overview
     // This includes search, filters, and sorting functionality
@@ -377,8 +283,6 @@ function setupEventListeners() {
             return;
         }
     });
-    
-    console.log('✅ All event listeners setup complete');
 }
 
 // ==================== GLOBAL FUNCTIONS (FOR HTML onclick) ====================
@@ -399,9 +303,6 @@ window.applyFilters = function() {
 window.clearFilters = function() {
     window.UIManager.clearFilters();
 };
-
-// Expose test function globally for manual testing in console
-window.testAnomalyDetection = testAnomalyDetection;
 
 // ==================== INITIALIZATION ====================
 

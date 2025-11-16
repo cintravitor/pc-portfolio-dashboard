@@ -2916,15 +2916,11 @@ label.filter-checkbox,
     background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(24px) saturate(120%);
     -webkit-backdrop-filter: blur(24px) saturate(120%);
-    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
     display: block;
 }
 
-@keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+/* Removed keyframe animation - now using JavaScript-controlled transitions for expanding card effect */
 
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
@@ -2941,9 +2937,9 @@ label.filter-checkbox,
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity;
+    will-change: transform, opacity;
     z-index: 10000 !important;
+    transform-origin: center center;
 }
 
 .detail-header {

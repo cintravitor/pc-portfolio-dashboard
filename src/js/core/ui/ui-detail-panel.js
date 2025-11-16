@@ -450,6 +450,7 @@
         if (!product) return;
 
         const panel = document.getElementById('detail-panel');
+        const overlay = document.getElementById('detail-panel-overlay');
         const mainContent = document.getElementById('main-content');
         const contentLeft = document.getElementById('content-left');
 
@@ -458,10 +459,19 @@
             card.classList.remove('selected');
         });
 
-        // Add selected class to clicked card
+        // Find and store the clicked card for animation origin
         const clickedCard = document.querySelector(`[data-product-id="${productId}"]`);
         if (clickedCard) {
             clickedCard.classList.add('selected');
+        }
+        
+        // Capture card position for expanding animation (before rendering modal)
+        let cardRect = null;
+        if (clickedCard) {
+            cardRect = clickedCard.getBoundingClientRect();
+            // Store for close animation
+            panel._originCard = clickedCard;
+            panel._originRect = cardRect;
         }
 
         // Check for alert context to display banner
@@ -537,8 +547,7 @@
             </div>
         `;
 
-        // Show overlay and panel - PRODUCTION APPROACH (SIMPLE & WORKING)
-        const overlay = document.getElementById('detail-panel-overlay');
+        // Show overlay and panel with expanding card animation
         overlay.classList.remove('hidden');
         panel.classList.remove('hidden');
         
@@ -554,6 +563,46 @@
         const previouslyFocused = document.activeElement;
         panel._previouslyFocused = previouslyFocused;
         
+        // PREMIUM ANIMATION: Expanding card effect
+        if (cardRect) {
+            // Start overlay at transparent
+            overlay.style.opacity = '0';
+            
+            // Set panel initial state to match card position/size
+            const scaleX = cardRect.width / window.innerWidth;
+            const scaleY = cardRect.height / window.innerHeight;
+            const translateX = cardRect.left + (cardRect.width / 2) - (window.innerWidth / 2);
+            const translateY = cardRect.top + (cardRect.height / 2) - (window.innerHeight / 2);
+            
+            panel.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+            panel.style.opacity = '0.5';
+            
+            // Force reflow to ensure initial state is applied
+            panel.offsetHeight;
+            
+            // Animate to full screen using requestAnimationFrame for smoothness
+            requestAnimationFrame(() => {
+                // Enable transitions
+                overlay.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                panel.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                
+                // Animate to full screen
+                overlay.style.opacity = '1';
+                panel.style.transform = 'translate(0, 0) scale(1, 1)';
+                panel.style.opacity = '1';
+                
+                // Clean up transition styles after animation completes
+                setTimeout(() => {
+                    overlay.style.transition = '';
+                    panel.style.transition = '';
+                }, 200);
+            });
+        } else {
+            // Fallback: simple fade-in if no card reference
+            overlay.style.opacity = '1';
+            panel.style.opacity = '1';
+        }
+        
         // Update URL hash (History API integration)
         pushModalState(product);
         
@@ -563,11 +612,14 @@
         // Setup modal close handlers
         setupModalCloseHandlers();
         
-        // Focus close button for keyboard accessibility
-        const closeBtn = panel.querySelector('.detail-close');
-        if (closeBtn) {
-            closeBtn.focus();
-        }
+        // Focus close button for keyboard accessibility (after animation)
+        setTimeout(() => {
+            const closeBtn = panel.querySelector('.detail-close');
+            if (closeBtn) {
+                closeBtn.focus();
+            }
+        }, 210);
+
         
         // Load charts asynchronously (non-blocking) using requestAnimationFrame for optimal performance
         // Modal UI renders instantly while charts load in background
@@ -704,7 +756,7 @@
     }
     
     /**
-     * Hide detail panel
+     * Hide detail panel with contracting animation
      * @param {Object} options - Options object
      * @param {boolean} options.skipHistoryPop - Skip history.back() call (used when triggered by popstate)
      */
@@ -716,6 +768,54 @@
             popModalState();
         }
         
+        const overlay = document.getElementById('detail-panel-overlay');
+        const panel = document.getElementById('detail-panel');
+        
+        // PREMIUM ANIMATION: Contracting card effect
+        const originCard = panel._originCard;
+        const originRect = panel._originRect;
+        
+        if (originCard && originRect) {
+            // Get current position of origin card (may have moved due to filtering/scrolling)
+            const currentCardRect = originCard.getBoundingClientRect();
+            
+            // Calculate transform to contract back to card
+            const scaleX = currentCardRect.width / window.innerWidth;
+            const scaleY = currentCardRect.height / window.innerHeight;
+            const translateX = currentCardRect.left + (currentCardRect.width / 2) - (window.innerWidth / 2);
+            const translateY = currentCardRect.top + (currentCardRect.height / 2) - (window.innerHeight / 2);
+            
+            // Enable transitions
+            overlay.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            panel.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Animate back to card position
+            overlay.style.opacity = '0';
+            panel.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+            panel.style.opacity = '0';
+            
+            // After animation completes, hide and cleanup
+            setTimeout(() => {
+                completeHidePanel(overlay, panel, skipHistoryPop);
+            }, 200);
+        } else {
+            // Fallback: simple fade-out
+            overlay.style.transition = 'opacity 0.15s ease';
+            panel.style.transition = 'opacity 0.15s ease';
+            overlay.style.opacity = '0';
+            panel.style.opacity = '0';
+            
+            setTimeout(() => {
+                completeHidePanel(overlay, panel, skipHistoryPop);
+            }, 150);
+        }
+    }
+    
+    /**
+     * Complete the hide panel operation (cleanup after animation)
+     * @private
+     */
+    function completeHidePanel(overlay, panel, skipHistoryPop) {
         // Clear alert context (part of contextual alerting feature)
         window.State.clearAlertContext();
         
@@ -728,9 +828,6 @@
         });
         window.State.clearAllChartInstances();
         
-        const overlay = document.getElementById('detail-panel-overlay');
-        const panel = document.getElementById('detail-panel');
-        
         // Clean up ESC key listener
         if (overlay && overlay._escHandler) {
             document.removeEventListener('keydown', overlay._escHandler);
@@ -738,16 +835,31 @@
         }
         
         // Hide overlay and panel
-        if (overlay) overlay.classList.add('hidden');
-        if (panel) panel.classList.add('hidden');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.transition = '';
+            overlay.style.opacity = '';
+        }
+        if (panel) {
+            panel.classList.add('hidden');
+            panel.style.transition = '';
+            panel.style.transform = '';
+            panel.style.opacity = '';
+        }
         
-        // Restore body scroll - PRODUCTION APPROACH (SIMPLE & WORKING)
+        // Restore body scroll
         document.body.style.overflow = '';
         
         // Restore focus to previously focused element (accessibility)
         if (panel && panel._previouslyFocused) {
             panel._previouslyFocused.focus();
             panel._previouslyFocused = null;
+        }
+        
+        // Clean up animation references
+        if (panel) {
+            panel._originCard = null;
+            panel._originRect = null;
         }
         
         // Remove selected class from cards

@@ -1,9 +1,12 @@
 /**
- * Data Manager Index (Coordinator)
- * Unifies all data modules under a single DataManager interface
+ * Data Manager Index (Coordinator) - Enhanced with Facade Pattern
+ * Provides a minimal, event-driven public API while reducing coupling
  * 
- * This module consolidates the modular data architecture into a single API
- * for backward compatibility and ease of use.
+ * Architecture Pattern: Facade + Event-Driven
+ * - Exposes minimal public API for common operations
+ * - Emits events for all data operations (enables loose coupling)
+ * - Maintains backward compatibility through sub-module exposure
+ * - Reduces direct dependencies from UI layer
  * 
  * Part of modular data architecture refactor (Phase 3)
  */
@@ -39,12 +42,164 @@
         console.log('Module status:', loadedModules);
     }
     
-    // Consolidate all sub-modules into unified DataManager interface
-    const unifiedDataManager = {
-        // ====================  AI Module ====================
-        getAISummary: window.DataManager.AI?.getAISummary,
+    // ==================== FACADE API (Recommended) ====================
+    
+    /**
+     * Fetch portfolio data from API
+     * Emits events: data:fetch:start, data:loaded (success), data:fetch:error (failure)
+     * @returns {Promise<Object>} Promise resolving to { portfolioData, columnMapping }
+     */
+    function fetchData() {
+        window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.FETCH_START, {
+            timestamp: Date.now()
+        });
         
-        // ==================== Fetching Module ====================
+        return window.DataManager.Fetching.fetchSheetData()
+            .then(result => {
+                window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.LOADED, {
+                    portfolioData: result.portfolioData,
+                    columnMapping: result.columnMapping,
+                    timestamp: Date.now()
+                });
+                return result;
+            })
+            .catch(error => {
+                window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.FETCH_ERROR, {
+                    error: error.message || String(error),
+                    timestamp: Date.now()
+                });
+                throw error;
+            });
+    }
+    
+    /**
+     * Apply filters to portfolio data
+     * Emits event: data:filtered
+     * @param {Object} criteria - Filter criteria object
+     * @returns {Array} Filtered data
+     */
+    function filterData(criteria) {
+        const {
+            searchTerm = '',
+            areaFilters = [],
+            journeyFilters = [],
+            maturityFilters = [],
+            targetUserFilters = [],
+            ownerFilters = [],
+            sortBy = '',
+            belowTargetOnly = false,
+            notUpdatedFilter = null,
+            riskLevelFilter = null
+        } = criteria;
+        
+        const filteredData = window.DataManager.Filtering.applyFilters(
+            searchTerm,
+            areaFilters,
+            journeyFilters,
+            maturityFilters,
+            targetUserFilters,
+            ownerFilters,
+            sortBy,
+            belowTargetOnly,
+            notUpdatedFilter,
+            riskLevelFilter
+        );
+        
+        window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.FILTERED, {
+            filteredData,
+            filters: criteria,
+            count: filteredData.length,
+            timestamp: Date.now()
+        });
+        
+        return filteredData;
+    }
+    
+    /**
+     * Fetch governance data from API
+     * Emits event: data:governance:loaded
+     * @returns {Promise<Object>} Promise resolving to governance data
+     */
+    function fetchGovernance() {
+        return window.DataManager.Fetching.fetchGovernanceData()
+            .then(governanceData => {
+                window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.GOVERNANCE_LOADED, {
+                    governanceData,
+                    timestamp: Date.now()
+                });
+                return governanceData;
+            })
+            .catch(error => {
+                window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.FETCH_ERROR, {
+                    error: error.message || String(error),
+                    context: 'governance',
+                    timestamp: Date.now()
+                });
+                throw error;
+            });
+    }
+    
+    /**
+     * Get filtered portfolio data (read-only accessor)
+     * @returns {Array} Filtered data from state
+     */
+    function getFilteredData() {
+        return window.DataManager.Accessors.getFilteredData();
+    }
+    
+    /**
+     * Get all portfolio data (read-only accessor)
+     * @returns {Array} Complete portfolio data from state
+     */
+    function getPortfolioData() {
+        return window.DataManager.Accessors.getPortfolioData();
+    }
+    
+    /**
+     * Get product by ID
+     * @param {string|number} productId - Product identifier
+     * @returns {Object|null} Product object or null if not found
+     */
+    function getProductById(productId) {
+        return window.DataManager.Accessors.getProductById(productId);
+    }
+    
+    /**
+     * Get summary metrics for current filtered data
+     * @returns {Object} Summary metrics
+     */
+    function getSummaryMetrics() {
+        return window.DataManager.Accessors.getCardSummaryMetrics();
+    }
+    
+    // ==================== PUBLIC FACADE API ====================
+    
+    const facadeAPI = {
+        // ==================== FACADE METHODS (Recommended - Event-Driven) ====================
+        // These are the primary methods that should be used by UI modules
+        fetchData,           // Fetch portfolio data with events
+        filterData,          // Filter data with events
+        fetchGovernance,     // Fetch governance data with events
+        getFilteredData,     // Read-only accessor
+        getPortfolioData,    // Read-only accessor
+        getProductById,      // Read-only accessor
+        getSummaryMetrics,   // Read-only accessor
+        
+        // ==================== SUB-MODULES (Backward Compatibility) ====================
+        // Direct access to sub-modules for backward compatibility
+        // New code should use facade methods above instead
+        AI: window.DataManager.AI,
+        Fetching: window.DataManager.Fetching,
+        Filtering: window.DataManager.Filtering,
+        Analytics: window.DataManager.Analytics,
+        Anomalies: window.DataManager.Anomalies,
+        Accessors: window.DataManager.Accessors,
+        Governance: window.DataManager.Governance,
+        
+        // ==================== DIRECT METHOD EXPOSURE (Legacy Compatibility) ====================
+        // These are exposed for backward compatibility with existing code
+        // Gradually migrate to using facade methods or event subscriptions
+        getAISummary: window.DataManager.AI?.getAISummary,
         fetchSheetData: window.DataManager.Fetching?.fetchSheetData,
         fetchGovernanceData: window.DataManager.Fetching?.fetchGovernanceData,
         fetchAllDataParallel: window.DataManager.Fetching?.fetchAllDataParallel,
@@ -55,52 +210,38 @@
         updateLastFetchTime: window.DataManager.Fetching?.updateLastFetchTime,
         getLastUpdateTime: window.DataManager.Fetching?.getLastUpdateTime,
         shouldRefreshData: window.DataManager.Fetching?.shouldRefreshData,
-        
-        // ==================== Filtering Module ====================
         applyFilters: window.DataManager.Filtering?.applyFilters,
         sortData: window.DataManager.Filtering?.sortData,
         getFilterOptions: window.DataManager.Filtering?.getFilterOptions,
-        
-        // ==================== Analytics Module ====================
         calculatePerformanceVsTarget: window.DataManager.Analytics?.calculatePerformanceVsTarget,
         calculateRiskScore: window.DataManager.Analytics?.calculateRiskScore,
         analyzePortfolioData: window.DataManager.Analytics?.analyzePortfolioData,
         getQuadrant: window.DataManager.Analytics?.getQuadrant,
         analyzeHealthFactors: window.DataManager.Analytics?.analyzeHealthFactors,
         calculatePortfolioMetrics: window.DataManager.Analytics?.calculatePortfolioMetrics,
-        
-        // ==================== Anomalies Module ====================
         checkAnomalies: window.DataManager.Anomalies?.checkAnomalies,
         calculateSmokeDetectors: window.DataManager.Anomalies?.calculateSmokeDetectors,
         runSmokeDetectorTests: window.DataManager.Anomalies?.runSmokeDetectorTests,
-        
-        // ==================== Accessors Module ====================
-        getPortfolioData: window.DataManager.Accessors?.getPortfolioData,
-        getFilteredData: window.DataManager.Accessors?.getFilteredData,
-        getProductById: window.DataManager.Accessors?.getProductById,
         getProductStats: window.DataManager.Accessors?.getProductStats,
         countMissingMetrics: window.DataManager.Accessors?.countMissingMetrics,
         getCardSummaryMetrics: window.DataManager.Accessors?.getCardSummaryMetrics,
         calculateFilteredSummaryMetrics: window.DataManager.Accessors?.calculateFilteredSummaryMetrics,
         
-        // ==================== Governance Module ====================
-        // Client-side governance calculations for real-time filtering
-        Governance: window.DataManager.Governance,
-        
-        // ==================== Legacy Compatibility ====================
-        // Utility reference for backward compatibility
+        // ==================== UTILITY METHODS ====================
         debounce: window.Utils ? window.Utils.debounce : null
     };
     
-    // Replace DataManager with unified interface
-    window.DataManager = Object.assign({}, window.DataManager, unifiedDataManager);
+    // Replace DataManager with facade-enhanced interface
+    window.DataManager = Object.assign({}, window.DataManager, facadeAPI);
     
-    console.log('✅ Data Manager Index loaded - Unified API active');
+    console.log('✅ Data Manager Index loaded - Facade API with event-driven architecture');
     console.log('📊 Data Manager Modules:', loadedModules);
+    console.log('🎯 Facade API: fetchData(), filterData(), fetchGovernance() (event-driven)');
+    console.log('📡 Events: data:loaded, data:filtered, data:governance:loaded');
     
     // Log API summary
-    const apiCount = Object.keys(unifiedDataManager).filter(key => typeof unifiedDataManager[key] === 'function').length;
-    console.log(`📦 DataManager API: ${apiCount} functions available`);
+    const apiCount = Object.keys(facadeAPI).filter(key => typeof facadeAPI[key] === 'function').length;
+    console.log(`📦 DataManager API: ${apiCount} total functions (7 facade + ${apiCount - 7} legacy)`);
     
 })();
 

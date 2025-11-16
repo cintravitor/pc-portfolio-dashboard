@@ -36,7 +36,7 @@
         
         // Use debounced filtering for search input (improves performance)
         if (searchInput) {
-            const debouncedFilter = window.DataManager.debounce(applyFiltersFromUI, FILTER_DEBOUNCE_MS);
+            const debouncedFilter = window.Utils.debounce(applyFiltersFromUI, FILTER_DEBOUNCE_MS);
             searchInput.addEventListener('input', debouncedFilter);
         }
         
@@ -677,11 +677,22 @@
             riskLevelFilter
         });
 
-        // Apply all filters including "Not Updated" card filter and risk level filter
-        window.DataManager.applyFilters(searchTerm, areaFilters, journeyFilters, maturityFilters, targetUserFilters, ownerFilters, sortBy, belowTargetOnly, activeNotUpdatedFilter, riskLevelFilter);
+        // Build filter criteria object
+        const filterCriteria = {
+            searchTerm,
+            areaFilters,
+            journeyFilters,
+            maturityFilters,
+            targetUserFilters,
+            ownerFilters,
+            sortBy,
+            belowTargetOnly,
+            notUpdatedFilter: activeNotUpdatedFilter,
+            riskLevelFilter
+        };
         
-        // Get filtered data to determine which areas to expand
-        const filteredData = window.DataManager.getFilteredData();
+        // Apply filters using facade API (emits 'data:filtered' event)
+        const filteredData = window.DataManager.filterData(filterCriteria);
         
         console.log('📥 Filtered data count:', filteredData.length);
         

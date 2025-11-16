@@ -241,6 +241,88 @@ Returns consolidated JSON
 ui-governance.js renders dashboard
 ```
 
+## Event-Driven Architecture
+
+**Implemented:** November 2025 architectural refactor for reduced coupling
+
+The application uses event-driven communication to reduce tight coupling between modules.
+
+### Event Registry
+
+All events are centrally defined in `window.Utils.EVENTS`:
+
+```javascript
+window.Utils.EVENTS = {
+    DATA: {
+        LOADED: 'data:loaded',
+        FILTERED: 'data:filtered',
+        GOVERNANCE_LOADED: 'data:governance:loaded'
+    },
+    UI: {
+        FILTER_CHANGED: 'ui:filter:changed',
+        CARD_CLICKED: 'ui:card:clicked',
+        PANEL_OPENED: 'ui:panel:opened'
+    },
+    STATE: {
+        PORTFOLIO_DATA_SET: 'state:portfolioData',
+        FILTERED_DATA_SET: 'state:filteredData'
+    }
+};
+```
+
+### Pub/Sub Pattern
+
+**Publishing Events:**
+```javascript
+window.Utils.publishEnhanced(window.Utils.EVENTS.DATA.FILTERED, {
+    filteredData: results,
+    count: results.length
+});
+```
+
+**Subscribing to Events:**
+```javascript
+window.Utils.subscribeEnhanced('data:filtered', (data) => {
+    renderCards(data.filteredData);
+});
+
+// Wildcard subscription (all data events)
+window.Utils.subscribeEnhanced('data:*', (data, event) => {
+    console.log(`Data event: ${event}`, data);
+});
+```
+
+### Facade Pattern (Data Manager)
+
+Minimal public API that emits events:
+
+```javascript
+// Facade API (event-driven)
+window.DataManager.fetchData()      // Emits: data:loaded
+window.DataManager.filterData({})   // Emits: data:filtered
+window.DataManager.fetchGovernance() // Emits: data:governance:loaded
+```
+
+**Benefits:**
+- Reduced coupling between UI and Data layers
+- UI modules subscribe to events instead of direct calls
+- Easier to add features without modifying existing code
+- Better testability
+
+### Event-Driven Data Flow
+
+```
+User applies filter
+    ↓
+ui-filters.js emits 'ui:filter:changed'
+    ↓
+DataManager subscribes, filters data
+    ↓
+Emits 'data:filtered' event
+    ↓
+ui-cards.js subscribes, re-renders
+```
+
 ## Backend Architecture
 
 ### Apps Script Structure

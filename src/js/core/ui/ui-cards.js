@@ -1045,6 +1045,37 @@
     window.Utils.subscribe('filters:changed', updateFilteredSummaryCards);
     console.log('✅ Summary cards subscribed to filters:changed event');
     
-    console.log('✅ UI Cards module loaded (HORIZONTAL JOURNEY NAVIGATION)');
+    // Subscribe to data:filtered event from facade API for automatic re-rendering
+    // This event is emitted by DataManager.filterData() facade method
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.DATA.FILTERED, (data) => {
+        console.log(`📡 ui-cards received data:filtered event (${data.count} items)`);
+        
+        // Invalidate cache to force re-grouping with new data
+        invalidateCache();
+        
+        // Re-render cards with new filtered data
+        renderCards();
+        
+        // Update inline metrics
+        updateInlineMetrics();
+        
+        // Update journey navigation
+        renderJourneyNavigation();
+    });
+    console.log('✅ UI Cards subscribed to data:filtered event (event-driven architecture)');
+    
+    // Subscribe to data:loaded event for initial render
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.DATA.LOADED, (data) => {
+        console.log(`📡 ui-cards received data:loaded event (${data.portfolioData.length} items)`);
+        
+        // Invalidate cache when new data loads
+        invalidateCache();
+        
+        // Initial render will be triggered by the app orchestrator
+        // This subscription is for future automatic updates
+    });
+    console.log('✅ UI Cards subscribed to data:loaded event');
+    
+    console.log('✅ UI Cards module loaded (EVENT-DRIVEN + HORIZONTAL JOURNEY NAVIGATION)');
 })();
 

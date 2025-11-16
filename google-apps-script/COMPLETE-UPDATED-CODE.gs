@@ -79,57 +79,153 @@ function logSuspiciousActivity(reason, details) {
   }
 }
 
-// ==================== MAIN ENDPOINT ====================
+// ==================== CACHING CONFIGURATION ====================
+
+const CACHE_CONFIG = {
+  PORTFOLIO_DATA_TTL: 300,      // 5 minutes for portfolio data
+  GOVERNANCE_DATA_TTL: 600,     // 10 minutes for governance data
+  ENABLE_CACHING: true           // Feature flag
+};
+
+// ==================== CACHE HELPERS ====================
+
+/**
+ * Get data from cache or fetch fresh
+ * @param {string} cacheKey - Cache key
+ * @param {Function} fetchFunction - Function to fetch fresh data
+ * @param {number} ttl - Time to live in seconds
+ * @returns {Object} Cached or fresh data
+ */
+function getCachedOrFresh(cacheKey, fetchFunction, ttl) {
+  if (!CACHE_CONFIG.ENABLE_CACHING) {
+    Logger.log('⚠️ Caching disabled, fetching fresh data');
+    return fetchFunction();
+  }
+  
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    Logger.log(`✅ Cache hit: ${cacheKey}`);
+    return JSON.parse(cached);
+  }
+  
+  Logger.log(`❌ Cache miss: ${cacheKey}, fetching fresh data`);
+  const freshData = fetchFunction();
+  
+  // Store in cache
+  try {
+    cache.put(cacheKey, JSON.stringify(freshData), ttl);
+    Logger.log(`💾 Cached data for ${ttl}s: ${cacheKey}`);
+  } catch (e) {
+    Logger.log(`⚠️ Failed to cache data: ${e.toString()}`);
+  }
+  
+  return freshData;
+}
+
+/**
+ * Calculate cache key based on sheet and parameters
+ * @param {string} sheetId - Spreadsheet ID
+ * @param {string} action - Action type
+ * @returns {string} Cache key
+ */
+function getCacheKey(sheetId, action) {
+  // Include last modified time in cache key for auto-invalidation
+  const lastModified = SpreadsheetApp.openById(sheetId)
+    .getLastUpdated()
+    .getTime();
+  
+  const truncatedTime = Math.floor(lastModified / 60000); // Round to minute
+  return `data_${action}_${truncatedTime}`;
+}
+
+// ==================== MAIN ENDPOINT (OPTIMIZED) ====================
 
 function doGet(e) {
+  const startTime = new Date().getTime();
+  
   try {
     // Security checks
     checkRateLimit();
     validateRequest(e);
     
     const action = e.parameter ? e.parameter.action : null;
+    const spreadsheetId = '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI';
     
     if (action === 'getGovernanceData') {
       Logger.log('🎯 Governance data request received');
-      const governanceData = getGovernanceData();
+      
+      const cacheKey = getCacheKey(spreadsheetId, 'governance');
+      const governanceData = getCachedOrFresh(
+        cacheKey,
+        function() { return getGovernanceData(); },
+        CACHE_CONFIG.GOVERNANCE_DATA_TTL
+      );
+      
+      const executionTime = new Date().getTime() - startTime;
+      
       return ContentService
         .createTextOutput(JSON.stringify({
           success: true,
           message: 'Governance data retrieved successfully',
+          cached: governanceData.cached !== false,
+          executionTime: executionTime,
           ...governanceData
         }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    // DEFAULT: Return raw sheet data (backward compatible)
-    const spreadsheetId = '10YL71NMZ9gfMBa2AQgKqn3KTtNzQjw01S-7PnXHsnyI';
-    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-    const sheetName = '[2025] P&C Portfolio';
-    const sheet = spreadsheet.getSheetByName(sheetName);
+    // DEFAULT: Return raw sheet data (backward compatible) with caching
+    Logger.log('📊 Portfolio data request received');
     
-    if (!sheet) {
-      throw new Error(`Sheet "${sheetName}" not found`);
-    }
+    const cacheKey = getCacheKey(spreadsheetId, 'portfolio');
+    const portfolioData = getCachedOrFresh(
+      cacheKey,
+      function() {
+        const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+        const sheetName = '[2025] P&C Portfolio';
+        const sheet = spreadsheet.getSheetByName(sheetName);
+        
+        if (!sheet) {
+          throw new Error(`Sheet "${sheetName}" not found`);
+        }
+        
+        // Use batch getValues for better performance
+        const data = sheet.getDataRange().getValues();
+        
+        return {
+          data: data,
+          sheetName: sheetName,
+          lastUpdated: new Date().toISOString(),
+          rowCount: data.length,
+          columnCount: data.length > 0 ? data[0].length : 0,
+          cached: false
+        };
+      },
+      CACHE_CONFIG.PORTFOLIO_DATA_TTL
+    );
     
-    const data = sheet.getDataRange().getValues();
+    const executionTime = new Date().getTime() - startTime;
     
     return ContentService
       .createTextOutput(JSON.stringify({
         success: true,
-        data: data,
-        sheetName: sheetName,
-        lastUpdated: new Date().toISOString(),
-        rowCount: data.length,
-        columnCount: data.length > 0 ? data[0].length : 0
+        ...portfolioData,
+        cached: portfolioData.cached !== false,
+        executionTime: executionTime
       }))
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {
+    const executionTime = new Date().getTime() - startTime;
+    
     return ContentService
       .createTextOutput(JSON.stringify({
         success: false,
         error: error.toString(),
-        message: 'Failed to fetch data from Google Sheet'
+        message: 'Failed to fetch data from Google Sheet',
+        executionTime: executionTime
       }))
       .setMimeType(ContentService.MimeType.JSON);
   }

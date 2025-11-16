@@ -462,6 +462,269 @@ function getSubscriberCount(event) {
     return (eventSubscribers[event] || []).length;
 }
 
+// ==================== EVENT REGISTRY ====================
+
+/**
+ * Event Registry - Centralized, typed event constants
+ * Prevents typos and provides IDE autocomplete support
+ * 
+ * Event Naming Convention: domain:action
+ * - data:* - Data layer events (fetching, filtering, updates)
+ * - ui:* - UI interaction events (clicks, opens, closes)
+ * - state:* - State management events (state changes)
+ * - filter:* - Filter-specific events
+ * - governance:* - Governance dashboard events
+ * 
+ * @constant
+ * @type {Object}
+ */
+const EVENT_REGISTRY = {
+    // Data Layer Events
+    DATA: {
+        LOADED: 'data:loaded',                      // Portfolio data loaded from API
+        FILTERED: 'data:filtered',                  // Data filtered/sorted
+        UPDATED: 'data:updated',                    // Data refreshed
+        FETCH_START: 'data:fetch:start',            // Data fetch initiated
+        FETCH_SUCCESS: 'data:fetch:success',        // Data fetch completed
+        FETCH_ERROR: 'data:fetch:error',            // Data fetch failed
+        GOVERNANCE_LOADED: 'data:governance:loaded' // Governance data loaded
+    },
+    
+    // UI Interaction Events
+    UI: {
+        FILTER_CHANGED: 'ui:filter:changed',        // Filter criteria changed
+        CARD_CLICKED: 'ui:card:clicked',            // Product card clicked
+        PANEL_OPENED: 'ui:panel:opened',            // Detail panel opened
+        PANEL_CLOSED: 'ui:panel:closed',            // Detail panel closed
+        TAB_CHANGED: 'ui:tab:changed',              // Navigation tab changed
+        SEARCH_CHANGED: 'ui:search:changed'         // Search input changed
+    },
+    
+    // State Management Events
+    STATE: {
+        CHANGED: 'state:changed',                   // Generic state change
+        PORTFOLIO_DATA_SET: 'state:portfolioData',  // Portfolio data state updated
+        FILTERED_DATA_SET: 'state:filteredData',    // Filtered data state updated
+        TAB_SET: 'state:currentTab',                // Current tab state updated
+        RISK_FILTER_SET: 'state:riskFilter'         // Risk filter state updated
+    },
+    
+    // Filter-Specific Events
+    FILTER: {
+        APPLIED: 'filter:applied',                  // Filters applied to data
+        CLEARED: 'filter:cleared',                  // All filters cleared
+        RISK_ACTIVATED: 'filter:risk:activated',    // Risk filter activated
+        RISK_DEACTIVATED: 'filter:risk:deactivated',// Risk filter deactivated
+        METRIC_ACTIVATED: 'filter:metric:activated',// Metric filter (UX/BI) activated
+        METRIC_DEACTIVATED: 'filter:metric:deactivated' // Metric filter deactivated
+    },
+    
+    // Governance Dashboard Events
+    GOVERNANCE: {
+        RENDERED: 'governance:rendered',            // Governance dashboard rendered
+        DRILLDOWN_OPENED: 'governance:drilldown:opened', // Drill-down modal opened
+        DRILLDOWN_CLOSED: 'governance:drilldown:closed', // Drill-down modal closed
+        METRIC_CLICKED: 'governance:metric:clicked' // Governance metric clicked
+    }
+};
+
+/**
+ * Event payload schemas for validation
+ * Defines expected structure for each event type
+ * @private
+ */
+const EVENT_SCHEMAS = {
+    'data:loaded': { required: ['portfolioData'], optional: ['timestamp'] },
+    'data:filtered': { required: ['filteredData'], optional: ['filters', 'count'] },
+    'ui:filter:changed': { required: ['filters'], optional: ['source'] },
+    'ui:card:clicked': { required: ['productId'], optional: ['product'] },
+    'ui:panel:opened': { required: ['productId'], optional: [] },
+    'ui:panel:closed': { required: [], optional: [] },
+    'ui:tab:changed': { required: ['tabName'], optional: ['previousTab'] },
+    'state:changed': { required: ['key'], optional: ['oldValue', 'newValue'] }
+};
+
+/**
+ * Validate event payload against schema
+ * @param {string} event - Event name
+ * @param {*} data - Payload to validate
+ * @returns {boolean} True if valid
+ * @private
+ */
+function validateEventPayload(event, data) {
+    const schema = EVENT_SCHEMAS[event];
+    if (!schema) {
+        // No schema defined - allow any payload
+        return true;
+    }
+    
+    // Check required fields
+    if (schema.required && schema.required.length > 0) {
+        if (!data || typeof data !== 'object') {
+            console.warn(`Event "${event}" requires payload object with fields: ${schema.required.join(', ')}`);
+            return false;
+        }
+        
+        const missingFields = schema.required.filter(field => !(field in data));
+        if (missingFields.length > 0) {
+            console.warn(`Event "${event}" missing required fields: ${missingFields.join(', ')}`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * Enhanced publish with validation and wildcard support
+ * Validates payload and notifies wildcard subscribers
+ * 
+ * @param {string} event - Event name (use EVENT_REGISTRY constants)
+ * @param {*} data - Event payload
+ * @param {Object} options - Publishing options
+ * @param {boolean} options.silent - Suppress console logging
+ * @param {boolean} options.skipValidation - Skip payload validation
+ * 
+ * @example
+ * publishEnhanced(Utils.EVENTS.DATA.LOADED, { portfolioData: [...] });
+ * publishEnhanced(Utils.EVENTS.UI.FILTER_CHANGED, { filters: {...} }, { silent: true });
+ */
+function publishEnhanced(event, data, options = {}) {
+    if (!event || typeof event !== 'string') {
+        console.error('publishEnhanced() requires an event name (string)');
+        return;
+    }
+    
+    // Validate payload (unless skipped)
+    if (!options.skipValidation && !validateEventPayload(event, data)) {
+        console.error(`Event "${event}" published with invalid payload`, data);
+        // Still publish, but log warning
+    }
+    
+    // Get direct subscribers
+    const subscribers = eventSubscribers[event] || [];
+    
+    // Get wildcard subscribers (e.g., 'data:*' matches 'data:loaded')
+    const eventParts = event.split(':');
+    const wildcardEvent = eventParts[0] + ':*';
+    const wildcardSubscribers = eventSubscribers[wildcardEvent] || [];
+    
+    const totalSubscribers = subscribers.length + wildcardSubscribers.length;
+    
+    if (totalSubscribers === 0) {
+        if (!options.silent) {
+            console.warn(`No subscribers for event: ${event}`);
+        }
+        return;
+    }
+    
+    if (!options.silent) {
+        console.log(`📡 Publishing event: ${event}`, `(${totalSubscribers} subscribers)`);
+    }
+    
+    // Notify direct subscribers
+    subscribers.forEach(callback => {
+        try {
+            callback(data, event);
+        } catch (error) {
+            console.error(`Error in subscriber for event "${event}":`, error);
+        }
+    });
+    
+    // Notify wildcard subscribers
+    wildcardSubscribers.forEach(callback => {
+        try {
+            callback(data, event);
+        } catch (error) {
+            console.error(`Error in wildcard subscriber for event "${event}":`, error);
+        }
+    });
+}
+
+/**
+ * Subscribe to events with wildcard support
+ * Supports wildcard patterns like 'data:*' to subscribe to all data events
+ * 
+ * @param {string} event - Event name or wildcard pattern (e.g., 'data:*')
+ * @param {Function} callback - Function to call when event is published
+ * @param {Object} options - Subscription options
+ * @param {boolean} options.once - Auto-unsubscribe after first invocation
+ * @returns {Function} Unsubscribe function
+ * 
+ * @example
+ * // Subscribe to specific event
+ * subscribeEnhanced(Utils.EVENTS.DATA.LOADED, (data) => { ... });
+ * 
+ * // Subscribe to all data events
+ * subscribeEnhanced('data:*', (data, event) => {
+ *     console.log('Data event:', event, data);
+ * });
+ * 
+ * // Subscribe with once option
+ * subscribeEnhanced(Utils.EVENTS.DATA.LOADED, callback, { once: true });
+ */
+function subscribeEnhanced(event, callback, options = {}) {
+    if (!event || typeof event !== 'string') {
+        console.error('subscribeEnhanced() requires an event name (string)');
+        return () => {};
+    }
+    
+    if (typeof callback !== 'function') {
+        console.error('subscribeEnhanced() requires a callback function');
+        return () => {};
+    }
+    
+    // Wrap callback for 'once' option
+    let wrappedCallback = callback;
+    if (options.once) {
+        let unsubscribeFn;
+        wrappedCallback = function(...args) {
+            callback(...args);
+            if (unsubscribeFn) {
+                unsubscribeFn();
+            }
+        };
+    }
+    
+    if (!eventSubscribers[event]) {
+        eventSubscribers[event] = [];
+    }
+    
+    eventSubscribers[event].push(wrappedCallback);
+    
+    const isWildcard = event.endsWith(':*');
+    console.log(`📬 Subscribed to ${isWildcard ? 'wildcard ' : ''}event: ${event} (${eventSubscribers[event].length} subscribers)`);
+    
+    // Return unsubscribe function
+    const unsubscribeFn = function unsubscribe() {
+        const index = eventSubscribers[event].indexOf(wrappedCallback);
+        if (index > -1) {
+            eventSubscribers[event].splice(index, 1);
+            console.log(`📭 Unsubscribed from event: ${event}`);
+        }
+    };
+    
+    return unsubscribeFn;
+}
+
+/**
+ * Get event statistics for debugging
+ * @returns {Object} Event system statistics
+ */
+function getEventStats() {
+    const events = Object.keys(eventSubscribers);
+    const totalSubscribers = events.reduce((sum, event) => sum + eventSubscribers[event].length, 0);
+    
+    return {
+        totalEvents: events.length,
+        totalSubscribers,
+        events: events.map(event => ({
+            name: event,
+            subscriberCount: eventSubscribers[event].length
+        }))
+    };
+}
+
 // ==================== ERROR LOGGING ====================
 
 /**
@@ -550,16 +813,25 @@ window.Utils = {
     getElement,
     createElement,
     
-    // Pub/Sub Event System
+    // Pub/Sub Event System (Legacy - for backward compatibility)
     publish,
     subscribe,
     unsubscribeAll,
     getRegisteredEvents,
     getSubscriberCount,
     
+    // Enhanced Pub/Sub Event System (Recommended)
+    publishEnhanced,
+    subscribeEnhanced,
+    getEventStats,
+    
+    // Event Registry - Typed event constants
+    EVENTS: EVENT_REGISTRY,
+    
     // Error Logging
     logCriticalError
 };
 
 console.log('✅ Utils module loaded');
+console.log('📡 Event system enhanced with typed constants and validation');
 

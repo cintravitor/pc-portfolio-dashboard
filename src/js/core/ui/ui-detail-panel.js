@@ -679,6 +679,11 @@
         document.querySelectorAll('.product-card').forEach(card => {
             card.classList.remove('selected');
         });
+        
+        // Emit panel closed event
+        window.Utils.publishEnhanced(window.Utils.EVENTS.UI.PANEL_CLOSED, {
+            timestamp: Date.now()
+        });
     }
     
     // Export to window.UIManager.DetailPanel namespace
@@ -692,5 +697,19 @@
     window.showDetailPanel = showDetailPanel;
     window.hideDetailPanel = hideDetailPanel;
     
-    console.log('✅ UI Detail Panel module loaded');
+    // Subscribe to ui:card:clicked event for automatic panel opening
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.UI.CARD_CLICKED, (data) => {
+        console.log(`📡 ui-detail-panel received ui:card:clicked event (productId: ${data.productId})`);
+        
+        // Automatically open detail panel
+        showDetailPanel(data.productId);
+        
+        // Emit panel opened event
+        window.Utils.publishEnhanced(window.Utils.EVENTS.UI.PANEL_OPENED, {
+            productId: data.productId
+        });
+    });
+    
+    console.log('✅ UI Detail Panel module loaded (EVENT-DRIVEN)');
+    console.log('📡 Subscribed to: ui:card:clicked');
 })();

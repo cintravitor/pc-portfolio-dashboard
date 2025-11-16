@@ -1953,8 +1953,48 @@ Example: "10 solutions [HIGH RISK] require immediate attention" NOT "10 solution
         }
     });
     
-    console.log('✅ UI Governance module loaded');
-    console.log('📡 Subscribed to filters:changed event');
+    // Subscribe to data:loaded event for automatic cache invalidation
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.DATA.LOADED, (data) => {
+        console.log(`📡 ui-governance received data:loaded event (${data.portfolioData.length} items)`);
+        
+        // Clear cache when new data loads
+        clearCache();
+        
+        // If we're on the governance tab, re-render
+        if (window.State.getCurrentTab() === 'governance-dashboard') {
+            console.log('🔄 Auto-refreshing governance dashboard with new data');
+            renderGovernanceDashboard();
+        }
+    });
+    
+    // Subscribe to data:filtered event for automatic updates
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.DATA.FILTERED, (data) => {
+        console.log(`📡 ui-governance received data:filtered event (${data.count} items)`);
+        
+        // Clear cache when filtered data changes
+        clearCache();
+        
+        // Update dashboard if we're on the governance tab
+        if (window.State.getCurrentTab() === 'governance-dashboard') {
+            console.log('🔄 Auto-updating governance dashboard with filtered data');
+            // The filters:changed event will handle the update
+            // This is just for cache invalidation
+        }
+    });
+    
+    // Subscribe to data:governance:loaded event (for future server-side governance data)
+    window.Utils.subscribeEnhanced(window.Utils.EVENTS.DATA.GOVERNANCE_LOADED, (data) => {
+        console.log('📡 ui-governance received data:governance:loaded event');
+        
+        // Clear cache and potentially use server-calculated data
+        clearCache();
+        
+        // Future enhancement: Use server-calculated governance data if available
+        // For now, we calculate client-side
+    });
+    
+    console.log('✅ UI Governance module loaded (EVENT-DRIVEN)');
+    console.log('📡 Subscribed to: filters:changed, data:loaded, data:filtered, data:governance:loaded');
     
 })();
 

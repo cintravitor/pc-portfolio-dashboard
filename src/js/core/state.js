@@ -170,6 +170,7 @@ function getState() {
 
 /**
  * Set the complete portfolio data
+ * Emits event: state:portfolioData
  * @param {Array} data - New portfolio data array
  * @throws {Error} If data is not an array
  */
@@ -177,12 +178,25 @@ function setPortfolioData(data) {
     if (!Array.isArray(data)) {
         throw new Error('Portfolio data must be an array');
     }
+    
+    const oldData = appState.portfolioData;
     appState.portfolioData = data;
     console.log(`State: Portfolio data set (${data.length} items)`);
+    
+    // Emit state change event for subscribers
+    if (window.Utils && window.Utils.publishEnhanced) {
+        window.Utils.publishEnhanced(window.Utils.EVENTS.STATE.PORTFOLIO_DATA_SET, {
+            key: 'portfolioData',
+            oldValue: oldData,
+            newValue: data,
+            count: data.length
+        }, { silent: true }); // Silent to avoid console spam
+    }
 }
 
 /**
  * Set the filtered data
+ * Emits event: state:filteredData
  * @param {Array} data - New filtered data array
  * @throws {Error} If data is not an array
  */
@@ -190,7 +204,19 @@ function setFilteredData(data) {
     if (!Array.isArray(data)) {
         throw new Error('Filtered data must be an array');
     }
+    
+    const oldData = appState.filteredData;
     appState.filteredData = data;
+    
+    // Emit state change event for subscribers
+    if (window.Utils && window.Utils.publishEnhanced) {
+        window.Utils.publishEnhanced(window.Utils.EVENTS.STATE.FILTERED_DATA_SET, {
+            key: 'filteredData',
+            oldValue: oldData,
+            newValue: data,
+            count: data.length
+        }, { silent: true }); // Silent to avoid console spam
+    }
 }
 
 /**
@@ -208,13 +234,25 @@ function setColumnMapping(mapping) {
 
 /**
  * Set current active tab
+ * Emits event: state:currentTab
  * @param {string} tabName - Tab identifier
  */
 function setCurrentTab(tabName) {
     if (typeof tabName !== 'string') {
         throw new Error('Tab name must be a string');
     }
+    
+    const oldTab = appState.currentTab;
     appState.currentTab = tabName;
+    
+    // Emit state change event for subscribers
+    if (window.Utils && window.Utils.publishEnhanced) {
+        window.Utils.publishEnhanced(window.Utils.EVENTS.STATE.TAB_SET, {
+            key: 'currentTab',
+            oldValue: oldTab,
+            newValue: tabName
+        }, { silent: true }); // Silent to avoid console spam
+    }
 }
 
 /**
@@ -286,6 +324,7 @@ function setLastUpdateTime(timestamp) {
 
 /**
  * Set active risk filter
+ * Emits event: state:riskFilter
  * @param {string|null} level - Risk level: 'critical', 'monitor', 'datagaps', or null to clear
  */
 function setActiveRiskFilter(level) {
@@ -293,8 +332,19 @@ function setActiveRiskFilter(level) {
         console.warn(`Invalid risk level: ${level}. Must be 'critical', 'monitor', 'datagaps', or null`);
         return;
     }
+    
+    const oldLevel = appState.activeRiskFilter;
     appState.activeRiskFilter = level;
     console.log(`State: Active risk filter set to ${level || 'null'}`);
+    
+    // Emit state change event for subscribers
+    if (window.Utils && window.Utils.publishEnhanced) {
+        window.Utils.publishEnhanced(window.Utils.EVENTS.STATE.RISK_FILTER_SET, {
+            key: 'activeRiskFilter',
+            oldValue: oldLevel,
+            newValue: level
+        }, { silent: true }); // Silent to avoid console spam
+    }
 }
 
 /**

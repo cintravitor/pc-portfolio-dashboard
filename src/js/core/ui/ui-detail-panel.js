@@ -49,7 +49,10 @@
      */
     function popModalState() {
         if (window.location.hash) {
-            history.back();
+            // Use replaceState instead of history.back() to avoid navigating away
+            // This removes the hash without leaving the current page
+            const urlWithoutHash = window.location.pathname + window.location.search;
+            history.replaceState(null, '', urlWithoutHash);
         }
         window.State.setDetailModalOpen(false);
         window.State.setCurrentDetailModalProduct(null);

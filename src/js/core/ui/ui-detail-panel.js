@@ -3,7 +3,9 @@
  * Handles full-screen modal overlay for solution details with liquid glass styling
  * 
  * Features:
- * - Full-screen centered modal with backdrop blur
+ * - Full-screen immersive modal (100vw x 100vh)
+ * - History API integration with URL hash navigation
+ * - Browser back button support
  * - Tab-based navigation (Metrics | Core Details)
  * - Single view at a time prevents overlap issues
  * - Smooth tab switching with animations
@@ -15,6 +17,43 @@
 
 (function() {
     'use strict';
+    
+    // ==================== HISTORY API HELPERS ====================
+    
+    /**
+     * Convert product name to URL-friendly slug
+     * @param {string} name - Product name
+     * @returns {string} URL slug
+     */
+    function createSlug(name) {
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+    
+    /**
+     * Update URL hash when modal opens
+     * @param {Object} product - Product object
+     */
+    function pushModalState(product) {
+        const slug = createSlug(product.name);
+        const hash = `#/solution/${slug}`;
+        history.pushState({ productId: product.id, slug }, '', hash);
+        window.State.setDetailModalOpen(true);
+        window.State.setCurrentDetailModalProduct(product);
+    }
+    
+    /**
+     * Clear URL hash when modal closes
+     */
+    function popModalState() {
+        if (window.location.hash) {
+            history.back();
+        }
+        window.State.setDetailModalOpen(false);
+        window.State.setCurrentDetailModalProduct(null);
+    }
     
     /**
      * Generate AI-powered recommendation for a metric
@@ -462,23 +501,23 @@
 
         panel.innerHTML = `
             <div class="detail-header">
-                <button class="detail-close" aria-label="Close detail panel">×</button>
-                <div class="detail-title">${window.Utils.escapeHtml(product.name)}</div>
+                <button class="detail-close" aria-label="Close detail modal (press ESC or browser back)" role="button">×</button>
+                <div class="detail-title" id="detail-modal-title" role="heading" aria-level="1">${window.Utils.escapeHtml(product.name)}</div>
                 <div class="detail-subtitle">${window.Utils.escapeHtml(product.area)}</div>
             </div>
             <div class="detail-body">
                 ${alertBannerHtml}
                 <!-- Tab Navigation -->
-                <div class="detail-tabs">
-                    <button class="detail-tab active" data-tab="metrics">
-                        <span class="detail-tab-icon">📊</span>
+                <div class="detail-tabs" role="tablist" aria-label="Solution details navigation">
+                    <button class="detail-tab active" data-tab="metrics" role="tab" aria-selected="true" aria-controls="tab-metrics">
+                        <span class="detail-tab-icon" aria-hidden="true">📊</span>
                         <div class="detail-tab-label">
                             <span class="detail-tab-title">Metrics</span>
                             <span class="detail-tab-subtitle">Track performance and take action</span>
                         </div>
                     </button>
-                    <button class="detail-tab" data-tab="core-details">
-                        <span class="detail-tab-icon">📋</span>
+                    <button class="detail-tab" data-tab="core-details" role="tab" aria-selected="false" aria-controls="tab-core-details">
+                        <span class="detail-tab-icon" aria-hidden="true">📋</span>
                         <div class="detail-tab-label">
                             <span class="detail-tab-title">Core Details</span>
                             <span class="detail-tab-subtitle">Essential product information</span>
@@ -487,12 +526,12 @@
                 </div>
                 
                 <!-- Tab Content: Metrics -->
-                <div class="detail-tab-content active" id="tab-metrics">
+                <div class="detail-tab-content active" id="tab-metrics" role="tabpanel" aria-labelledby="detail-modal-title">
                     ${generateMetricsContent(product)}
                 </div>
                 
                 <!-- Tab Content: Core Details -->
-                <div class="detail-tab-content" id="tab-core-details">
+                <div class="detail-tab-content" id="tab-core-details" role="tabpanel" aria-labelledby="detail-modal-title">
                     ${generateCoreDetailsContent(product)}
                 </div>
             </div>
@@ -503,8 +542,20 @@
         overlay.classList.remove('hidden');
         panel.classList.remove('hidden');
         
+        // Add ARIA attributes to overlay and panel for accessibility
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'detail-modal-title');
+        
         // Prevent body scroll when modal is open
         document.body.style.overflow = 'hidden';
+        
+        // Store previously focused element for restoration on close
+        const previouslyFocused = document.activeElement;
+        panel._previouslyFocused = previouslyFocused;
+        
+        // Update URL hash (History API integration)
+        pushModalState(product);
         
         // Setup tab navigation
         setupTabNavigation();
@@ -512,8 +563,15 @@
         // Setup modal close handlers
         setupModalCloseHandlers();
         
-        // Load Chart.js and render charts after panel is visible
-        setTimeout(() => {
+        // Focus close button for keyboard accessibility
+        const closeBtn = panel.querySelector('.detail-close');
+        if (closeBtn) {
+            closeBtn.focus();
+        }
+        
+        // Load charts asynchronously (non-blocking) using requestAnimationFrame for optimal performance
+        // Modal UI renders instantly while charts load in background
+        requestAnimationFrame(() => {
             window.UIManager.Charts.loadChartJs()
                 .then(() => {
                     window.UIManager.Charts.renderMetricChart('chart-ux', product.monthlyUX, product.targetUX, product.keyMetricUX);
@@ -531,7 +589,7 @@
                         biContainer.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load charts. Please refresh the page.</p>';
                     }
                 });
-        }, 100);
+        });
         
         // Generate AI recommendations asynchronously
         generateAndDisplayRecommendations(product);
@@ -595,16 +653,18 @@
     function switchTab(clickedTab) {
         const tabName = clickedTab.getAttribute('data-tab');
         
-        // Remove active class from all tabs and contents
+        // Remove active class and update ARIA from all tabs and contents
         document.querySelectorAll('.detail-tab').forEach(tab => {
             tab.classList.remove('active');
+            tab.setAttribute('aria-selected', 'false');
         });
         document.querySelectorAll('.detail-tab-content').forEach(content => {
             content.classList.remove('active');
         });
         
-        // Add active class to clicked tab and corresponding content
+        // Add active class and update ARIA for clicked tab and corresponding content
         clickedTab.classList.add('active');
+        clickedTab.setAttribute('aria-selected', 'true');
         const targetContent = document.getElementById(`tab-${tabName}`);
         if (targetContent) {
             targetContent.classList.add('active');
@@ -645,8 +705,17 @@
     
     /**
      * Hide detail panel
+     * @param {Object} options - Options object
+     * @param {boolean} options.skipHistoryPop - Skip history.back() call (used when triggered by popstate)
      */
-    function hideDetailPanel() {
+    function hideDetailPanel(options = {}) {
+        const { skipHistoryPop = false } = options;
+        
+        // Clear URL hash (only if not triggered by popstate)
+        if (!skipHistoryPop) {
+            popModalState();
+        }
+        
         // Clear alert context (part of contextual alerting feature)
         window.State.clearAlertContext();
         
@@ -674,6 +743,12 @@
         
         // Restore body scroll - PRODUCTION APPROACH (SIMPLE & WORKING)
         document.body.style.overflow = '';
+        
+        // Restore focus to previously focused element (accessibility)
+        if (panel && panel._previouslyFocused) {
+            panel._previouslyFocused.focus();
+            panel._previouslyFocused = null;
+        }
         
         // Remove selected class from cards
         document.querySelectorAll('.product-card').forEach(card => {
@@ -710,6 +785,20 @@
         });
     });
     
-    console.log('✅ UI Detail Panel module loaded (EVENT-DRIVEN)');
+    // Listen for browser back/forward navigation (History API integration)
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.productId !== undefined) {
+            // User navigated forward to a modal state
+            showDetailPanel(event.state.productId);
+        } else {
+            // User navigated back from modal (or to base state)
+            if (window.State.getIsDetailModalOpen()) {
+                hideDetailPanel({ skipHistoryPop: true });
+            }
+        }
+    });
+    
+    console.log('✅ UI Detail Panel module loaded (EVENT-DRIVEN + HISTORY API)');
     console.log('📡 Subscribed to: ui:card:clicked');
+    console.log('🔙 History API: Browser back button enabled');
 })();

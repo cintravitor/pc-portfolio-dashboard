@@ -2911,17 +2911,14 @@ label.filter-checkbox,
     right: 0;
     bottom: 0;
     z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: rgba(99, 102, 241, 0.04);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
-    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(24px) saturate(120%);
+    -webkit-backdrop-filter: blur(24px) saturate(120%);
+    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
 }
 
-@keyframes fadeIn {
+@keyframes modalFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
@@ -2929,36 +2926,20 @@ label.filter-checkbox,
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: relative;
-    width: 90%;
-    max-width: 1200px;
-    height: 92vh;
+    width: 100vw;
+    height: 100vh;
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-radius: 1.5rem;
-    border: 1.5px solid var(--glass-border);
-    box-shadow: 
-        0 24px 80px rgba(99, 102, 241, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes modalSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    animation: modalFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity;
 }
 
 .detail-header {
-    padding: 2rem;
+    padding: 2.5rem 3rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
     position: relative;

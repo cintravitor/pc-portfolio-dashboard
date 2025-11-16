@@ -32,14 +32,39 @@
             .replace(/^-+|-+$/g, '');
     }
     
+    // Store original URL when first modal opens (for restoration)
+    let originalUrlBeforeModal = null;
+    
+    // Initialize: Ensure we have a base dashboard state in history
+    // This prevents browser back from leaving the site when closing modals
+    (function initializeDashboardHistory() {
+        // Only if we're on the dashboard (no hash) and haven't already set this
+        if (!window.location.hash && !history.state?.isDashboardBase) {
+            history.replaceState({ isDashboardBase: true }, '', window.location.href);
+        }
+    })();
+    
     /**
      * Update URL hash when modal opens
      * @param {Object} product - Product object
      */
     function pushModalState(product) {
+        // Store original URL only on first modal open (no hash present)
+        if (!window.location.hash) {
+            originalUrlBeforeModal = window.location.pathname + window.location.search;
+        }
+        
         const slug = createSlug(product.name);
         const hash = `#/solution/${slug}`;
-        history.pushState({ productId: product.id, slug }, '', hash);
+        
+        // Use replaceState instead of pushState to avoid adding history entries
+        // This prevents navigation to external pages when closing modal
+        history.replaceState({ 
+            productId: product.id, 
+            slug,
+            isModal: true 
+        }, '', hash);
+        
         window.State.setDetailModalOpen(true);
         window.State.setCurrentDetailModalProduct(product);
     }
@@ -48,9 +73,12 @@
      * Clear URL hash when modal closes
      */
     function popModalState() {
-        if (window.location.hash) {
-            // Use replaceState instead of history.back() to avoid navigating away
-            // This removes the hash without leaving the current page
+        if (window.location.hash && originalUrlBeforeModal) {
+            // Restore the original URL from before any modals were opened
+            history.replaceState(null, '', originalUrlBeforeModal);
+            originalUrlBeforeModal = null; // Reset for next modal session
+        } else if (window.location.hash) {
+            // Fallback: just remove hash
             const urlWithoutHash = window.location.pathname + window.location.search;
             history.replaceState(null, '', urlWithoutHash);
         }
@@ -1030,5 +1058,5 @@
     
     console.log('✅ UI Detail Panel module loaded (EVENT-DRIVEN + HISTORY API)');
     console.log('📡 Subscribed to: ui:card:clicked');
-    console.log('🔙 History API: Browser back button enabled');
+    console.log('🔗 URL Hash: Updates on modal open/close (no new history entries)');
 })();

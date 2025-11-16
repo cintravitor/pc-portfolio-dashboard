@@ -1,6 +1,6 @@
 # P&C Portfolio Dashboard
 
-![Version](https://img.shields.io/badge/version-7.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-8.4.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-production-green.svg)
 
 An interactive dashboard for managing and visualizing the People & Culture (P&C) portfolio solutions with AI-powered insights and strategic governance features.
@@ -62,8 +62,11 @@ The dashboard follows a modern, modular architecture:
 ### Two Main Views
 
 #### 🔍 Explore Tab
+- **🆕 Premium Header with Inline Metrics** (v8.4.0): Ultra-compact header with glass-morphism design, inline metrics display, and consolidated single-row filters for maximum content visibility
 - **AI-Powered Cards**: Solution cards with AI-generated summaries (120-147 chars)
-- **Smart Filtering**: Multi-select filters by area, maturity, and owner
+- **Smart Filtering**: Multi-select filters by area, maturity, target user, and owner
+- **Clickable Warning Metrics**: Interactive UX/BI metrics that filter to missing data
+- **Smart Section Visibility**: Journey sections auto-hide when empty
 - **Smoke Detectors**: Automated issue detection with visual indicators
 - **Detail Panels**: Comprehensive solution details with metric charts
 - **Search**: Fast text search across solutions

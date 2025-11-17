@@ -144,13 +144,26 @@ async function initialize() {
     // Setup UI event listeners (now safe - all modules are ready)
     setupEventListeners();
     
-    // Try to load cached data first for instant display
-    const cachedData = window.DataManager.loadCachedData();
-    if (cachedData && cachedData.length > 0) {
-        window.State.setPortfolioData(cachedData);
-        window.UIManager.renderCards();
-        window.UIManager.updateStats();
-        window.UIManager.updateLastUpdateDisplay();
+    // Subscribe to fetch retry events for transparent user feedback
+    if (window.Utils && window.Utils.subscribeEnhanced) {
+        window.Utils.subscribeEnhanced('data:fetch:retry', (data) => {
+            const loadingDiv = document.getElementById('loading');
+            const loadingText = loadingDiv?.querySelector('h2');
+            const loadingSubtext = loadingDiv?.querySelector('p');
+            
+            if (loadingText && loadingSubtext) {
+                if (data.attempt === 1) {
+                    loadingText.textContent = 'Loading Portfolio Data...';
+                    loadingSubtext.textContent = 'Connecting to Google Sheets';
+                } else if (data.attempt === 2) {
+                    loadingText.textContent = 'Still Loading...';
+                    loadingSubtext.textContent = 'Apps Script warming up (this is normal for first load)';
+                } else {
+                    loadingText.textContent = 'Almost There...';
+                    loadingSubtext.textContent = `Final attempt (${Math.round(data.timeout/1000)}s timeout)`;
+                }
+            }
+        });
     }
     
     // Initialize auto-update system
@@ -162,17 +175,25 @@ async function initialize() {
  * Checks if data should be refreshed and sets up periodic checks
  */
 function initAutoUpdate() {
+    // Check if DataManager is available
+    if (!window.DataManager || !window.DataManager.shouldRefreshData) {
+        console.error('❌ DataManager not available! Retrying in 100ms...');
+        setTimeout(initAutoUpdate, 100);
+        return;
+    }
+    
     if (window.DataManager.shouldRefreshData()) {
         fetchSheetData();
     } else {
         const portfolioData = window.DataManager.loadCachedData();
+        
         if (portfolioData && portfolioData.length > 0) {
             window.UIManager.setupTacticalFilters(); // Setup filters and sorting
             window.DataManager.applyFilters('', '', '', '', ''); // Initialize filteredData with sorting
             window.UIManager.renderCards();
             window.UIManager.updateStats();
             window.UIManager.updateLastUpdateDisplay();
-            window.UIManager.showError('Showing cached data.');
+            window.UIManager.showLoading(false); // Hide loading screen when rendering from cache
         } else {
             fetchSheetData();
         }
@@ -192,10 +213,9 @@ function initAutoUpdate() {
  */
 async function fetchSheetData() {
     window.UIManager.showLoading(true);
-    window.UIManager.hideError();
 
     try {
-        // Fetch data using Data Manager
+        // Fetch data using Data Manager (with automatic retry logic)
         const data = await window.DataManager.fetchSheetData();
         
         // Update UI after successful fetch
@@ -211,17 +231,44 @@ async function fetchSheetData() {
         }
 
     } catch (error) {
-        console.error('Error in fetchSheetData:', error);
-        window.UIManager.showError(`Failed to fetch data: ${error.message}`);
+        console.error('❌ CRITICAL: All data fetch attempts failed:', error);
         
-        // Try to load cached data as fallback
+        // Try to load cached data as silent fallback
         const cachedData = window.DataManager.loadCachedData();
         if (cachedData && cachedData.length > 0) {
+            console.log('✅ Loading from cache as fallback');
             window.UIManager.setupTacticalFilters(); // Setup filters and sorting
             window.DataManager.applyFilters('', '', '', '', ''); // Reset filters and sorting
             window.UIManager.renderCards();
             window.UIManager.updateStats();
-            window.UIManager.showError('Showing cached data. Unable to fetch fresh data.');
+            window.UIManager.updateLastUpdateDisplay();
+        } else {
+            // Only show error for truly catastrophic failures (no cache available)
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <h2 style="color: #ef4444;">Unable to Connect</h2>
+                        <p style="color: #6b7280; margin: 1rem 0;">
+                            Could not reach Google Sheets after multiple attempts.
+                        </p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">
+                            Please check your internet connection or contact support.
+                        </p>
+                        <button class="refresh-btn" onclick="fetchSheetData()" style="margin-top: 1rem;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // Log critical error for debugging
+            if (window.Utils && window.Utils.logCriticalError) {
+                window.Utils.logCriticalError('InitialDataFetch', error, {
+                    hasCache: false,
+                    errorType: error.name
+                });
+            }
         }
     } finally {
         window.UIManager.showLoading(false);

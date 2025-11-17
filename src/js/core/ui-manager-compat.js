@@ -66,24 +66,6 @@
                     loading.classList.add('hidden');
                 }
             }
-        },
-        
-        showError: function(message) {
-            const errorDiv = document.getElementById('error');
-            const errorMessage = document.getElementById('error-message');
-            if (errorMessage) {
-                errorMessage.textContent = message;
-            }
-            if (errorDiv) {
-                errorDiv.classList.remove('hidden');
-            }
-        },
-        
-        hideError: function() {
-            const errorDiv = document.getElementById('error');
-            if (errorDiv) {
-                errorDiv.classList.add('hidden');
-            }
         }
     });
     

@@ -59,6 +59,73 @@
     }
 
     /**
+     * Fetch with automatic retry and exponential backoff
+     * Handles Google Apps Script cold starts gracefully
+     * @param {string} url - URL to fetch
+     * @param {number} maxAttempts - Maximum retry attempts (default: 3)
+     * @param {Array<number>} timeouts - Timeout per attempt in ms (default: [45000, 60000, 90000])
+     * @returns {Promise<Object>} JSON response from server
+     */
+    async function fetchWithRetry(url, maxAttempts = 3, timeouts = [45000, 60000, 90000]) {
+        let lastError;
+        
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                const timeout = timeouts[attempt - 1];
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                // Emit progress event for UI feedback
+                if (window.Utils && window.Utils.publishEnhanced) {
+                    window.Utils.publishEnhanced('data:fetch:retry', {
+                        attempt,
+                        maxAttempts,
+                        timeout,
+                        isFirstAttempt: attempt === 1
+                    });
+                }
+                
+                console.log(`🔄 Fetch attempt ${attempt}/${maxAttempts} (timeout: ${timeout / 1000}s)`);
+                
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
+                const jsonData = await response.json();
+                
+                // Success!
+                if (attempt > 1) {
+                    console.log(`✅ Fetch succeeded on attempt ${attempt}`);
+                }
+                
+                return jsonData;
+                
+            } catch (error) {
+                lastError = error;
+                console.warn(`⚠️ Fetch attempt ${attempt}/${maxAttempts} failed:`, error.message);
+                
+                // If this is not the last attempt, wait briefly before retry
+                if (attempt < maxAttempts) {
+                    const backoffDelay = Math.min(1000 * Math.pow(2, attempt - 1), 3000);
+                    console.log(`⏳ Waiting ${backoffDelay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                }
+            }
+        }
+        
+        // All attempts failed
+        console.error(`❌ All ${maxAttempts} fetch attempts failed`);
+        throw lastError;
+    }
+
+    /**
      * Fetch data from Google Apps Script
      */
     async function fetchSheetData() {
@@ -70,21 +137,8 @@
             console.log('Fetching data from Google Apps Script...');
             console.log('URL:', CONFIG.WEB_APP_URL);
             
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout (increased)
-            
-            const response = await fetch(CONFIG.WEB_APP_URL, { 
-                signal: controller.signal,
-                mode: 'cors',
-                cache: 'no-cache'
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error(`HTTP Error: ${response.status}`);
-            }
-
-            const jsonData = await response.json();
+            // Use retry wrapper instead of direct fetch
+            const jsonData = await fetchWithRetry(CONFIG.WEB_APP_URL);
 
             if (!jsonData.success) {
                 throw new Error(jsonData.error || 'Unknown error');

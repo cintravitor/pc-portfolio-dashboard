@@ -248,8 +248,10 @@
      * @param {string} stageName - The display name of the journey stage to show
      */
     function selectJourneyStage(stageName) {
+        // Toggle deselect: clicking active stage clears selection
         if (activeJourneyStage === stageName) {
-            return; // Already selected
+            clearJourneyStageSelection();
+            return;
         }
         
         const cardsContainer = document.getElementById('cards-container');
@@ -273,6 +275,67 @@
                 });
             }, 250); // Reduced from 300ms for snappier feel
         });
+    }
+    
+    /**
+     * Clear the active journey stage selection and return to empty state
+     * Provides smooth transition with visual feedback
+     */
+    function clearJourneyStageSelection() {
+        const cardsContainer = document.getElementById('cards-container');
+        if (!cardsContainer) return;
+        
+        // Visual feedback: brief transition
+        cardsContainer.classList.add('transitioning');
+        
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                activeJourneyStage = null;
+                renderJourneyNavigation(); // Update button states (remove active class)
+                renderCards(); // Show zen empty state
+                
+                // Remove transitioning class for fade-in
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        cardsContainer.classList.remove('transitioning');
+                    }, 50);
+                });
+            }, 250);
+        });
+    }
+    
+    /**
+     * Setup click-to-clear functionality on cards container
+     * Clicking in white space when cards are displayed clears the selection
+     */
+    function setupClickToClearListener() {
+        const cardsContainer = document.getElementById('cards-container');
+        if (!cardsContainer) return;
+        
+        // Remove existing listener if present
+        if (cardsContainer._clickToClearListener) {
+            cardsContainer.removeEventListener('click', cardsContainer._clickToClearListener);
+        }
+        
+        const clickListener = function(event) {
+            // Only clear if:
+            // 1. A journey stage is currently selected
+            // 2. User clicked on the container itself (not a card or child element)
+            // 3. Cards are currently displayed (not zen empty state)
+            
+            if (!activeJourneyStage) return;
+            
+            // Check if click was on container background (not a card)
+            if (event.target === cardsContainer || event.target.classList.contains('cards-grid')) {
+                const hasCards = cardsContainer.querySelector('.product-card');
+                if (hasCards) {
+                    clearJourneyStageSelection();
+                }
+            }
+        };
+        
+        cardsContainer.addEventListener('click', clickListener);
+        cardsContainer._clickToClearListener = clickListener;
     }
     
     /**
@@ -302,6 +365,9 @@
 
         // Render journey navigation first
         renderJourneyNavigation();
+
+        // Setup click-to-clear listener (idempotent)
+        setupClickToClearListener();
 
         // Get grouped data (from cache if possible)
         const { groupedByJourney } = getGroupedData();
@@ -1028,6 +1094,7 @@
         render: renderCards,
         renderJourneyNavigation,  // NEW: Horizontal journey navigation
         selectJourneyStage,  // NEW: Select active journey stage
+        clearJourneyStageSelection,  // NEW: Clear journey stage selection (toggle deselect)
         updateStats,  // Legacy - calls updateInlineMetrics
         updateInlineMetrics,  // NEW: Premium header redesign v8.4.0
         setupInlineMetricsListeners,  // NEW: Setup click handlers for warning metrics

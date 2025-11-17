@@ -2926,13 +2926,13 @@ label.filter-checkbox,
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: fixed !important;
-    /* Premium Card Positioning: Centered with medium breathing room */
-    top: 2.5vh !important;
+    /* Premium Card Positioning: Centered with minimal breathing room for max space */
+    top: 2vh !important;
     left: 50% !important;
     transform: translateX(-50%);
-    width: 96vw !important;
-    max-width: 1600px !important;
-    height: 95vh !important;
+    width: 98vw !important;
+    max-width: 1700px !important;
+    height: 96vh !important;
     
     /* Premium Glass Card Aesthetic */
     background: linear-gradient(135deg, 
@@ -3211,7 +3211,7 @@ label.filter-checkbox,
 /* Detail Tab Content - CRITICAL SCROLLING FIX */
 .detail-tab-content {
     display: none;
-    padding: 1.75rem 1.5rem 2rem !important;
+    padding: 0.5rem 0 1.25rem !important;
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
@@ -3220,6 +3220,8 @@ label.filter-checkbox,
     background: rgba(248, 250, 252, 0.5);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .detail-tab-content.active {
@@ -3255,49 +3257,47 @@ label.filter-checkbox,
 #detail-panel .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem; /* Optimized gap for maximum chart space */
+    gap: 0.5rem; /* Minimal gap for maximum card width */
     margin: 0;
-    padding: 1rem 1rem 1.25rem 1rem; /* Optimized padding for more graph area */
+    padding: 0;
     align-items: stretch;
     width: 100% !important;
-    max-width: none !important; /* Remove any max-width */
+    max-width: 100% !important;
     box-sizing: border-box;
-    justify-items: stretch; /* Force cards to fill grid cells */
+    justify-items: stretch;
+    justify-content: stretch;
 }
 
 .metric-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 14px;
-    padding: 1rem; /* Optimized padding for maximum chart space */
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    width: 100% !important; /* Force full width */
-    max-width: 100% !important; /* No constraints */
-    min-width: 0;
-    transition: all 0.2s ease;
+    width: 100% !important; /* Force full width of grid cell */
+    max-width: 100% !important;
+    min-width: 0 !important;
+    transition: none;
     overflow: visible;
-    flex: 1; /* Flex to fill grid cell */
+    flex: 1 1 100%; /* Flex to fill grid cell completely */
+    box-sizing: border-box;
 }
 
 .metric-card:hover {
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
-    transform: translateY(-1px);
-    border-color: rgba(99, 102, 241, 0.3); /* Subtle accent on hover */
+    /* No hover effect on invisible container - hover happens on chart container */
 }
 
 .metric-card.below-target {
-    border-left: 3px solid #ef4444;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(255, 255, 255, 0.65) 100%);
+    /* Performance indicator styling moved to chart-container */
 }
 
 .metric-card.above-target {
-    border-left: 3px solid #10b981;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(255, 255, 255, 0.65) 100%);
+    /* Performance indicator styling moved to chart-container */
 }
 
 .metric-card-title {
@@ -3306,7 +3306,8 @@ label.filter-checkbox,
     color: #1e293b;
     text-transform: none;
     letter-spacing: -0.01em;
-    margin-bottom: 0.5rem; /* FURTHER REDUCED for chart space */
+    margin-bottom: 0.375rem; /* Tighter spacing for more graph space */
+    padding-left: 0;
     flex-shrink: 0;
     display: block;
 }
@@ -3325,7 +3326,7 @@ label.filter-checkbox,
 
 .metric-card .detail-field {
     flex-shrink: 0;
-    margin-bottom: 0.5rem; /* Reduced for tighter layout */
+    margin-bottom: 0.5rem; /* Tighter spacing for more graph space */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3337,22 +3338,23 @@ label.filter-checkbox,
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.5rem; /* Tighter spacing */
+    margin-bottom: 0.375rem; /* Tighter spacing for more graph space */
+    padding-left: 0;
 }
 
 .metric-card .recommendation-placeholder {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
     flex-shrink: 0;
-    max-height: 120px; /* Optimized: prioritize graphs over text */
-    overflow-y: auto; /* Add scroll if needed */
+    max-height: 85px; /* Reduced to prioritize graph space */
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
 .metric-card .automation-recommendation {
     margin-bottom: 0;
-    padding: 0.75rem; /* Reduced padding */
-    font-size: 0.8125rem;
-    line-height: 1.4; /* Tighter line height */
+    padding: 0.625rem;
+    font-size: 0.75rem; /* Compact but readable */
+    line-height: 1.45; /* Efficient line spacing */
 }
 
 .metric-performance-indicator {
@@ -3363,7 +3365,8 @@ label.filter-checkbox,
     font-weight: 700;
     padding: 0.375rem 0.625rem;
     border-radius: 6px;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Tighter spacing for more graph space */
+    margin-left: 0;
     white-space: nowrap;
     flex-shrink: 0;
     width: fit-content;
@@ -3514,19 +3517,26 @@ label.filter-checkbox,
 
 .chart-container {
     position: relative;
-    height: 500px; /* DRAMATICALLY INCREASED for maximum visibility */
-    margin-top: 0.75rem;
-    margin-left: -0.75rem;  /* Extend further left */
-    margin-right: -0.75rem; /* Extend further right */
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 12px;
-    padding: 1rem 0.75rem; /* Tighter padding for more chart space */
-    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.06);
-    width: calc(100% + 1.5rem); /* Extend 0.75rem each side */
-    min-height: 500px;
+    height: 660px;
+    margin-top: 0.25rem;
+    margin-left: 0;
+    margin-right: 0;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+    border-radius: 16px;
+    padding: 0.875rem 0.375rem; /* Balanced padding for graph breathing room */
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08),
+                0 2px 4px rgba(99, 102, 241, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    width: 100% !important; /* Force full width of parent card */
+    min-height: 660px;
     min-width: 0;
-    max-width: none; /* No constraints */
+    max-width: 100% !important;
     overflow: visible;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
 }
 
 .chart-container canvas {
@@ -3535,6 +3545,26 @@ label.filter-checkbox,
     height: 100% !important; /* Fill full container height */
     max-width: 100%;
     display: block;
+}
+
+/* Premium hover effect on chart containers */
+.chart-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.12),
+                0 4px 8px rgba(99, 102, 241, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Performance indicator styling on chart containers */
+.metric-card.below-target .chart-container {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(255, 255, 255, 0.75) 100%);
+}
+
+.metric-card.above-target .chart-container {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(255, 255, 255, 0.75) 100%);
 }
 
 @media (max-width: 768px) {
@@ -3614,12 +3644,13 @@ label.filter-checkbox,
     }
     
     .detail-tab-content {
-        padding: 1.5rem 1.25rem 2rem !important; /* Adjusted for mobile */
+        padding: 0.5rem 0.25rem 1rem !important; /* Minimal padding for mobile */
         overflow-y: auto !important; /* Ensure scrolling on mobile */
     }
     
     .chart-container {
-        height: 250px;
+        height: 350px; /* Increased for better visibility on mobile */
+        padding: 0.75rem 0.25rem; /* Minimal horizontal padding on mobile */
     }
     
     .metric-card {
@@ -3628,7 +3659,8 @@ label.filter-checkbox,
     
     .metrics-grid {
         grid-template-columns: 1fr;
-        gap: 1.25rem;
+        gap: 1rem;
+        padding: 0.25rem !important; /* Minimal mobile padding */
     }
     
     .core-details-grid {

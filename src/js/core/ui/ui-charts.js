@@ -158,8 +158,8 @@
                         position: 'top',
                         align: 'end',
                         labels: {
-                            boxWidth: 12,
-                            padding: 15,
+                            boxWidth: 10,
+                            padding: 12,
                             font: {
                                 size: 12,
                                 family: "'Inter', sans-serif"

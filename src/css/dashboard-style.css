@@ -2930,9 +2930,10 @@ label.filter-checkbox,
     top: 2vh !important;
     left: 50% !important;
     transform: translateX(-50%);
-    width: 98vw !important;
-    max-width: 1700px !important;
-    height: 96vh !important;
+    width: min(98vw, 1800px) !important;
+    max-width: 1800px !important;
+    height: auto !important;
+    max-height: 96vh !important;
     
     /* Premium Glass Card Aesthetic */
     background: linear-gradient(135deg, 
@@ -3129,9 +3130,7 @@ label.filter-checkbox,
     background: transparent;
 }
 
-.detail-body-column {
-    width: 100%;
-}
+/* Note: .detail-body-column removed - unused wrapper div */
 
 /* Detail Panel Tab Navigation */
 .detail-tabs {
@@ -3292,26 +3291,16 @@ label.filter-checkbox,
     display: flex;
     flex-direction: column;
     min-height: 0;
-    width: 100% !important; /* Force full width of grid cell */
-    max-width: 100% !important;
-    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     transition: none;
     overflow: visible;
     flex: 1 1 100%; /* Flex to fill grid cell completely */
     box-sizing: border-box;
 }
 
-.metric-card:hover {
-    /* No hover effect on invisible container - hover happens on chart container */
-}
-
-.metric-card.below-target {
-    /* Performance indicator styling moved to chart-container */
-}
-
-.metric-card.above-target {
-    /* Performance indicator styling moved to chart-container */
-}
+/* Note: Hover effects and performance indicator styling applied to .chart-container */
 
 .metric-card-title {
     font-size: 0.9375rem;

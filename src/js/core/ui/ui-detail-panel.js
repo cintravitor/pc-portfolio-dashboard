@@ -86,295 +86,23 @@
         window.State.setCurrentDetailModalProduct(null);
     }
     
-    /**
-     * Generate AI-powered recommendation for a metric
-     * Falls back to rule-based if AI fails
-     * @param {Object} product - Full product object with context
-     * @param {string} metricType - 'UX' or 'BI'
-     * @param {Array} monthlyData - Monthly actual values
-     * @param {Array} targetData - Monthly target values
-     * @returns {Promise<string>} HTML string with recommendation
-     */
-    async function generateAIRecommendation(product, metricType, monthlyData, targetData) {
-        // Try AI first if enabled and available
-        if (CONFIG.AI_RECOMMENDATIONS_ENABLED && window.AIRecommendations) {
-            try {
-                console.log('[Detail Panel] Generating AI recommendation for', metricType);
-                const aiText = await window.AIRecommendations.generate(product, metricType);
-                
-                // Return AI recommendation with subtle attribution
-                return `
-                    <div class="automation-recommendation ai-powered">
-                        <div class="recommendation-text">
-                            <span>${aiText}</span>
-                            <span class="ai-attribution">🤖 Powered by OpenAI</span>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                console.warn('[Detail Panel] AI generation failed, falling back to rule-based:', error);
-                // Fall through to rule-based
-            }
-        }
-        
-        // Fallback to rule-based recommendation
-        return generateRuleBasedRecommendation(monthlyData, targetData, metricType);
-    }
+    // NOTE: generateAIRecommendation and generateRuleBasedRecommendation 
+    // have been moved to ui-metric-cards.js module for better isolation
     
-    /**
-     * Generate rule-based recommendation (fallback)
-     * Original logic preserved for when AI is unavailable
-     */
-    function generateRuleBasedRecommendation(monthlyData, targetData, metricType) {
-        // Check if we have data
-        if (!Array.isArray(monthlyData) || monthlyData.length === 0) {
-            return `
-                <div class="automation-recommendation info">
-                    <div class="recommendation-icon">📊</div>
-                    <div class="recommendation-text">No data available for this metric. Establish baseline measurements to track ${metricType === 'UX' ? 'user experience' : 'business impact'}.</div>
-                </div>
-            `;
-        }
-        
-        // Check if target data exists at all
-        const hasTargetArray = Array.isArray(targetData) && targetData.length > 0;
-        let hasAnyValidTarget = false;
-        
-        if (hasTargetArray) {
-            // Check if there's at least one valid target value
-            for (let i = 0; i < targetData.length; i++) {
-                const targetVal = targetData[i];
-                if (targetVal && targetVal !== '' && targetVal !== 'N/A' && targetVal !== '-' && !isNaN(parseFloat(targetVal))) {
-                    hasAnyValidTarget = true;
-                    break;
-                }
-            }
-        }
-        
-        // Count valid data points and analyze performance
-        let validDataPoints = 0;
-        let belowTargetCount = 0;
-        let aboveTargetCount = 0;
-        
-        for (let i = 0; i < monthlyData.length; i++) {
-            const actualVal = monthlyData[i];
-            const targetVal = targetData && targetData[i] ? targetData[i] : null;
-            
-            if (actualVal && actualVal !== '' && actualVal !== 'N/A' && actualVal !== '-') {
-                validDataPoints++;
-                
-                if (targetVal && targetVal !== '' && targetVal !== 'N/A' && targetVal !== '-') {
-                    const actual = parseFloat(actualVal);
-                    const target = parseFloat(targetVal);
-                    
-                    if (!isNaN(actual) && !isNaN(target)) {
-                        if (actual < target) {
-                            belowTargetCount++;
-                        } else if (actual >= target) {
-                            aboveTargetCount++;
-                        }
-                    }
-                }
-            }
-        }
-        
-        // No valid data points
-        if (validDataPoints === 0) {
-            return `
-                <div class="automation-recommendation info">
-                    <div class="recommendation-icon">📊</div>
-                    <div class="recommendation-text">No data available for this metric. Establish baseline measurements to track ${metricType === 'UX' ? 'user experience' : 'business impact'}.</div>
-                </div>
-            `;
-        }
-        
-        // Has data but no valid targets at all
-        if (!hasAnyValidTarget) {
-            return `
-                <div class="automation-recommendation info">
-                    <div class="recommendation-icon">🎯</div>
-                    <div class="recommendation-text">Data is being tracked. Consider setting target values to measure performance against goals.</div>
-                </div>
-            `;
-        }
-        
-        // Has targets but no successful comparisons (e.g., data and targets don't align)
-        const totalComparisons = belowTargetCount + aboveTargetCount;
-        
-        if (totalComparisons === 0) {
-            return `
-                <div class="automation-recommendation info">
-                    <div class="recommendation-icon">📊</div>
-                    <div class="recommendation-text">Metric data is available, but performance comparison is limited. Ensure actual and target values align for the same time periods.</div>
-                </div>
-            `;
-        }
-        
-        // Calculate performance ratio
-        const belowTargetRatio = belowTargetCount / totalComparisons;
-        
-        if (belowTargetRatio >= 0.6) {
-            // Consistently below target
-            return `
-                <div class="automation-recommendation warning">
-                    <div class="recommendation-icon">⚠️</div>
-                    <div class="recommendation-text">${metricType === 'UX' ? 'User experience' : 'Business impact'} metric is frequently below target. Consider improvement initiatives to address performance gaps.</div>
-                </div>
-            `;
-        } else if (belowTargetRatio >= 0.3) {
-            // Mixed performance
-            return `
-                <div class="automation-recommendation info">
-                    <div class="recommendation-icon">📈</div>
-                    <div class="recommendation-text">Performance is variable. Review months below target and identify patterns or opportunities for optimization.</div>
-                </div>
-            `;
-        } else {
-            // Meeting or exceeding target
-            return `
-                <div class="automation-recommendation success">
-                    <div class="recommendation-icon">✅</div>
-                    <div class="recommendation-text">Great work! ${metricType === 'UX' ? 'User experience' : 'Business impact'} metric is consistently meeting or exceeding target. Keep up the momentum.</div>
-                </div>
-            `;
-        }
-    }
-    
-    /**
-     * Calculate performance status based on last month's data
-     * @param {Array} monthlyData - Monthly actual values
-     * @param {Array} targetData - Monthly target values (can be array or single value)
-     * @returns {Object} { status: 'above'|'below'|'neutral', actual: number, target: number }
-     */
-    function calculateLastMonthPerformance(monthlyData, targetData) {
-        if (!Array.isArray(monthlyData)) {
-            return { status: 'neutral', actual: null, target: null };
-        }
-        
-        // Parse target - can be a single value or an array
-        let targetValue = null;
-        if (Array.isArray(targetData) && targetData.length > 0) {
-            // Use first valid target value from array
-            for (let val of targetData) {
-                const parsed = parseFloat(val);
-                if (!isNaN(parsed) && parsed > 0) {
-                    targetValue = parsed;
-                    break;
-                }
-            }
-        } else if (targetData !== null && targetData !== undefined && targetData !== '' && targetData !== '-') {
-            targetValue = parseFloat(targetData);
-            if (isNaN(targetValue)) targetValue = null;
-        }
-        
-        // Find the last valid actual data point
-        for (let i = monthlyData.length - 1; i >= 0; i--) {
-            const val = monthlyData[i];
-            if (val === null || val === undefined || val === '' || val === '-' || val === 'N/A') continue;
-            
-            const actual = parseFloat(val);
-            if (!isNaN(actual) && actual >= 0) {
-                // If no target, just show the value
-                if (targetValue === null || targetValue <= 0) {
-                    return { status: 'neutral', actual, target: null };
-                }
-                
-                const status = actual >= targetValue ? 'above' : 'below';
-                return { status, actual, target: targetValue };
-            }
-        }
-        
-        return { status: 'neutral', actual: null, target: null };
-    }
-    
-    /**
-     * Generate performance indicator HTML
-     * @param {Object} performance - { status, actual, target }
-     * @returns {string} HTML string
-     */
-    function generatePerformanceIndicator(performance) {
-        const { status, actual, target } = performance;
-        
-        if (status === 'neutral' || actual === null || target === null) {
-            return `
-                <div class="metric-performance-indicator neutral">
-                    <span>○</span>
-                    <span>No Recent Data</span>
-                </div>
-            `;
-        }
-        
-        const percentage = Math.round((actual / target) * 100);
-        const diff = Math.abs(percentage - 100);
-        
-        if (status === 'above') {
-            return `
-                <div class="metric-performance-indicator above">
-                    <span>✓</span>
-                    <span>Last Month: ${percentage}% of Target (+${diff}%)</span>
-                </div>
-            `;
-        } else {
-            return `
-                <div class="metric-performance-indicator below">
-                    <span>⚠</span>
-                    <span>Last Month: ${percentage}% of Target (-${diff}%)</span>
-                </div>
-            `;
-        }
-    }
+    // NOTE: calculateLastMonthPerformance and generatePerformanceIndicator 
+    // have been moved to ui-metric-cards.js module for better isolation
     
     /**
      * Generate metrics section HTML content
+     * Now delegates to ui-metric-cards.js module for actual rendering
      * @param {Object} product - Product data
-     * @returns {string} HTML string
+     * @returns {string} HTML string with empty metrics grid (populated by module)
+     * @requires window.UIManager.MetricCards - Isolated metric card rendering module
      */
     function generateMetricsContent(product) {
-        const uxPerformance = calculateLastMonthPerformance(product.monthlyUX, product.targetUX);
-        const biPerformance = calculateLastMonthPerformance(product.monthlyBI, product.targetBI);
-        
+        // Return empty grid structure - metrics cards module will populate it
         return `
-            <div class="metrics-grid">
-                <div class="metric-card ${uxPerformance.status === 'below' ? 'below-target' : uxPerformance.status === 'above' ? 'above-target' : ''}">
-                    <div class="metric-card-title">User Experience</div>
-                    ${generatePerformanceIndicator(uxPerformance)}
-                    <div class="detail-field">
-                        <div class="detail-field-label">
-                            ${window.Utils.escapeHtml(product.keyMetricUX) || 'Metric'}
-                            ${product.trackingFrequencyUX ? `<span class="metric-tracking-frequency">Tracked ${window.Utils.escapeHtml(product.trackingFrequencyUX)}</span>` : ''}
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="chart-ux"></canvas>
-                        </div>
-                    </div>
-                    <div id="ux-recommendation" class="recommendation-placeholder">
-                        <div class="automation-recommendation info">
-                            <div class="recommendation-icon">🤖</div>
-                            <div class="recommendation-text">Generating AI recommendation...</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="metric-card ${biPerformance.status === 'below' ? 'below-target' : biPerformance.status === 'above' ? 'above-target' : ''}">
-                    <div class="metric-card-title">Business Impact</div>
-                    ${generatePerformanceIndicator(biPerformance)}
-                    <div class="detail-field">
-                        <div class="detail-field-label">
-                            ${window.Utils.escapeHtml(product.keyMetricBI) || 'Metric'}
-                            ${product.trackingFrequencyBI ? `<span class="metric-tracking-frequency">Tracked ${window.Utils.escapeHtml(product.trackingFrequencyBI)}</span>` : ''}
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="chart-bi"></canvas>
-                        </div>
-                    </div>
-                    <div id="bi-recommendation" class="recommendation-placeholder">
-                        <div class="automation-recommendation info">
-                            <div class="recommendation-icon">🤖</div>
-                            <div class="recommendation-text">Generating AI recommendation...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="metrics-grid" id="metrics-grid-container"></div>
         `;
     }
     
@@ -513,6 +241,11 @@
      * Show detail panel for a product with streamlined attribute display
      * Displays essential ownership and context information in scannable format
      * @param {number} productId - Product ID to display
+     * @requires window.DataManager.getProductById - Fetch product data
+     * @requires window.State - Modal state management
+     * @requires window.UIManager.MetricCards - Render metric cards
+     * @requires window.UIManager.ModalTabs - Handle tab navigation
+     * @requires window.UIManager.Charts - Render charts
      */
     function showDetailPanel(productId) {
         const product = window.DataManager.getProductById(productId);
@@ -723,123 +456,41 @@
         }, 210);
 
         
-        // Load charts immediately for first-click display
-        // Use setTimeout(0) to ensure DOM is fully ready
+        // Render metric cards using the isolated module
+        // Use setTimeout to ensure DOM is fully ready
         setTimeout(() => {
-            const uxCanvas = document.getElementById('chart-ux');
-            const biCanvas = document.getElementById('chart-bi');
+            const metricsGridContainer = document.getElementById('metrics-grid-container');
             
-            if (!uxCanvas || !biCanvas) {
-                console.error('Chart canvas elements not found');
+            if (!metricsGridContainer) {
+                console.error('[Detail Panel] Metrics grid container not found');
                 return;
             }
             
-            window.UIManager.Charts.loadChartJs()
-                .then(() => {
-                    // Render charts immediately after Chart.js loads
-                    window.UIManager.Charts.renderMetricChart(
-                        'chart-ux', 
-                        product.monthlyUX, 
-                        product.targetUX, 
-                        product.keyMetricUX || 'UX Metric'
-                    );
-                    window.UIManager.Charts.renderMetricChart(
-                        'chart-bi', 
-                        product.monthlyBI, 
-                        product.targetBI, 
-                        product.keyMetricBI || 'BI Metric'
-                    );
-                })
-                .catch(error => {
-                    console.error('Failed to load charts:', error);
-                    // Show fallback message
-                    if (uxCanvas && uxCanvas.parentElement) {
-                        uxCanvas.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load UX chart. Please refresh.</p>';
-                    }
-                    if (biCanvas && biCanvas.parentElement) {
-                        biCanvas.parentElement.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load BI chart. Please refresh.</p>';
-                    }
-                });
+            if (!window.UIManager || !window.UIManager.MetricCards) {
+                console.error('[Detail Panel] MetricCards module not loaded');
+                return;
+            }
+            
+            // Render both metric cards using the isolated module
+            window.UIManager.MetricCards.renderGrid(metricsGridContainer, product);
         }, 50); // Small delay to ensure DOM is ready
-        
-        // Generate AI recommendations asynchronously
-        generateAndDisplayRecommendations(product);
     }
     
-    /**
-     * Generate and display AI recommendations for both metrics
-     * @param {Object} product - Product object
-     */
-    async function generateAndDisplayRecommendations(product) {
-        // Generate UX recommendation
-        generateAIRecommendation(product, 'UX', product.monthlyUX, product.targetUX)
-            .then(html => {
-                const uxContainer = document.getElementById('ux-recommendation');
-                if (uxContainer) {
-                    uxContainer.innerHTML = html;
-                }
-            })
-            .catch(error => {
-                console.error('Failed to generate UX recommendation:', error);
-                const uxContainer = document.getElementById('ux-recommendation');
-                if (uxContainer) {
-                    uxContainer.innerHTML = generateRuleBasedRecommendation(product.monthlyUX, product.targetUX, 'UX');
-                }
-            });
-        
-        // Generate BI recommendation
-        generateAIRecommendation(product, 'BI', product.monthlyBI, product.targetBI)
-            .then(html => {
-                const biContainer = document.getElementById('bi-recommendation');
-                if (biContainer) {
-                    biContainer.innerHTML = html;
-                }
-            })
-            .catch(error => {
-                console.error('Failed to generate BI recommendation:', error);
-                const biContainer = document.getElementById('bi-recommendation');
-                if (biContainer) {
-                    biContainer.innerHTML = generateRuleBasedRecommendation(product.monthlyBI, product.targetBI, 'BI');
-                }
-            });
-    }
+    // NOTE: generateAndDisplayRecommendations has been removed
+    // Recommendations are now handled internally by ui-metric-cards.js module
     
     /**
      * Setup tab navigation in detail panel
+     * Now delegates to ui-modal-tabs.js module
+     * @requires window.UIManager.ModalTabs - Isolated tab navigation module
      */
     function setupTabNavigation() {
-        const tabs = document.querySelectorAll('.detail-tab');
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                switchTab(tab);
-            });
-        });
-    }
-    
-    /**
-     * Switch active tab in detail panel
-     * @param {HTMLElement} clickedTab - The tab button that was clicked
-     */
-    function switchTab(clickedTab) {
-        const tabName = clickedTab.getAttribute('data-tab');
-        
-        // Remove active class and update ARIA from all tabs and contents
-        document.querySelectorAll('.detail-tab').forEach(tab => {
-            tab.classList.remove('active');
-            tab.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.detail-tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        // Add active class and update ARIA for clicked tab and corresponding content
-        clickedTab.classList.add('active');
-        clickedTab.setAttribute('aria-selected', 'true');
-        const targetContent = document.getElementById(`tab-${tabName}`);
-        if (targetContent) {
-            targetContent.classList.add('active');
+        if (!window.UIManager || !window.UIManager.ModalTabs) {
+            console.error('[Detail Panel] ModalTabs module not loaded');
+            return;
         }
+        
+        window.UIManager.ModalTabs.init();
     }
     
     /**
@@ -959,10 +610,18 @@
     /**
      * Complete the hide panel operation (cleanup after animation)
      * @private
+     * @requires window.State - State management
+     * @requires window.UIManager.ModalTabs - Tab state reset
+     * @requires window.Utils - Event publishing
      */
     function completeHidePanel(overlay, panel, skipHistoryPop) {
         // Clear alert context (part of contextual alerting feature)
         window.State.clearAlertContext();
+        
+        // Reset tab state
+        if (window.UIManager && window.UIManager.ModalTabs) {
+            window.UIManager.ModalTabs.reset();
+        }
         
         // Destroy chart instances
         const chartInstances = window.State.getChartInstances();

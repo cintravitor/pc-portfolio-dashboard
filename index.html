@@ -285,9 +285,6 @@
                 </div>
                 <div id="cards-container" class="cards-grid hidden"></div>
             </div>
-            <div id="detail-panel-overlay" class="detail-panel-overlay hidden">
-                <div id="detail-panel" class="detail-panel"></div>
-            </div>
         </div>
         <!-- Governance Dashboard Tab Content -->
         <div class="tab-content" id="tab-governance-dashboard">
@@ -303,6 +300,12 @@
             </div>
         </div>
     </main>
+    
+    <!-- Modal Overlay: Positioned at body level for true viewport overlay -->
+    <div id="detail-panel-overlay" class="detail-panel-overlay hidden">
+        <div id="detail-panel" class="detail-panel"></div>
+    </div>
+    
     <!-- Configuration -->
     <script src="src/js/config.js?v=8.0.0"></script>
     

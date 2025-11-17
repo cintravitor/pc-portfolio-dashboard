@@ -2926,13 +2926,13 @@ label.filter-checkbox,
 /* ===== DETAIL PANEL ===== */
 .detail-panel {
     position: fixed !important;
-    /* Premium Card Positioning: Centered with breathing room */
-    top: 3vh !important;
+    /* Premium Card Positioning: Centered with medium breathing room */
+    top: 2.5vh !important;
     left: 50% !important;
     transform: translateX(-50%);
-    width: 94vw !important;
+    width: 96vw !important;
     max-width: 1600px !important;
-    height: 92vh !important;
+    height: 95vh !important;
     
     /* Premium Glass Card Aesthetic */
     background: linear-gradient(135deg, 
@@ -3255,9 +3255,9 @@ label.filter-checkbox,
 #detail-panel .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem; /* Slightly reduced gap for more chart space */
+    gap: 1rem; /* Optimized gap for maximum chart space */
     margin: 0;
-    padding: 1.25rem 1.25rem 1.5rem 1.25rem; /* Tighter padding */
+    padding: 1rem 1rem 1.25rem 1rem; /* Optimized padding for more graph area */
     align-items: stretch;
     width: 100% !important;
     max-width: none !important; /* Remove any max-width */
@@ -3270,7 +3270,7 @@ label.filter-checkbox,
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 14px;
-    padding: 1.25rem; /* REDUCED padding for more chart space */
+    padding: 1rem; /* Optimized padding for maximum chart space */
     border: 1px solid rgba(226, 232, 240, 0.5);
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
     display: flex;
@@ -3343,7 +3343,7 @@ label.filter-checkbox,
 .metric-card .recommendation-placeholder {
     margin-top: 0.75rem;
     flex-shrink: 0;
-    max-height: 140px; /* CONSTRAIN recommendation height */
+    max-height: 120px; /* Optimized: prioritize graphs over text */
     overflow-y: auto; /* Add scroll if needed */
     overflow-x: hidden;
 }

@@ -3137,14 +3137,14 @@ label.filter-checkbox,
 .detail-tabs {
     display: flex;
     gap: 0.5rem;
-    margin: 1rem 1.5rem 0 1.5rem; /* Match grid padding */
+    margin: 1rem 3rem 0 3rem; /* Match header's 3rem horizontal padding */
     padding: 0.5rem;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
     border: 1px solid rgba(226, 232, 240, 0.4);
     flex-shrink: 0;
-    width: calc(100% - 3rem); /* Explicit width calculation */
-    max-width: calc(100% - 3rem);
+    width: calc(100% - 6rem); /* Account for 3rem on each side */
+    max-width: calc(100% - 6rem);
 }
 
 .detail-tab {
@@ -3228,10 +3228,23 @@ label.filter-checkbox,
     display: block;
 }
 
+/* Metrics tab content - ULTRA-minimal padding for maximum card width */
+.detail-tab-content#tab-metrics {
+    padding: 0.75rem 0.25rem 1.5rem !important; /* Ultra-minimal 4px padding for ~99% width */
+}
+
+/* Core Details tab - align content with tab headers for centered layout */
 .detail-tab-content#tab-core-details {
+    padding: 0.75rem 0 1.5rem !important; /* No horizontal padding - let inner container handle it */
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+}
+
+/* Core Details content wrapper - centers content to match tab header width */
+.detail-tab-content#tab-core-details .core-details-grid {
+    margin: 0 3rem; /* Match tab navigation margins for perfect alignment */
+    max-width: calc(100% - 6rem); /* Constrain to tab header width */
 }
 
 @keyframes fadeInTab {
@@ -3257,7 +3270,7 @@ label.filter-checkbox,
 #detail-panel .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem; /* Minimal gap for maximum card width */
+    gap: 0.375rem; /* 6px gap between cards for visual separation */
     margin: 0;
     padding: 0;
     align-items: stretch;
@@ -3640,12 +3653,23 @@ label.filter-checkbox,
     }
     
     .detail-tabs {
-        padding: 1rem 1.25rem 0 !important;
+        margin: 1rem 1.25rem 0 1.25rem !important;
+        width: calc(100% - 2.5rem) !important;
     }
     
-    .detail-tab-content {
-        padding: 0.5rem 0.25rem 1rem !important; /* Minimal padding for mobile */
-        overflow-y: auto !important; /* Ensure scrolling on mobile */
+    .detail-tab-content#tab-metrics {
+        padding: 0.75rem 0.25rem 1rem !important; /* Ultra-minimal for metrics on mobile */
+        overflow-y: auto !important;
+    }
+    
+    .detail-tab-content#tab-core-details {
+        padding: 0.75rem 0 1rem !important; /* No padding - let inner container handle it */
+        overflow-y: auto !important;
+    }
+    
+    .detail-tab-content#tab-core-details .core-details-grid {
+        margin: 0 1.25rem; /* Match mobile header padding */
+        max-width: calc(100% - 2.5rem);
     }
     
     .chart-container {
